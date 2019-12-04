@@ -89,7 +89,9 @@ function M.new(self, sType, name, action, is, ie)
    o.__action     = action
    o.__is         = is or false
    o.__ie         = ie or false
-   o.__range      = { o.__is, o.__ie }
+   o.__have_range = is or ie
+   o.__range      = { o.__is and parseVersion(o.__is) or " ", o.__ie and parseVersion(o.__ie) or "~" }
+   o.__show_range = { o.__is , o.__ie }
    o.__actionNm   = action
 
    if (sType == "entryT") then
@@ -353,7 +355,7 @@ function M.find_exact_match(self, fileA)
    local versionStr = self.__versionStr
    local fn         = false
    local version    = false
-   local weight     = " "  -- this is less than the lowest possible weight
+   local pV         = " "  -- this is less than the lowest possible weight
    local found      = false
 
 
@@ -361,11 +363,12 @@ function M.find_exact_match(self, fileA)
       local a = fileA[i]
       for j = 1, #a do
          local entry = a[j]
-         if (entry.version == versionStr and entry.pV > weight) then
-            weight  = entry.pV
+         if (entry.version == versionStr and entry.pV > pV) then
+            pV      = entry.pV
             fn      = entry.fn
             version = entry.version or false
             found   = true
+            self.__range = { pV, pV }
             break
          end
       end
@@ -374,7 +377,7 @@ function M.find_exact_match(self, fileA)
    return found, fn, version
 end
 
-local function find_highest_by_key(key, fileA)
+local function find_highest_by_key(self, key, fileA)
    local mrc     = MRC:singleton()
    local a       = fileA[1] or {}
    local weight  = " "  -- this is less than the lower possible weight.
@@ -382,6 +385,7 @@ local function find_highest_by_key(key, fileA)
    local fn      = false
    local found   = false
    local version = false
+   local pV      = false
 
    for j = 1,#a do
       local entry = a[j]
@@ -390,13 +394,15 @@ local function find_highest_by_key(key, fileA)
          if (v > weight) then
             idx    = j
             weight = v
+            pV     = entry.pV
          end
       end
    end
    if (idx) then
-      fn      = a[idx].fn
-      version = a[idx].version or false
-      found   = true
+      fn           = a[idx].fn
+      version      = a[idx].version or false
+      found        = true
+      self.__range = { pV, pV }
    end
    return found, fn, version
 end
@@ -406,14 +412,15 @@ end
 
 
 function M.find_highest(self, fileA)
-   return find_highest_by_key("wV",fileA)
+   return find_highest_by_key(self, "wV",fileA)
 end
 
 function M.find_latest(self, fileA)
-   return find_highest_by_key("pV",fileA)
+   return find_highest_by_key(self,"pV",fileA)
 end
 
 function M.find_between(self, fileA)
+   --dbg.start{"MName:find_between(fileA)"}
    local a     = fileA[1] or {}
    sort(a, function(x,y)
            return x.pV < y.pV
@@ -421,17 +428,24 @@ function M.find_between(self, fileA)
 
    local fn         = false
    local version    = false
-   local lowerBound = self.__is and parseVersion(self.__is) or " "
-   local upperBound = self.__ie and parseVersion(self.__ie) or "~"
+   local lowerBound = self.__range[1]
+   local upperBound = self.__range[2]
    local pV         = lowerBound
    local wV         = " "  -- this is less than the lower possible weight.
+
+   --dbg.print{"lower: ",pV,"\n"}
+   --dbg.print{"upper: ",upperBound,"\n"}
+   --dbg.print{"wV:    \"",wV,"\"\n\n"}
+
    local idx        = nil
    local found      = false
    for j = 1,#a do
       local entry = a[j]
       local v     = entry.pV
+      --dbg.print{"pV: ",pV,", v: ",v,", upper: \"",upperBound,"\"\n"}
+      --dbg.print{"pV <= v: ",pV <= v, ", v <= upperBound: ",v <= upperBound,", entry.wV > wV: ",entry.wV > wV,"\n"}
 
-      if (v >= pV and v <= upperBound and entry.wV > wV) then
+      if (pV <= v and v <= upperBound and entry.wV > wV) then
          idx = j
          pV  = v
          wV  = entry.wV
@@ -445,6 +459,7 @@ function M.find_between(self, fileA)
          self.__userName = build_fullName(self.__sn,version)
       end
    end
+   --dbg.fini("MName:find_between")
    return found, fn, version
 end
 
@@ -459,6 +474,13 @@ function M.isloaded(self)
    local sn        = self:sn()
    local status    = mt:status(sn)
    local sn_status = ((status == "active") or (status == "pending"))
+   if (sn_status and self.__have_range) then
+      local pV = parseVersion(mt:version(sn))
+      if ((self.__range[1] <= pV) and (pV <= self.__range[2])) then
+         return sn_status
+      end
+   end
+
    local userName  = self:userName()
    if (userName == sn            or
        userName == mt:fullName(sn)) then
@@ -499,6 +521,13 @@ function M.prereq(self)
       return userName
    end
 
+   if (self.__have_range) then
+      local pV = parseVersion(mt:version(sn))
+      if ((self.__range[1] <= pV) and (pV <= self.__range[2])) then
+         return false
+      end
+   end
+      
    if (userName == sn or userName == fullName) then
       -- The userName matched the either the sn or fullName
       -- stored in the MT
