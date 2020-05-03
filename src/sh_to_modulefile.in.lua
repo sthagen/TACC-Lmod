@@ -346,11 +346,13 @@ local function cleanPath(value)
    pathA        = {}
 
    for execName in pairs(execT) do
-      local cmd = findInPath(execName, myPath)
-      if (cmd) then
+      local cmd, found = findInPath(execName, myPath)
+      if (found) then
          local dir = dirname(cmd):gsub("/+$","")
          local p = path_regularize(dir)
-         pathT[p].keep = true
+         if (p and pathT[p]) then
+            pathT[p].keep = true
+         end
       end
    end
 
@@ -474,10 +476,11 @@ function main()
    end
 
    local LuaCmd = "@path_to_lua@/lua"
+   local found
 
    if (LuaCmd:sub(1,1) == "@") then
-      LuaCmd = findInPath("lua")
-      if (LuaCmd == nil) then
+      LuaCmd, found = findInPath("lua")
+      if (not found) then
          io.stderr:write("Unable to find lua program")
          return
       end
@@ -522,7 +525,7 @@ function main()
    if (masterTbl.outFn) then
       local f = io.open(masterTbl.outFn,"w")
       if (f) then
-         f:write(s)
+         f:write(s,"\n")
          f:close()
       else
          io.stderr:write("Unable to write modulefile named: ",masterTbl.outFn,"\n")

@@ -116,9 +116,10 @@ local function l_error_on_missing_loaded_modules(aa,bb)
 
    if (#aa > 0) then
       local luaprog = "@path_to_lua@/lua"
+      local found
       if (luaprog:sub(1,1) == "@") then
-         luaprog = find_exec_path("lua")
-         if (luaprog == nil) then
+         luaprog, found = findInPath("lua")
+         if (not found) then
             LmodError{msg="e_Failed_2_Find", name = "lua"}
          end
       end
@@ -1013,6 +1014,34 @@ function M.load(self, mA)
 
    dbg.fini("MasterControl:load")
    return a
+end
+
+function M.load_any(self, mA)
+   if (dbg.active()) then
+      local s = mAList(mA)
+      dbg.start{"MasterControl:load_any(mA={"..s.."})"}
+   end
+   local b
+   local uA     = {}
+   local result = false
+
+   for i = 1, #mA do
+      local mname = mA[i]
+      b = self:try_load{mname}
+      if (mname:isloaded()) then
+         result = true
+         break
+      else
+         uA[#uA+1] = mname:userName()
+      end
+   end
+
+   if (not result) then
+      LmodError{msg="e_Failed_Load_any", module_list=concatTbl(uA," ")}
+   end
+
+   dbg.fini("MasterControl:load_any")
+   return b
 end
 
 
