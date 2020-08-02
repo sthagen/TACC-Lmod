@@ -431,6 +431,20 @@ AC_ARG_WITH(extendedDefault,
     EXTENDED_DEFAULT="$withval"
     AC_DEFINE_UNQUOTED(EXTENDED_DEFAULT, "$withval"))dnl
 
+AC_SUBST(SUPPORT_KSH)
+AC_ARG_WITH(supportKsh,
+    AC_HELP_STRING([--with-supportKsh=ans],[Support KSH. [[no]]]),
+    SUPPORT_KSH="$withval"
+    SUPPORT_KSH=`echo $SUPPORT_KSH | tr '@<:@:upper:@:>@' '@<:@:lower:@:>@'`
+    VALID_YN $SUPPORT_KSH "--with-supportKsh=ans: ans must be yes or no"
+    AC_MSG_RESULT([SUPPORT_KSH=$with_supportKsh])
+    AC_DEFINE_UNQUOTED(SUPPORT_KSH, "$with_supportKsh")dnl
+    ,
+    withval="no"
+    AC_MSG_RESULT([SUPPORT_KSH=$withval])
+    SUPPORT_KSH="$withval"
+    AC_DEFINE_UNQUOTED(SUPPORT_KSH, "$withval"))dnl
+
 AC_SUBST(MODULEPATH_INIT)
 AC_ARG_WITH(ModulePathInit,
     AC_HELP_STRING([--with-ModulePathInit=ans],[File containing initial MODULEPATH directories]),
@@ -653,8 +667,8 @@ fi
 
 IntLuaV=$( $luaprog  -e "_,_,M,m=_VERSION:gsub('Lua%s+',''):find('(%d+)%.(%d)'); print(math.floor(tonumber(M)*1000+tonumber(m)))")
 
-if test $IntLuaV -lt 5001 -o $IntLuaV -gt 5003; then
-  echo "Error: Lmod requires versions 5.1 or 5.2 or 5.3, You have: $LuaV"
+if test $IntLuaV -lt 5001 -o $IntLuaV -gt 5004; then
+  echo "Error: Lmod requires versions 5.1, 5.2, 5.3, or 5.4 You have: $LuaV"
   rm -f makefile
   exit 1
 fi
@@ -783,7 +797,7 @@ else
     echo "... no"
   else
     lfsV=`$luaprog getLFSVersion`
-    if test "$lfsV" -lt 1006002; then
+    if test "$lfsV" -lt 1008000; then
        echo "... Too old, using providing version"
     else
        echo "... yes"    

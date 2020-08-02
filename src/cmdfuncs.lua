@@ -772,7 +772,7 @@ end
 
 --------------------------------------------------------------------------
 -- Use the show mode of MasterControl to list the active Lmod
--- commands in a module file.  Note that it is always in Lua
+-- commands in a module file.  Note that the output is always in Lua
 -- even if the modulefile is written in TCL.
 function Show(...)
    local master = Master:singleton()
@@ -791,7 +791,10 @@ function Show(...)
                      a[#a+1] = borderStr
                      return concatTbl(a,"")
                   end
+   local exit = os.exit
+   sandbox_set_os_exit(show_exit)
    master:access(...)
+   os.exit = exit
    dbg.fini("Show")
 end
 

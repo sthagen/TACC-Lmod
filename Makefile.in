@@ -39,6 +39,7 @@ LMOD_HIDDEN_ITALIC        := @HIDDEN_ITALIC@
 LMOD_OVERRIDE_LANG        := @LMOD_OVERRIDE_LANG@
 SITE_MSG_FILE             := @SITE_MSG_FILE@
 SITE_NAME                 := @SITE_NAME@
+SUPPORT_KSH               := @SUPPORT_KSH@
 SYSHOST                   := @SYSHOST@
 SILENCE_SHELL_DEBUGGING   := @SILENCE_SHELL_DEBUGGING@
 SYS_LD_LIB_PATH           := @SYS_LD_LIB_PATH@
@@ -88,6 +89,7 @@ TOOLS                     := $(MY_PACKAGE)/tools
 I18N                      := $(MY_PACKAGE)/tools/i18n
 SETTARG                   := $(MY_PACKAGE)/settarg
 INIT		  	  := $(MY_PACKAGE)/init
+INIT_KSH_FUNCS	  	  := $(MY_PACKAGE)/init/ksh_funcs
 FISH_TAB	  	  := $(MY_PACKAGE)/init/fish_tab_completion
 MESSAGEDIR      	  := $(MY_PACKAGE)/messageDir
 LMOD_MF 	  	  := $(MY_PACKAGE)/modulefiles/Core
@@ -103,10 +105,10 @@ else
   DATE_cmd := date
 endif
 
-DIRLIST		  	  := $(DESTDIR)$(LIBEXEC) $(DESTDIR)$(TOOLS)      $(DESTDIR)$(SETTARG)    \
-                             $(DESTDIR)$(SHELLS)  $(DESTDIR)$(INIT)       $(DESTDIR)$(LIB)        \
-                             $(DESTDIR)$(LMOD_MF) $(DESTDIR)$(MAN_PAGES)  $(DESTDIR)$(MESSAGEDIR) \
-                             $(DESTDIR)$(I18N)    $(DESTDIR)$(FISH_TAB)
+DIRLIST		  	  := $(DESTDIR)$(LIBEXEC) $(DESTDIR)$(TOOLS)      $(DESTDIR)$(SETTARG)        \
+                             $(DESTDIR)$(SHELLS)  $(DESTDIR)$(INIT)       $(DESTDIR)$(LIB)            \
+                             $(DESTDIR)$(LMOD_MF) $(DESTDIR)$(MAN_PAGES)  $(DESTDIR)$(MESSAGEDIR)     \
+                             $(DESTDIR)$(I18N)    $(DESTDIR)$(FISH_TAB)   $(DESTDIR)$(INIT_KSH_FUNCS)
 
 STANDALONE_PRGM   	  := src/lmod.in.lua src/addto.in.lua                       \
                              src/spider.in.lua src/clearLMOD_cmd.in.lua             \
@@ -128,6 +130,9 @@ ZSH_FUNCS                 := $(patsubst %, $(srcdir)/init/zsh/%, $(ZSH_FUNCS))
 
 FISH_FUNCS                := module.fish   
 FISH_FUNCS                := $(patsubst %, $(srcdir)/init/fish/%, $(FISH_FUNCS))
+
+KSH_FUNCS                 := clearLmod.in clearMT.in ml.in module.in settarg.in
+KSH_FUNCS                 := $(patsubst %, $(srcdir)/init/ksh_funcs/%, $(KSH_FUNCS))
 
 STARTUP		  	  := profile.in profile.fish.in cshrc.in
 STARTUP		  	  := $(patsubst %, $(srcdir)/init/%, $(STARTUP))
@@ -184,11 +189,13 @@ uninstall:
 	$(RM) -rf $(DESTDIR)$(MY_PKG_PACKAGE)
 	@echo "If you added lmod files to /etc/profile.d please remove them."
 
-pre-install: $(DIRLIST) $(PKGS) lmodrc_init shell_init startup libexec    \
-             Inst_Tools Inst_Shells Inst_Settarg Inst_Lmod_MF other_tools \
-             man_pages messageFns i18n spiderCacheSupport
+pre-install: $(DIRLIST) lmod_install_targets
 
-install: pre-install  zsh_tab_funcs fish_tab_funcs
+lmod_install_targets: $(PKGS) lmodrc_init shell_init startup libexec    \
+             Inst_Tools Inst_Shells Inst_Settarg Inst_Lmod_MF other_tools \
+             man_pages messageFns i18n spiderCacheSupport ksh_funcs
+
+install: pre-install  zsh_tab_funcs fish_tab_funcs 
 	$(MAKE) PKGV=$(PKG) shell_init startup
 	@if test "$(SITE_CONTROLLED_PREFIX)" = "no" ; then                        \
 	   echo $(RM) $(DESTDIR)$(PKG);                                           \
@@ -209,6 +216,7 @@ echo:
 	@echo LUA_PATH: $$LUA_PATH
 	@echo L_PATH: "$(L_PATH)"
 	@echo VDATE: $(VDATE)
+	@echo DIRLIST: $(DIRLIST)
 
 man_pages:
 	-$(PATH_TO_LUA)/lua $(srcdir)/src/lmod.in.lua bash --help >/dev/null 2> $(DESTDIR)$(MAN_PAGES)/module.1
@@ -250,6 +258,7 @@ __installMe:
 	        -e 's|@tmod_find_first@|$(TMOD_FIND_FIRST)|g'            	  \
 	        -e 's|@redirect@|$(REDIRECT)|g'                       	   	  \
 	        -e 's|@basename@|$(BASENAME)|g'                       	   	  \
+	        -e 's|@support_ksh@|$(SUPPORT_KSH)|g'                  	   	  \
 	        -e 's|@cached_loads@|$(CACHED_LOADS)|g'                	   	  \
 	        -e 's|@ps@|$(PS)|g'                              	   	  \
 	        -e 's|@site_name@|$(SITE_NAME)|g'                     	   	  \
@@ -342,13 +351,22 @@ pkgs:
                install;                                                    \
         fi
 
-zsh_tab_funcs: $(ZSH_FUNCS)
-	-if [ -n "$(ZSH_SITE_FUNCTIONS_DIRS)" ]; then                    \
-          for i in `echo "$(ZSH_SITE_FUNCTIONS_DIRS)" | tr ':' ' '`; do  \
-            cp $^ $(DESTDIR)$$i  2> /dev/null;                           \
-	  done;                                                          \
-	  true;                                                          \
+zsh_tab_funcs: $(ZSH_FUNCS) $(KSH_FUNCS)
+	-if [ -n "$(ZSH_SITE_FUNCTIONS_DIRS)" ]; then                       \
+          for zdir in `echo "$(ZSH_SITE_FUNCTIONS_DIRS)" | tr ':' ' '`; do  \
+	    for i in $^; do                                            	    \
+              bareN=$${i##*/};                                              \
+              fn=$${bareN%%.in*};                                           \
+              ext=$${bareN#*.};                                             \
+              cp $$i $(DESTDIR)$$zdir/$$fn  2> /dev/null;                   \
+	      [ "$$ext" = "in" ] && chmod +x $(DESTDIR)$$zdir/$$fn;         \
+	    done;                                                           \
+	  done;                                                             \
+	  true;                                                             \
         fi
+
+ksh_funcs: $(KSH_FUNCS)
+	$(MAKE) FILELIST="$^" DIRLOC=$(DESTDIR)$(INIT_KSH_FUNCS) __installMe
 
 fish_tab_funcs: $(FISH_FUNCS)
 	cp $^ $(DESTDIR)$(FISH_TAB) 2>/dev/null

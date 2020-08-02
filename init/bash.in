@@ -15,13 +15,24 @@ fi
 
 [ -n "${__lmod_vx:-}" ] && set +$__lmod_vx 
 
-export LMOD_ROOT=@lmod_root@
-export LMOD_PKG=@PKGV@
-
 if [ -n "${__lmod_vx:-}" ]; then
-    echo "Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for this output ($LMOD_PKG/init/bash)" 1>&2
+    echo "Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for this output (@PKGV@/init/@my_shell@)" 1>&2
 fi
 
+#
+# Prepend the FPATH variable for ksh functions when ssh is being used,
+# except for zsh as it breaks things there.
+SUPPORT_KSH="@support_ksh@" 
+if [ $SUPPORT_KSH = yes -o -n "${SSH_CLIENT+x}" -o -n "${KSH_VERSION+x}" ]; then
+  if [ -z "${ZSH_VERSION+x}" -a -z "${__LMOD_SET_FPATH+x}" ]; then
+    export FPATH=$(@PKGV@/libexec/addto FPATH @PKGV@/init/ksh_funcs)
+    export __LMOD_SET_FPATH=1
+  fi
+fi
+unset SUPPORT_KSH
+
+export LMOD_ROOT=@lmod_root@
+export LMOD_PKG=@PKGV@
 export LMOD_DIR=$LMOD_PKG/libexec
 export LMOD_CMD=$LMOD_PKG/libexec/lmod
 export MODULESHOME=$LMOD_PKG
@@ -89,7 +100,7 @@ else
      fi
 
      eval $($LMOD_CMD @my_shell@ "$@") && eval $(${LMOD_SETTARG_CMD:-:} -s sh)
-     local _lmod_my_status=$?
+     __lmod_my_status=$?
 
      ############################################################
      # Un-silence shell debug after module command
@@ -98,7 +109,7 @@ else
        set -$__lmod_sh_dbg;
        unset __lmod_sh_dbg;
      fi;
-     return $_lmod_my_status
+     return $__lmod_my_status
    }
 fi
 

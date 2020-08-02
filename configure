@@ -652,6 +652,7 @@ SILENCE_SHELL_DEBUGGING
 USE_BUILT_IN_PKGS
 SITE_CONTROLLED_PREFIX
 MODULEPATH_INIT
+SUPPORT_KSH
 EXTENDED_DEFAULT
 CACHED_LOADS
 LUA_INCLUDE
@@ -709,7 +710,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -763,6 +763,7 @@ with_tmodFindFirst
 with_lua_include
 with_cachedLoads
 with_extendedDefault
+with_supportKsh
 with_ModulePathInit
 with_siteControlPrefix
 with_useBuiltinPkgs
@@ -816,7 +817,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1069,15 +1069,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1215,7 +1206,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1368,7 +1359,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1453,6 +1443,7 @@ Optional Packages:
   --with-cachedLoads=ans  Use cache when loading modules. [[no]]
   --with-extendedDefault=ans
                           Allow for extended default. [[yes]]
+  --with-supportKsh=ans   Support KSH. [[no]]
   --with-ModulePathInit=ans
                           File containing initial MODULEPATH directories
   --with-siteControlPrefix=ans
@@ -3716,6 +3707,30 @@ fi
 
 
 
+# Check whether --with-supportKsh was given.
+if test "${with_supportKsh+set}" = set; then :
+  withval=$with_supportKsh; SUPPORT_KSH="$withval"
+    SUPPORT_KSH=`echo $SUPPORT_KSH | tr '[:upper:]' '[:lower:]'`
+    VALID_YN $SUPPORT_KSH "--with-supportKsh=ans: ans must be yes or no"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: SUPPORT_KSH=$with_supportKsh" >&5
+$as_echo "SUPPORT_KSH=$with_supportKsh" >&6; }
+    cat >>confdefs.h <<_ACEOF
+#define SUPPORT_KSH "$with_supportKsh"
+_ACEOF
+
+else
+  withval="no"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: SUPPORT_KSH=$withval" >&5
+$as_echo "SUPPORT_KSH=$withval" >&6; }
+    SUPPORT_KSH="$withval"
+    cat >>confdefs.h <<_ACEOF
+#define SUPPORT_KSH "$withval"
+_ACEOF
+
+fi
+
+
+
 # Check whether --with-ModulePathInit was given.
 if test "${with_ModulePathInit+set}" = set; then :
   withval=$with_ModulePathInit; MODULEPATH_INIT="$withval"
@@ -4915,8 +4930,8 @@ fi
 
 IntLuaV=$( $luaprog  -e "_,_,M,m=_VERSION:gsub('Lua%s+',''):find('(%d+)%.(%d)'); print(math.floor(tonumber(M)*1000+tonumber(m)))")
 
-if test $IntLuaV -lt 5001 -o $IntLuaV -gt 5003; then
-  echo "Error: Lmod requires versions 5.1 or 5.2 or 5.3, You have: $LuaV"
+if test $IntLuaV -lt 5001 -o $IntLuaV -gt 5004; then
+  echo "Error: Lmod requires versions 5.1, 5.2, 5.3, or 5.4 You have: $LuaV"
   rm -f makefile
   exit 1
 fi
@@ -5047,7 +5062,7 @@ else
     echo "... no"
   else
     lfsV=`$luaprog getLFSVersion`
-    if test "$lfsV" -lt 1006002; then
+    if test "$lfsV" -lt 1008000; then
        echo "... Too old, using providing version"
     else
        echo "... yes"
@@ -6449,6 +6464,7 @@ echo "Use Tmod Find First rule instead of Find Best for defaults.." : $TMOD_FIND
 echo "MODULEPATH Initial file....................................." : $MODULEPATH_INIT
 echo "Use built-in lua packages instead of system provided pkgs..." : $USE_BUILT_IN_PKGS
 echo "Silence shell debugging output for bash/zsh................." : $SILENCE_SHELL_DEBUGGING
+echo "Support KSH................................................." : $SUPPORT_KSH
 echo "Use the fast TCL interpreter................................" : $FAST_TCL_INTERP
 echo "Allow for extended default.(ml intel/17 #-> intel/17.0.4)..." : $EXTENDED_DEFAULT  #"
 
