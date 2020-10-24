@@ -223,7 +223,7 @@ end
 -- @param t A table with possible dontWrite and quiet entries.
 -- @return A singleton Cache object.
 function M.singleton(self, t)
-   dbg.start{"Cache:cache()"}
+   dbg.start{"Cache:singleton()"}
 
    t                = t or {}
    if (not s_cache) then
@@ -261,7 +261,7 @@ function M.singleton(self, t)
       end
    end
 
-   dbg.fini("Cache:cache")
+   dbg.fini("Cache:singleton")
    return s_cache
 end
 
@@ -272,8 +272,8 @@ end
 -- @param self a Cache object
 -- @param spiderTFnA An array of cache files to read and process.
 -- @return the number of directories read.
-local function l_readCacheFile(self, spiderTFnA)
-   dbg.start{"Cache l_readCacheFile(spiderTFnA)"}
+local function l_readCacheFile(self, mpathA, spiderTFnA)
+   dbg.start{"Cache l_readCacheFile(mpathA, spiderTFnA)"}
    local dirsRead  = 0
    local ignore_cache = cosmic:value("LMOD_IGNORE_CACHE")
    if (masterTbl().ignoreCache or ignore_cache) then
@@ -337,7 +337,7 @@ local function l_readCacheFile(self, spiderTFnA)
                LmodError{msg="e_BrokenCacheFn",fn=fn}
             end
 
-            mrc:import(_G.mrcT)
+            mrc:import(mpathA, _G.mrcT)
 
             local G_spiderT = _G.spiderT
             for k, v in pairs(G_spiderT) do
@@ -411,14 +411,13 @@ function M.build(self, fast)
    -- we need to.
    local mrc       = MRC:singleton({})
 
-
    dbg.print{"self.buildCache: ",self.buildCache,"\n"}
    if (not self.buildCache) then
       dbg.fini("Cache:build")
       mrc:update()
       return false, false, false, false
    end
-
+   
    if (next(spiderT) ~= nil) then
       dbg.print{"Using pre-built spiderT!\n"}
       dbg.fini("Cache:build")
@@ -434,7 +433,7 @@ function M.build(self, fast)
    local sysDirsRead = 0
    dbg.print{"buildFresh: ",self.buildFresh,"\n"}
    if (not (self.buildFresh or masterTbl.checkSyntax)) then
-      sysDirsRead = l_readCacheFile(self, self.systemDirA)
+      sysDirsRead = l_readCacheFile(self, mpathA, self.systemDirA)
    end
 
    ------------------------------------------------------------------------
@@ -443,7 +442,7 @@ function M.build(self, fast)
    local spiderDirT  = self.spiderDirT
    local usrDirsRead = 0
    if (not (self.buildFresh  or isFile(self.usrCacheInvalidFn))) then
-      usrDirsRead = l_readCacheFile(self, self.usrSpiderTFnA)
+      usrDirsRead = l_readCacheFile(self, mpathA, self.usrSpiderTFnA)
    end
 
    local mpathT = {}
@@ -673,4 +672,8 @@ function M.build(self, fast)
    return spiderT, dbT, mpathMapT, providedByT
 end
 
+function M.__clear()
+   dbg.print{"Clearing s_cache\n"}
+   s_cache = false
+end
 return M

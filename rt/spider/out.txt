@@ -268,6 +268,7 @@ mrcT = {
   hiddenT = {
     ["gcc/4.8"] = true,
   },
+  mpathT = {},
   version2modT = {
     ["intel/17"] = "intel/2017.1.132",
     ["intel/2017"] = "intel/2017.1.132",
@@ -276,6 +277,7 @@ mrcT = {
 spiderT = {
   ["ProjectDIR/rt/spider/mf/E_Compiler/gcc/4.2"]  = {
     python2 = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -298,6 +300,7 @@ spiderT = {
   },
   ["ProjectDIR/rt/spider/mf/E_Compiler/intel/11"]  = {
     python2 = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -320,6 +323,7 @@ spiderT = {
   },
   ["ProjectDIR/rt/spider/mf/E_Core"]  = {
     gcc = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -346,6 +350,7 @@ spiderT = {
       },
     },
     intel = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -402,6 +407,7 @@ spiderT = {
       },
     },
     perl = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -420,6 +426,7 @@ spiderT = {
       },
     },
     python2 = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
@@ -827,6 +834,7 @@ mrcT = {
   hiddenT = {
     ["gcc/4.8"] = true,
   },
+  mpathT = {},
   version2modT = {
     ["intel/17"] = "intel/2017.1.132",
     ["intel/2017"] = "intel/2017.1.132",
@@ -835,6 +843,7 @@ mrcT = {
 spiderT = {
   ["ProjectDIR/rt/spider/mf/G_Core"]  = {
     acme_xyz = {
+      defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {

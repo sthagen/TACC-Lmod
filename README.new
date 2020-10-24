@@ -1,2 +1,25 @@
 Lmod 8.4+
-   (8.4.1)  * 
+   (8.4.1)  * Issue #460: Change meta modules from having a separate file= to be
+              a fileT= in ModuleA
+   (8.4.2)  * Actually set shell name from the command line and not based on Shell Object.
+            * Issue #462: Allow for more matches with extended default.  The last character can
+              be: . _ - + = or letters
+   (8.4.3)  * Adding userInGroups(group1,group2,...) as a replacement for userInGroup(group)
+              (userInGroup calls userInGroups)
+            * Added new command check_module_tree_syntax to check for multiple marked defaults
+              for the same shortName module and that all modulefiles pass the syntax test.              
+   (8.4.4)  * Fix bug in MasterControl:userInGroups(): capture returns string and status and
+              tonumber() doesn't like it.
+   (8.4.5)  * Issue #447: Report (N/A) when global alias does not resolve with current $MODULEPATH
+   (8.4.6)  * Modify spiderT to know about mpath dependent aliases, hidden modulefiles.
+            * Issue #467:  added MName:find_exact_match_meta_module() to handle hidden meta modules
+	      loading. Changed versionStr (user input) to be false and not nil   
+   (8.4.7)  * Issue #461: Modified instructions for installing lua and lua-posix on ubuntu 18.04 and 20.04
+            * Issue #469: Use LMOD_ALLOW_ROOT_USE to control whether root uses Lmod or not
+	    * Suggestion from Xavier Delaruelle to define ModuleTool and ModuleToolVersion env vars
+	      and versioncmp test.
+            * Updated documentation for Lmod Env. Vars and TCL module functions.
+   (8.4.8)  * To match Tmod, ModuleTool and ModuleToolVersion are also TCL global variables.
+   (8.4.9)  * Issue #470, Issue #471: fix fish logic w.r.t. LMOD_ALLOW_ROOT_USE
+   (8.4.10) * User found bug where if sha1sum was not in current path, "module save" would die.
+            * Issue #474: Updated FAQ doc on how to handle missing new modules.

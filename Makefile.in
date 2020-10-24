@@ -37,6 +37,7 @@ SETTARG_CMD               := settarg_cmd
 MODULEPATH_INIT           := @MODULEPATH_INIT@
 LMOD_HIDDEN_ITALIC        := @HIDDEN_ITALIC@
 LMOD_OVERRIDE_LANG        := @LMOD_OVERRIDE_LANG@
+LMOD_ALLOW_ROOT_USE       := @LMOD_ALLOW_ROOT_USE@
 SITE_MSG_FILE             := @SITE_MSG_FILE@
 SITE_NAME                 := @SITE_NAME@
 SUPPORT_KSH               := @SUPPORT_KSH@
@@ -116,7 +117,8 @@ STANDALONE_PRGM   	  := src/lmod.in.lua src/addto.in.lua                       \
                              src/spiderCacheSupport.in.lua                          \
                              src/sh_to_modulefile.in.lua                            \
 	                     src/update_lmod_system_cache_files.in                  \
-	                     sh_src/print_os.sh.in
+                             src/check_module_tree_syntax.in.lua                    \
+	                     sh_src/print_os.sh.in 
 STANDALONE_PRGM           := $(patsubst %, $(srcdir)/%, $(STANDALONE_PRGM))
 SHELL_INIT	  	  := bash.in cmake.in csh.in ksh.in tcsh.in zsh.in sh.in perl.in R.in \
                              env_modules_python.py.in lmod_bash_completions fish.in           \
@@ -286,6 +288,7 @@ __installMe:
 	        -e 's|@updateSystemFn@|$(UPDATE_SYSTEM_FN)|g'         	   	  \
 	        -e 's|@modulepath_root@|$(MODULEPATH_ROOT)|g'         	   	  \
                 -e 's|@lmod_root@|$(LMOD_ROOT)|g'                             	  \
+                -e 's|@lmod_allow_root_use@|$(LMOD_ALLOW_ROOT_USE)|g'          	  \
                 -e 's|@PKGV@|$(PKGV)|g'                                    	  \
                 -e 's|@PKG@|$(PKG)|g'         < $$i > $(DIRLOC)/$$fn; 	   	  \
             [ "$$ext" = "in.lua" -o "$$ext" = "tcl" -o "$$ext" = "in"             \

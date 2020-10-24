@@ -628,6 +628,9 @@ function setenv_lmod_version()
    for i = 1, #nameA do
       setenv_posix(nameA[i],numA[i] or "0", true)
    end
+
+   setenv_posix("ModuleTool",        "Lmod",     true)
+   setenv_posix("ModuleToolVersion", versionStr, true)
 end
 
 --------------------------------------------------------------------------
@@ -929,4 +932,12 @@ if (not prepend_order) then
    build_prepend_order_function()
 end
 
+local s_checkSyntaxMode = false
+function setSyntaxMode(state)
+   s_checkSyntaxMode = state
+end
+function checkSyntaxMode()
+   return s_checkSyntaxMode
+end
 
+   

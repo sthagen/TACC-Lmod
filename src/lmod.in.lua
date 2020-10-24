@@ -332,7 +332,6 @@ function main()
    }
 
    build_i18n_messages()
-
    dbg.set_prefix(colorize("red","Lmod"))
 
    local shellNm = barefilename(arg[1])
@@ -484,6 +483,7 @@ function main()
    if (masterTbl.checkSyntax) then
       MCP = MasterControl.build("checkSyntax")
       mcp = MasterControl.build("checkSyntax")
+      setSyntaxMode(true)
       Shell:setActive(false)
    end
 

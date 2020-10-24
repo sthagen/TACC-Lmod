@@ -72,6 +72,11 @@ function M.name(self)
    return self.my_name
 end
 
+function M.set_my_name(self, name)
+   self.my_name = name
+end
+
+
 --------------------------------------------------------------------------
 -- BaseShell:setActive(): Should shell output be turned on.  Currently
 --                        checkSyntax mode is the only thing that turns off
@@ -292,8 +297,10 @@ end
 
 function M.build(self, shell_name)
    createShellTbl()
-   local o     = valid_shell(s_shellTbl, shell_name:lower()):create()
-   o._active   = true
+   local shellNm = shell_name:lower()
+   local o       = valid_shell(s_shellTbl, shellNm):create()
+   o._active     = true
+   o:set_my_name(shellNm)
    return o
 end
 

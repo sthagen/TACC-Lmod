@@ -22,7 +22,8 @@ cleanUp ()
 
    sed                                                    \
        -e "s|\@git\@|$gitV|g"                             \
-       -e "s|/usr/bin/sha1sum|PATH_to_HASHSUM|g"          \
+       -e "s|/usr/.*/sha1sum|PATH_to_HASHSUM|g"           \
+       -e "s|/bin/.*/sha1sum|PATH_to_HASHSUM|g"           \
        -e "s|:$PATH_to_LUA\([:;]\)|\1|g"                  \
        -e "s|;$PATH_to_LUA:[0-9];|;|g"                    \
        -e "s| $PATH_to_LUA||g"                            \
@@ -140,6 +141,11 @@ runSh2MF ()
 runSpiderCmd ()
 {
    $LUA_EXEC $projectDir/src/spider.in.lua "$@"
+}
+
+runCkMTSyntax ()
+{
+   runBase $LUA_EXEC $projectDir/src/check_module_tree_syntax.in.lua "$@"
 }
 
 buildSpiderT ()

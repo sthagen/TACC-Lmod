@@ -898,13 +898,6 @@ function M.depends_on(self, mA)
       end
    end
 
-   local frameStk = FrameStk:singleton()
-   if (masterTbl().checkSyntax and frameStk:count() > 1) then
-      dbg.print{"frameStk:count(): ",frameStk:count(),"\n"}
-      dbg.fini("MasterControl:depends_on")
-      return {}
-   end
-
    registerUserLoads(mB)
    local a = self:load(mB)
 
@@ -975,7 +968,7 @@ function M.load_usr(self, mA)
       dbg.start{"MasterControl:load_usr(mA={"..s.."})"}
    end
    local frameStk = FrameStk:singleton()
-   if (masterTbl().checkSyntax and frameStk:count() > 1) then
+   if (checkSyntaxMode() and frameStk:count() > 1) then
       dbg.print{"frameStk:count(): ",frameStk:count(),"\n"}
       dbg.fini("MasterControl:load_usr")
       return {}
@@ -1457,6 +1450,31 @@ function M.color_banner(self,color)
 end
 
 
+function M.set_errorFunc(self, errorFunc)
+   metaT = getmetatable(self).__index
+   metaT.error = errFunc
+end
+
+
+function M.userInGroups(self, ...)
+   local grps   = capture("groups")
+   local argA   = pack(...)
+   for g in grps:split("[ \n]") do
+      for i = 1, argA.n do
+         local group = argA[i]
+         if (g == group) then
+            return true
+         end
+      end
+   end
+   local userId = capture("id -u")
+   local isRoot = tonumber(userId) == 0
+   if (isRoot) then
+      return true
+   end
+   return false
+end   
+   
 function M.missing_module(self,userName, showName)
    s_missingModuleT[userName] = showName
 end

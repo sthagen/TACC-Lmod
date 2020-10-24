@@ -77,33 +77,19 @@ If you use this option you do **not** need to use your package manager
 or install luarocks.  Instead please read the section on how to
 install Lmod.
 
-Using Your Package Manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Your Package Manager for Redhat/Centos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you didn't install the lua tar ball described above then  
 you can use your package manager for your OS to install Lua. You will
-also need the matching packages: lua Filesystem (lfs) and luaposix.
+also need the luaposix package 
 
-On Ubuntu Linux, the following packages will work::
-
-   liblua5.1-0
-   liblua5.1-0-dev
-   liblua5.1-filesystem-dev
-   liblua5.1-filesystem0
-   liblua5.1-posix-dev
-   liblua5.1-posix0
-   lua5.1
-   tcl
-   tcl-dev
-   libtcl
-
-Note; Centos may require looking the EPEL repo.  At TACC we install the
+Centos may require looking the EPEL repo.  At TACC we install the
 following rpms for our Centos based systems::
 
    lua-5.1.4-15.el7.x86_64
    lua-bitop-1.0.2-3.el7.x86_64
    lua-devel-5.1.4-15.el7.x86_64
-   lua-filesystem-1.6.2-2.el7.x86_64
    lua-json-1.3.2-2.el7.noarch
    lua-lpeg-0.12-1.el7.x86_64
    lua-posix-32-2.el7.x86_64
@@ -121,15 +107,47 @@ lmod package.  Note as well that the tcl-devel for Centos or tcl-dev
 for ubuntu is only required if you configure Lmod
 using --with-fastTCLInterp=yes. 
 
+
+Using Your Package Manager Ubuntu for 18.04 and 20.04
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Please install the following packages::
+
+    lua5.3
+    lua-bit32:amd64
+    lua-posix:amd64
+    lua-posix-dev
+    liblua5.3-0:amd64
+    liblua5.3-dev:amd64
+    tcl
+    tcl-dev
+    tcl8.6
+    tcl8.6-dev:amd64
+    libtcl8.6:amd64
+
+For Ubuntu 18.04, you will need to make lua 5.3 the default using
+**update-alternatives** and fix a lua posix symlink::
+
+   sudo update-alternatives --install /usr/bin/lua \
+       lua-interpreter /usr/bin/lua5.3 130 \
+       --slave /usr/share/man/man1/lua.1.gz lua-manual \
+       /usr/share/man/man1/lua5.3.1.gz
+   sudo update-alternatives --install /usr/bin/luac \
+       lua-compiler /usr/bin/luac5.3 130 \
+       --slave /usr/share/man/man1/luac.1.gz lua-compiler-manual \
+       /usr/share/man/man1/luac5.3.1.gz
+   sudo ln -s /usr/lib/x86_64-linux-gnu/liblua5.3-posix.so \
+       /usr/lib/x86_64-linux-gnu/lua/5.3/posix.so
+
 Using Luarocks
 ~~~~~~~~~~~~~~
 
-If you have installed lua but still need luafilesystem and luaposix,
-you can install the ``luarocks`` program from your package manager or
-directly from https://luarocks.org/.  The ``luarocks`` programs can
-install many lua packages including the ones required for Lmod. ::
+If you have installed lua but still need luaposix, you can install the
+``luarocks`` program from your package manager or directly from
+https://luarocks.org/.  The ``luarocks`` programs can install many lua
+packages including the ones required for Lmod. ::
 
-  $ luarocks install luaposix; luarocks install luafilesystem
+  $ luarocks install luaposix
 
 Now you have to make the lua packages installed by luarocks to be known
 by lua.  On our Centos system, Lua knowns about the following for \*.lua
@@ -363,13 +381,10 @@ file can be in a number of places but is typically in ``/etc/zshenv`` or
         if [ -r $i ]; then
           . $i
         fi
-      setopt nomatch
       done
+      setopt nomatch
     fi
     
-**Note**: Zsh users using local installs of Lmod should turn off ksh support
-(--with-supportKsh=no).  This is the default.
-
 Ksh:
 ~~~~
 Ksh users as of Lmod version 8.3.12+ now have full support as long as
@@ -478,3 +493,4 @@ defined when run by a Bash User.  However, a Csh or Zsh user running a
 bash script will still need to set ``BASH_ENV`` and run bash
 scripts. They won't have the module command defined if they run a sh
 script.
+
