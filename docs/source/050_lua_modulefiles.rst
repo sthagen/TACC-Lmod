@@ -93,7 +93,9 @@ unset during unloading.
      unloaded.
 
 **try_load** ("pkgA", "pkgB", "pkgC"):
-     load all modules. No errors reported if unable to load.
+     load all modules. No errors reported if unable to load. Any other
+     errors will be reported.
+
 
 **userInGroups** ("group1", "group2", ...):
      Returns true if user is root or a member of one of the groups listed.
@@ -128,6 +130,13 @@ unset during unloading.
 **extensions** ("numpy/2.1, scipy/3.2, foo/1.3"):
      This module provides the following extensions. Place the list of
      extensions as a single string.
+
+**requireFullName** ():
+     This function throws an error if module name specified by the
+     user is not the fullName. Typically used as::
+
+        if (mode() == "load") then requireFullName() end
+
 
 Extra functions
 ~~~~~~~~~~~~~~~

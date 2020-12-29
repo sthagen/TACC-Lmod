@@ -332,6 +332,14 @@ function M.singleton(self, usage)
       default = 0.0
    }
 
+   cmdlineParser:add_option{
+      name   = {"--nx", "--no_extensions"},
+      dest   = "no_extensions",
+      action = "store_true",
+      help   = i18n("nx_H"),
+      default = 0.0
+   }
+
    local optionTbl, pargs = cmdlineParser:parse(arg)
    local masterTbl        = masterTbl()
    masterTbl.pargs        = pargs
@@ -381,6 +389,10 @@ function M.singleton(self, usage)
    end
    if (optionTbl.ignoreCache) then
       cosmic:assign("LMOD_IGNORE_CACHE", true)
+   end
+
+   if (optionTbl.no_extensions) then
+      cosmic:assign("LMOD_AVAIL_EXTENSIONS", "no")
    end
 end
 

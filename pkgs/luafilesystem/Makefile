@@ -12,11 +12,7 @@ else
   LIB_OPTION := -shared -Wl,-soname,$(SONAMEV) #for Linux
 endif
 
-override CFLAGS  := $(CFLAGS) -fPIC
-
-ifneq ($(LUA_INC),)
-  override CFLAGS  := $(CFLAGS) -I$(LUA_INC)
-endif
+override CFLAGS  := $(CFLAGS) -fPIC $(LUA_INC)
 
 
 all:  $(LIBRARY) $(SONAMEV) $(SONAME)
@@ -28,7 +24,7 @@ $(SONAME):
 	ln -s $(SONAMEV) $@
 
 $(LIBRARY): $(OBJ)
-	$(CC) $(CFLAGS) $(LIB_OPTION) -o $(LIBRARY) $(OBJ) -lc
+	$(CC) $(CFLAGS) $(LIB_OPTION) -o $(LIBRARY) $(OBJ) $(LDFLAGS) -lc
 
 install: $(LIB) all
 	cp -a *.so* $(LIB)

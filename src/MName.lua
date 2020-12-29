@@ -126,8 +126,8 @@ function M.new(self, sType, name, action, is, ie)
       o.__fullName = build_fullName(t.sn, t.version)
       o.__t        = t
    else
-      -- remove any trailing '/'s and any trailing .lua$. Also remove a trailing "/default".
-      o.__userName   = (name or ""):trim():gsub("/+$",""):gsub("%.lua$",""):gsub("/default$","") 
+      -- remove any trailing '/'s and any trailing .lua$
+      o.__userName   = (name or ""):trim():gsub("/+$",""):gsub("%.lua$","")
    end
 
    --dbg.fini("MName:new")
@@ -202,9 +202,9 @@ local function lazyEval(self)
 
    assert(sType == "load", "unknown sType: "..sType)
    local mrc                   = MRC:singleton()
-
    local frameStk              = FrameStk:singleton()
-   local userName              = mrc:resolve(self:userName())
+   local mt                    = frameStk:mt()
+   local userName              = mrc:resolve(mt:modulePathA(), self:userName())
    local sn, versionStr, fileA = moduleA:search(userName)
    dbg.print{"lazyEval: userName: ",userName, ", sn: ",sn,", versionStr: ",versionStr,"\n"}
 

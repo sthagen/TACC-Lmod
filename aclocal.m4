@@ -29,7 +29,7 @@ echo "Package version............................................." : Lmod-$Lmod
 echo "Package version (git) ......................................" : $lmodV
 echo 
 echo "LUA_INCLUDE................................................." : $LUA_INCLUDE
-echo "Lua executable.............................................." : $luaprog
+echo "Lua executable.............................................." : $PATH_TO_LUA
 echo "Luac executable............................................." : $PATH_TO_LUAC
 echo "User Controlled Prefix......................................" : $SITE_CONTROLLED_PREFIX
 echo "Prefix......................................................" : $prefix
@@ -72,6 +72,7 @@ echo "Silence shell debugging output for bash/zsh................." : $SILENCE_S
 echo "Allow root to use Lmod......................................" : $LMOD_ALLOW_ROOT_USE
 echo "Support KSH................................................." : $SUPPORT_KSH
 echo "Use the fast TCL interpreter................................" : $FAST_TCL_INTERP
+echo "Display Extensions w/ module avail.........................." : $AVAIL_EXTENSIONS
 echo "Allow for extended default.(ml intel/17 #-> intel/17.0.4)..." : $EXTENDED_DEFAULT  #"
 
 echo
