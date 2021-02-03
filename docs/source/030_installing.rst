@@ -57,12 +57,14 @@ One choice is to install the lua-X.Y.Z.tar.gz file.  This tar ball
 contains lua and the required libraries. This can be
 downloaded from https://sourceforge.net/projects/lmod/files/::
 
-    $ wget https://sourceforge.net/projects/lmod/files/lua-5.1.4.9.tar.gz
+    $ wget https://sourceforge.net/projects/lmod/files/lua-5.1.4.9.tar.bz2
 
-The current version is 5.1.4.9 but it may change in the future. This
-can be installed using the following commands::
+The current version is 5.1.4.9 but it may change in the future. If the
+above wget doesn't work then please go to sourceforce.net and down
+from the web interface. The lua package can be installed using the
+following commands::
 
-    $ tar xf lua-X.Y.Z.tar.gz
+    $ tar xf lua-X.Y.Z.tar.bz2
     $ cd lua-X.Y.Z
     $ ./configure --prefix=/opt/apps/lua/X.Y.Z
     $ make; make install
@@ -325,8 +327,29 @@ like::
     fi
 
 Similarly, the system BASHRC file should source all the \*.sh files in
-``/etc/profile.d`` as well.  Here is where things can get complicated.
-See the next section for details.
+``/etc/profile.d`` as well.
+
+
+
+Bash under Ubuntu:
+~~~~~~~~~~~~~~~~~~
+
+Sites that run Ubuntu and have bash users should consider adding the
+following to their /etc/bash.bashrc::
+
+    if ! shopt -q login_shell; then
+      if [ -d /etc/profile.d ]; then
+        for i in /etc/profile.d/*.sh; do
+          if [ -r $i ]; then
+            . $i
+          fi
+        done
+      fi
+    fi
+
+This is useful because non-login interactive shells only source
+/etc/bash.bashrc and this file doesn't normally source the files in
+/etc/profile.d/*.sh.
 
 Bash Shell Scripts:
 ~~~~~~~~~~~~~~~~~~~

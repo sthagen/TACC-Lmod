@@ -256,7 +256,7 @@ local function search(name, moduleA)
 end
 
 function M.applyWeights(self,fullNameDfltT)
-
+   dbg.start{"ModuleA:applyWeights(fullNameDfltT)"}
    for fullName, weight in pairs(fullNameDfltT) do
       repeat
          local sn, versionStr, vA = find_vA(fullName, self.__moduleA)
@@ -282,6 +282,7 @@ function M.applyWeights(self,fullNameDfltT)
          end
       until true
    end
+   dbg.fini("ModuleA:applyWeights")
 end
 
 

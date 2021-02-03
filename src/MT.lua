@@ -208,6 +208,7 @@ function M.__convertMT(self, v2)
       v.loadOrder = vv.loadOrder
       v.propT     = vv.propT
       v.status    = vv.status
+      v.wV        = vv.wV
       v.userName  = (vv.default == 1) and sn or v.fullName
       mT[sn]      = v
    end
@@ -242,6 +243,7 @@ function M.add(self, mname, status, loadOrder)
       status     = status,
       loadOrder  = loadOrder,
       propT      = {},
+      wV         = mname:wV() or false,
    }
 end
 
@@ -594,6 +596,14 @@ function M.fullName(self, sn)
       return nil
    end
    return entry.fullName
+end
+
+function M.wV(self, sn)
+   local entry = self.mT[sn]
+   if (entry == nil) then
+      return nil
+   end
+   return entry.wV
 end
 
 function M.fn(self, sn)
