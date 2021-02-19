@@ -118,14 +118,7 @@ end
 
 local function l_error_on_missing_loaded_modules(aa,bb)
    if (#aa > 0) then
-      local luaprog = "@path_to_lua@"
-      local found
-      if (luaprog:sub(1,1) == "@") then
-         luaprog, found = findInPath("lua")
-         if (not found) then
-            LmodError{msg="e_Failed_2_Find", name = "lua"}
-         end
-      end
+      local luaprog = findLuaProg()
       local cmdA = {}
       cmdA[#cmdA+1] = luaprog
       cmdA[#cmdA+1] = pathJoin(cmdDir(),cmdName())
@@ -1453,6 +1446,9 @@ function M.inherit(self)
 end
 
 function M.color_banner(self,color)
+   if (quiet()) then
+      return
+   end
    local term_width  = TermWidth()
    local border      = colorize(color or "red",string.rep("=", term_width-1))
    io.stderr:write(border,"\n")
