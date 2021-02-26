@@ -73,7 +73,7 @@ class LMODdb(object):
       self.__user    = config.get("MYSQL","USER")
       self.__passwd  = base64.b64decode(config.get("MYSQL","PASSWD").encode()).decode()
       self.__db      = config.get("MYSQL","DB")
-    except ConfigParser.NoOptionError, err:
+    except ConfigParser.NoOptionError as err:
       sys.stderr.write("\nCannot parse the config file\n")
       sys.stderr.write("Switch to user input mode...\n\n")
       self.__readFromUser()
@@ -102,7 +102,7 @@ class LMODdb(object):
         break
 
 
-      except MySQLdb.Error, e:
+      except MySQLdb.Error as e:
         if (i < n):
           sleep(i*0.1)
           print ("failed to connect trying again: ",i)
@@ -140,7 +140,7 @@ class LMODdb(object):
       query = "SELECT user_id, user from userT"
       cursor.execute(query)
       numRows = cursor.rowcount
-      for i in xrange(numRows):
+      for i in range(numRows):
         row            = cursor.fetchone()
         user_id        = row[0]
         user           = row[1]
@@ -157,7 +157,7 @@ class LMODdb(object):
       query = "SELECT mod_id, path, module, syshost from moduleT"
       cursor.execute(query)
       numRows = cursor.rowcount
-      for i in xrange(numRows):
+      for i in range(numRows):
         row             = cursor.fetchone()
         mod_id          = row[0]
         path            = row[1]
@@ -170,7 +170,7 @@ class LMODdb(object):
       query = "SELECT user_id, mod_id, UNIX_TIMESTAMP(date) from join_user_module where date >= %s AND date < %s"
       cursor.execute(query, (startDate, endDate))
       numRows = cursor.rowcount
-      for i in xrange(numRows):
+      for i in range(numRows):
         row     = cursor.fetchone()
         user    = userA[int(row[0])]
         modT    = moduleA[int(row[1])]
@@ -208,7 +208,7 @@ class LMODdb(object):
         cursor.execute(query)
 
         numRows = cursor.rowcount
-        for i in xrange(numRows):
+        for i in range(numRows):
           row = cursor.fetchone()
           user_id = int(row[0])
           user    = row[1]
@@ -246,7 +246,7 @@ class LMODdb(object):
         cursor.execute(query)
         numRows = cursor.rowcount
 
-        for i in xrange(numRows):
+        for i in range(numRows):
           row     = cursor.fetchone()
           mod_id  = row[0]
           path    = row[1]
@@ -298,7 +298,7 @@ class LMODdb(object):
       print("data_to_db(): ",e)
       sys.exit(1)
 
-  def counts(self, sqlPattern, syshost, startDate, endDate):
+  def counts(self, sqlPattern, syshost, startDate, endDate, allmodulesFn):
     query = ""
     try:
       conn   = self.connect()
@@ -323,13 +323,32 @@ class LMODdb(object):
       cursor.execute(query,( sqlPattern, syshost))
       numRows = cursor.rowcount
 
+      resultT = {}
+      sT = {}
+
+      if (allmodulesFn):
+        with open(allmodulesFn) as fp:
+          lineA = fp.readlines()
+          for moduleNm in lineA:
+            moduleNm          = moduleNm.strip()
+            resultT[moduleNm] = { 'syshost' : syshost, 'nUsers' : 0 }
+            sT[moduleNm]      = 0
+      
+
+      for i in range(numRows):
+        row = cursor.fetchone()
+        moduleNm = row[0]
+        resultT[moduleNm] = { 'syshost' : row[1], 'nUsers' : row[2] }
+        sT[moduleNm]      = row[2]
+
       resultA = []
 
       resultA.append(["Module path", "Syshost", "Distinct Users" ])
       resultA.append(["-----------", "-------", "--------------"])
-      for i in xrange(numRows):
-        row = cursor.fetchone()
-        resultA.append([row[0],row[1],row[2]])
+      sT_view = [ (v,k) for k,v in sT.items() ]
+      sT_view.sort(reverse=True)
+      for v,k in sT_view:
+        resultA.append([k, resultT[k]['syshost'], resultT[k]['nUsers'] ])
 
       conn.close()
 
@@ -369,7 +388,7 @@ class LMODdb(object):
 
       resultA.append(["Module path", "Syshost", "Number of Times" ])
       resultA.append(["-----------", "-------", "---------------"])
-      for i in xrange(numRows):
+      for i in range(numRows):
         row = cursor.fetchone()
         resultA.append([row[0],row[1],row[2]])
 
@@ -413,7 +432,7 @@ class LMODdb(object):
       resultA.append(["-----------", "-------", "---------"])
 
 
-      for i in xrange(numRows):
+      for i in range(numRows):
         row = cursor.fetchone()
         resultA.append([row[0],row[1],row[2]])
 
@@ -455,7 +474,7 @@ class LMODdb(object):
       resultA.append(["-----------", "-------", "---------"])
 
 
-      for i in xrange(numRows):
+      for i in range(numRows):
         row = cursor.fetchone()
         resultA.append([row[0],row[1],row[2]])
 

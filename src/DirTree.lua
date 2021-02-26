@@ -48,6 +48,7 @@ local open      = io.open
 local access    = posix.access
 local concatTbl = table.concat
 local readlink  = posix.readlink
+local sort      = table.sort
 local stat      = posix.stat
 local user_uid  = 0
 local getuid    = posix.getuid
@@ -199,8 +200,9 @@ local function walk(mrc, mpath, path, dirA, fileT)
             elseif (not fileT[fullName] or not fileT[fullName].luaExt) then
                local luaExt = f:find("%.lua$")
                if (accept_fn(file) and (luaExt or l_checkValidModulefile(file))) then
-                  fileT[fullName] = {fn = file, canonical = f:gsub("%.lua$", ""), mpath = mpath,
-                                     luaExt = luaExt}
+                  local dot_version = f:find("^%.version") or f:find("^%.modulerc")
+                  fileT[fullName]   = {fn = file, canonical = f:gsub("%.lua$", ""), mpath = mpath,
+                                       luaExt = luaExt, dot_version = dot_version}
                end
             end
          end
@@ -208,20 +210,22 @@ local function walk(mrc, mpath, path, dirA, fileT)
    end
    if (next(defaultA) ~= nil) then
       defaultA = l_versionFile(mrc, mpath, defaultA)
+      sort(defaultA, function(x,y)
+                     return x.defaultIdx < y.defaultIdx
+                     end)
    end
 
    return defaultA
 end
 
+----------------------------------------------------------------------
+-- Since defaultA is sorted by defaultIdx.  The first one will be the
+-- marked default, assuming that defaultA has any entries.
+
 local function l_find_default(defaultA)
-   local defaultIdx = 1000000
    local defaultT   = {}
-   for i = 1, #defaultA do
-      local entryT = defaultA[i]
-      if (entryT.defaultIdx < defaultIdx) then
-         defaultIdx = entryT.defaultIdx
-         defaultT   = entryT
-      end
+   if (next(defaultA) ~= nil) then
+      defaultT = defaultA[1]
    end
    return defaultT
 end
