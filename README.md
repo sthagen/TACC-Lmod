@@ -11,8 +11,8 @@ It is a new implementation of environment modules.
 ## Lmod Web Sites
 
 * Documentation:   http://lmod.readthedocs.org
-* Github:          https://github.com/TACC/Lmod
-* Sourceforge:     https://lmod.sf.net
+* GitHub:          https://github.com/TACC/Lmod
+* SourceForge:     https://lmod.sf.net
 * TACC Homepage:   https://www.tacc.utexas.edu/research-development/tacc-projects/lmod
 * Lmod Test Suite: https://github.com/rtmclay/Lmod_test_suite
 
@@ -31,6 +31,34 @@ release at sourceforge.
 
 ## ChangeLog
 
+
+### Lmod 8.5:
+
+Features:
+
+   1. New function added userInGroups(group1, group2, ...) to check to see if a user is in one of those groups.
+
+   2. The variable ModuleTool and ModuleToolVersion are set in both TCL and Lua modules.  These variables are also defined in Tmod 4.7+
+
+   3. Added option --no_extensions to module avail to not print extensions from avail.
+
+   4. added module function requireFullName() (TCL require-fullname) to generate an error if not specifying  the full name of a module.
+      
+   5. Configure options --with-lua= and --with-luac added to specify full path to both commands.
+      
+   6. Adding isAvail() function for Lua modulefiles. Report error if is-avail command used in a TCL modulefile.
+
+Bug Fixes:
+
+   1. Fix the try_load() function to ignore failure to be found but report broken modules.
+   
+   2. Spider list of modules from spider skip .version* and .modulerc* files.
+      
+   3. Allow all paths (but MODULEPATH) to have trailing double slashes.
+
+   4. The command module use converts relative paths to absolute paths.
+
+   5. Make TCL system call run in place rather than with an execute via Lmod.
 
 ### Lmod 8.4:
 

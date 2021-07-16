@@ -3417,7 +3417,7 @@ if test "${with_spiderCacheDescript+set}" = set; then :
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: SPIDER_CACHE_DESCRIPT_FN=$with_spiderCacheDescript" >&5
 $as_echo "SPIDER_CACHE_DESCRIPT_FN=$with_spiderCacheDescript" >&6; }
     cat >>confdefs.h <<_ACEOF
-#define SHORT_TIME "$with_spiderCacheDescript"
+#define SPIDER_CACHE_DESCRIPT_FN "$with_spiderCacheDescript"
 _ACEOF
 
 else
@@ -3439,7 +3439,7 @@ if test "${with_updateSystemFn+set}" = set; then :
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: UPDATE_SYSTEM_FN=$with_updateSystemFn" >&5
 $as_echo "UPDATE_SYSTEM_FN=$with_updateSystemFn" >&6; }
     cat >>confdefs.h <<_ACEOF
-#define SHORT_TIME "$with_updateSystemFn"
+#define UPDATE_SYSTEM_FN "$with_updateSystemFn"
 _ACEOF
 
 else
@@ -4028,15 +4028,14 @@ if test "$ALLOW_TCL_MFILES" = no ; then
 fi
 
 if test "$FAST_TCL_INTERP" = yes ; then
-   TCL_LIBS="-ltcl"
    OS=$(uname -s)
    if test "$OS" = Darwin ; then
-     TCL_INCLUDE=$(xcrun --show-sdk-path)
-     TCL_INCLUDE=${DIR}/usr/include
+     DIR=$(xcrun --show-sdk-path)
+     TCL_INCLUDE="-I${DIR}/usr/include"
    else
      for i in "" tcl tcl8.8 tcl8.7 tcl8.6 tcl8.5; do
         if test -f /usr/include/$i/tcl.h ; then
-	   TCL_INCLUDE=/usr/include/$i
+	   TCL_INCLUDE="-I/usr/include/$i"
 	   break;
 	fi
      done
@@ -4088,7 +4087,7 @@ fi
            for i in tcl tcl8.8 tcl8.7 tcl8.6 tcl8.5; do
                $pkgConfig --exists $i
                if test $? = 0; then
-                   TCL_INCLUDE=`$pkgConfig --cflags $i | sed -e 's/^-I//' -e 's/ //g'`
+                   TCL_INCLUDE=`PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --cflags-only-I $i 2> /dev/null`
                    TCL_LIBS=`$pkgConfig --libs $i`
                    break
                fi
@@ -4096,7 +4095,7 @@ fi
        fi
    fi
 
-   CPPFLAGS="-I $TCL_INCLUDE"
+   CPPFLAGS="$TCL_INCLUDE"
 
 
 ac_ext=c
@@ -5338,9 +5337,9 @@ fi
 
   if  ! test x$pkgConfig = "x"; then
     for i in lua$LuaV lua; do
-      $pkgConfig --exists $i
+      PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --exists $i
       if test $? = 0; then
-        LUA_INCLUDE=`$pkgConfig --cflags $i | sed -e 's/^-I//' -e 's/ //g'`
+        LUA_INCLUDE=`PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --cflags-only-I $i 2> /dev/null | sed -e 's/^-I//' -e 's/ //g'`
         break
       fi
     done

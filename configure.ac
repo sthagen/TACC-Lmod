@@ -261,7 +261,7 @@ AC_ARG_WITH(spiderCacheDescript,
     AC_HELP_STRING([--with-spiderCacheDescript=fn],[Use specified file to describe cache directory and timestamp files [[]]]),
     SPIDER_CACHE_DESCRIPT_FN="$withval"
     AC_MSG_RESULT([SPIDER_CACHE_DESCRIPT_FN=$with_spiderCacheDescript])
-    AC_DEFINE_UNQUOTED(SHORT_TIME, "$with_spiderCacheDescript")dnl
+    AC_DEFINE_UNQUOTED(SPIDER_CACHE_DESCRIPT_FN, "$with_spiderCacheDescript")dnl
     ,
     withval=""
     AC_MSG_RESULT([SPIDER_CACHE_DESCRIPT_FN=$withval])
@@ -273,7 +273,7 @@ AC_ARG_WITH(updateSystemFn,
     AC_HELP_STRING([--with-updateSystemFn=file],[This file is touched when the system has been updated [[]]]),
     UPDATE_SYSTEM_FN="$withval"
     AC_MSG_RESULT([UPDATE_SYSTEM_FN=$with_updateSystemFn])
-    AC_DEFINE_UNQUOTED(SHORT_TIME, "$with_updateSystemFn")dnl
+    AC_DEFINE_UNQUOTED(UPDATE_SYSTEM_FN, "$with_updateSystemFn")dnl
     ,
     withval=""
     AC_MSG_RESULT([UPDATE_SYSTEM_FN=$withval])
@@ -615,15 +615,14 @@ if test "$ALLOW_TCL_MFILES" = no ; then
 fi
 
 if test "$FAST_TCL_INTERP" = yes ; then
-   TCL_LIBS="-ltcl"
    OS=$(uname -s)
    if test "$OS" = Darwin ; then
-     TCL_INCLUDE=$(xcrun --show-sdk-path)
-     TCL_INCLUDE=${DIR}/usr/include
+     DIR=$(xcrun --show-sdk-path)
+     TCL_INCLUDE="-I${DIR}/usr/include"
    else
      for i in "" tcl tcl8.8 tcl8.7 tcl8.6 tcl8.5; do
         if test -f /usr/include/$i/tcl.h ; then
-	   TCL_INCLUDE=/usr/include/$i
+	   TCL_INCLUDE="-I/usr/include/$i"
 	   break;
 	fi
      done
@@ -635,7 +634,7 @@ if test "$FAST_TCL_INTERP" = yes ; then
            for i in tcl tcl8.8 tcl8.7 tcl8.6 tcl8.5; do
                $pkgConfig --exists $i
                if test $? = 0; then
-                   TCL_INCLUDE=`$pkgConfig --cflags $i | sed -e 's/^-I//' -e 's/ //g'`
+                   TCL_INCLUDE=`PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --cflags-only-I $i 2> /dev/null`
                    TCL_LIBS=`$pkgConfig --libs $i`
                    break
                fi
@@ -643,7 +642,7 @@ if test "$FAST_TCL_INTERP" = yes ; then
        fi  
    fi
 
-   CPPFLAGS="-I $TCL_INCLUDE"
+   CPPFLAGS="$TCL_INCLUDE"
 
    AC_CHECK_HEADER(tcl.h,
                    [AC_DEFINE([HAVE_TCL_H], 1, [Define to 1 if you have tcl.h])],[]) 
@@ -652,7 +651,7 @@ if test "$FAST_TCL_INTERP" = yes ; then
       rm -f makefile
       AC_MSG_ERROR([Unable to build Lmod without tcl.h.  Please install the tcl devel package or configure --with-fastTCLInterp=no to not require tcl.h])
    fi
-   AC_SEARCH_LIBS(Tcl_CreateInterp,[tcl] [tcl8.8] [tcl8.7] [tcl8.6] [tcl8.5],[],
+   AC_SEARCH_LIBS(Tcl_CreateInterp, [tcl] [tcl8.8] [tcl8.7] [tcl8.6] [tcl8.5],[],
                 [rm -f makefile; AC_MSG_ERROR([Unable to build Lmod with -ltcl Please install the tcl devel package or configure --with-fastTCLInterp=no to not require the tcl library])], [$TCL_LIBS])
 
    AC_SUBST(TCL_INCLUDE, "$TCL_INCLUDE")
@@ -911,9 +910,9 @@ if ! test -f $LUA_INCLUDE/lua.h; then
   AC_PATH_PROG(pkgConfig, pkg-config, "")
   if  ! test x$pkgConfig = "x"; then
     for i in lua$LuaV lua; do
-      $pkgConfig --exists $i
+      PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --exists $i
       if test $? = 0; then
-        LUA_INCLUDE=`$pkgConfig --cflags $i | sed -e 's/^-I//' -e 's/ //g'`
+        LUA_INCLUDE=`PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 $pkgConfig --cflags-only-I $i 2> /dev/null | sed -e 's/^-I//' -e 's/ //g'`
         break
       fi
     done

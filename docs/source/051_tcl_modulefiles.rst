@@ -54,6 +54,10 @@ standard TCL language.
    **load**  *A B* :
       load one or more modules
 
+   **try-load**  *A B* :
+      load one or more modules but does not report an error
+      if not found.
+
    **load-any** *A B* :
       load any one of the following modulefiles
 
@@ -128,7 +132,7 @@ standard TCL language.
   the module (e.g. **module load gcc/10.1** vs **module load gcc**.
   Typically used in TCL modulefile as follows::
 
-      if [ module-info mode load ] {
+      if { [ module-info mode load ] } {
           require-fullname
       }
 
@@ -151,6 +155,24 @@ standard TCL language.
    greater than.  Note that this command knows that 1.10 is newer than
    1.8.
 
+**is-avail** *name* :
+  Return 1 if the name is available for loading, 0 if not. (As of Lmod 8.6+)
+
+
+TCL Modulefile Functions NOT SUPPORTED
+--------------------------------------
+
+**atleast** :
+   It is not possible to use the atleast function inside a TCL modulefile
+
+**between** :
+   It is not possible to use the between function inside a TCL modulefile
+
+**latest** :
+   It is not possible to use the latest function inside a TCL modulefile
+
+
+
 TCL Global Variables
 --------------------
 
@@ -158,7 +180,9 @@ The following TCL global variables are set inside modulefiles and
 .modulerc and .version files.
 
 **ModuleTool** : This is the string "Lmod". This works for Lmod
-    8.4.8+.  This variable also exists in Tmod version 4.7 or greater.
+    8.4.8+.  This variable also exists in Tmod version 4.7 or greater
+    and reports "Modules".
 
 **ModuleToolVersion** : This is the current version of Lmod. This
     works for Lmod 8.4.8+ This variable also exists in Tmod version 4.7 or greater.
+

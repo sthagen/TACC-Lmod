@@ -44,6 +44,15 @@ configuration step.
   this variable has no value, then Lmod looks for
   ``<install_dir>/../etc/admin.list`` 
 
+**LMOD_AVAIL_STYLE**:
+  Used by the avail hook to control how avail output
+  is handled.   This is a colon separated list of
+  names.  Note that the default choice is marked by
+  angle brackets:  A:B:<C> ==> C is the default.
+  If no angle brackets are specified then the first
+  entry is the default (i.e. A:B:C => A is default).
+  See :ref:`avail_style` for more details.
+
 **LMOD_IGNORE_CACHE**:
   [yes/no] If set to yes then Lmod will bypass all cachefile and walk
   the directories in MODULEPATH instead.
@@ -62,6 +71,11 @@ configuration step.
   [string] This variable is used to where a site is using shared home
   files systems. See :ref:`shared_home_file_system` for more details.
 
+**LMOD_SYSTEM_DEFAULT_MODULEFILES**:
+  [string] This variable to define a list of colon separated standard
+  modules when the **module reset** command is issued by or for the
+  user. 
+
 **LMOD_TRACING**:
    [yes/no] If set to yes then Lmod will trace the loads/unloads while
    the module command is running.
@@ -77,8 +91,6 @@ configuration step.
    specify the system MODULERC file.  **LMOD_MODULERCFILE** can also be
    used but only **LMOD_MODULERCFILE** is used if both are specified.
    See :ref:`modulerc-label` for more details.
-   
-
 
 Configuration time settings that can be overridden by env. vars.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

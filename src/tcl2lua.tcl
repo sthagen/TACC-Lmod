@@ -35,6 +35,12 @@
 #------------------------------------------------------------------------
 
 global g_loadT g_varsT g_fullName g_usrName g_shellName g_mode g_shellType g_outputA, g_fast
+global g_moduleT g_setup_moduleT g_lua_cmd env g_my_cmd
+
+set g_setup_moduleT 0
+set g_lua_cmd       "@path_to_lua@"
+set g_lmod_cmd      "@path_to_lmod@"
+set g_my_cmd        $argv0
 namespace eval ::cmdline {
     namespace export getArgv0 getopt getKnownOpt getfiles getoptions \
 	    getKnownOptions usage
@@ -630,15 +636,22 @@ proc swapcmd { old {new {}}} {
     eval cmdargs "load"   $new
 }
 
-proc system { args } {
-    global g_outputA
-    foreach arg $args {
-        lappend cmdArgsL "$arg"
-    }
-    if {[info exists cmdArgsL]} {
-        set cmdArgs [join $cmdArgsL " "]
-	lappend g_outputA  "execute\{cmd=\"$cmdArgs\",modeA = \{\"all\"\}\}\n"
-    }
+proc system {args} {
+   set mode [currentMode]
+   set status {}
+
+   switch -- $mode {
+      load - unload {
+         if {[catch {exec /bin/sh -c [join $args]}]} {
+             # non-zero exit status, get it:
+             set status [lindex $::errorCode 2]
+         } else {
+             # exit status was 0
+             set status 0
+         }
+      }
+   }
+   return $status
 }
 
 proc tryloadcmd { args } {
@@ -795,9 +808,64 @@ proc uname {what} {
 
     return $unameCache($what)
 }
+
+proc findProg { arg } {
+    global env
+    foreach entry [split $env(PATH) ":" ] {
+	set myfile "$entry/$arg"
+	if { [file executable $myfile ] } {
+	    return $myfile
+	}
+    }
+    return "Unknown"
+}
+
 proc is-loaded { arg } {
     global g_loadT
     return [info exists g_loadT($arg)]
+}
+
+proc is-avail { arg } {
+    global g_moduleT g_setup_moduleT g_lua_cmd g_my_cmd g_lmod_cmd
+
+    if { ! $g_setup_moduleT } {
+	if { [regexp "^@" $g_lua_cmd match ] } {
+	    set g_lua_cmd [findProg lua]
+	}
+
+	if { [regexp "^@" $g_lmod_cmd match ] } {
+	    set my_dir     [ file dirname $g_my_cmd ]
+	    set g_lmod_cmd "$my_dir/lmod.in.lua"
+	}
+	
+	set g_setup_moduleT 1
+	set g_moduleT [dict create]
+	set cmd "$g_lua_cmd $g_lmod_cmd bash --no_redirect -t avail"
+	set ret [catch {
+	    exec sh -c $cmd |& cat
+	} msg]
+
+	foreach line [split $msg "\n" ] {
+	    if {[regexp "^MODULEPATH=" $line match]} {
+		continue
+	    }
+	    if {[regexp "^export" $line match]} {
+		continue
+	    }
+	    if {[regexp "=" $line match]} {
+		continue
+	    }
+	    if {[regexp ":" $line match]} {
+		continue
+	    }
+	    if {[regexp "/$" $line match]} {
+		regsub "/$" $line "" line
+	    }
+	    set moduleName $line
+	    dict set g_moduleT $moduleName 1
+	}
+    }
+    return [dict exist $g_moduleT $arg]
 }
 
 proc module { command args } {
@@ -868,6 +936,7 @@ proc execute-modulefile {modfile } {
     interp alias $child family         	 {} family
     interp alias $child initGA         	 {} initGA
     interp alias $child is-loaded      	 {} is-loaded
+    interp alias $child is-avail      	 {} is-avail
     interp alias $child module         	 {} module
     interp alias $child module-info    	 {} module-info
     interp alias $child module-whatis  	 {} module-whatis

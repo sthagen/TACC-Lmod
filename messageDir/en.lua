@@ -73,6 +73,20 @@ return {
        $ module name arg1 arg2 ...
 
    In other words you can not load a module named: show swap etc.
+
+   Shorthand:
+   ----------
+       ml r  -> ml restore
+       ml s  -> ml save
+       ml sl -> ml savelist
+       ml sw -> ml swap
+   
+   Loading modules same as commands:
+   ---------------------------------
+
+      If you want to load a module that has the same name then for example for "spider":
+
+         ml load spider  # instead ml spider
 ]==],
      ml_opt                = [==[Option: "%{v}" is unknown.
   Try ml --help for usage.
@@ -106,7 +120,7 @@ The syntax is:
 
 Please check the spelling or version number. Also try "module spider ..."
 It is also possible your cache file is out-of-date; it may help to try:
-  $   module --ignore-cache load %{module_list}
+  $   module --ignore_cache load %{module_list}
 
 Also make sure that all modulefiles written in TCL start with the string #%Module
 ]==],
@@ -160,7 +174,7 @@ Alternatively, you can set the environment variable LMOD_DISABLE_SAME_NAME_AUTOS
 for available versions.]==],
      e_Spdr_Timeout        = "Spider search timed out.\n",
      e_Swap_Failed         = "Swap failed: \"%{name}\" is not loaded.\n",
-     e_Unable_2_Load       = "Unable to load module because of error when evaluating modulefile: %{name}\n     %{fn}: %{message}\n     Please check the modulefile and especially if there is a the line number specified in the above message",
+     e_Unable_2_Load       = "Unable to load module because of error when evaluating modulefile: %{name}\n     %{fn}: %{message}\n     Please check the modulefile and especially if there is a line number specified in the above message",
      e_Unable_2_Load_short = "%{message}",
      e_Unable_2_parse      = "Unable to parse: \"%{path}\". Aborting!\n",
      e_Unable_2_rename     = "Unable to rename %{from} to %{to}, error message: %{errMsg}",
@@ -394,6 +408,7 @@ The system default contains no modules
      exprt_hlp = "Expert mode",
      terse_hlp = "Write out in machine readable format for commands: list, avail, spider, savelist",
      initL_hlp = "loading Lmod for first time in a user shell",
+     location_H = "Just print the file location when using show ",
      latest_H  = "Load latest (ignore default)",
      cache_hlp = "Treat the cache file(s) as out-of-date",
      novice_H  = "Turn off expert and quiet flag",

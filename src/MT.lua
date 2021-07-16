@@ -104,7 +104,8 @@ local function new(self, s, restoreFn)
    dbg.print{"currentMPATH: ",currentMPATH,"\n"}
    if (not s) then
       if (currentMPATH) then
-         o.mpathA          = path2pathA(currentMPATH)
+         local clearDblSlash = true
+         o.mpathA          = path2pathA(currentMPATH,':',clearDblSlash)
          o.systemBaseMPATH = concatTbl(o.mpathA,":")
       end
       local maxdepth    = cosmic:value("LMOD_MAXDEPTH")
@@ -162,7 +163,8 @@ local function new(self, s, restoreFn)
    -- environment value. Unless it is a module restore
 
    if (not restoreFn) then
-      o.mpathA = path2pathA(currentMPATH)
+      local clearDblSlash = true
+      o.mpathA            = path2pathA(currentMPATH,':',clearDblSlash)
    end
 
    dbg.fini("MT new")
@@ -457,6 +459,13 @@ function M.list(self, kind, status)
    return B
 end
 
+function M.empty(self)
+   local mT    = self.mT
+   return next(mT) == nil
+end
+
+
+
 --------------------------------------------------------------------------
 -- add a property to an active module.
 -- @param self An MT object.
@@ -573,7 +582,7 @@ end
 -- @param self An MT object.
 -- @param sn the short module name.
 -- @param status The status.
--- @return existance.
+-- @return existence.
 function M.have(self, sn, status)
    local entry = self.mT[sn]
    if (entry == nil) then
@@ -581,6 +590,24 @@ function M.have(self, sn, status)
    end
    return ((status == "any") or (status == entry.status))
 end
+
+function M.lookup_w_userName(self,userName)
+   -- Check if userName is an 
+   if (self:exists(userName)) then
+      return userName
+   end
+   -- Check to see if userName is fullName by looping over entries.
+   local mT = self.mT
+   dbg.printT("lookup_w: mT",mT)
+   for sn, v in pairs(mT) do
+      if (userName == self:fullName(sn)) then
+         return sn
+      end
+   end
+
+   return false
+end
+
 
 function M.userName(self, sn)
    local entry = self.mT[sn]
@@ -659,11 +686,12 @@ end
 
 function M.updateMPathA(self, value)
    if (type(value) == "string") then
-      self.mpathA = path2pathA(value)
+      local clearDblSlash = true
+      self.mpathA         = path2pathA(value,':',clearDblSlash)
    elseif (type(value) == "table") then
       self.mpathA = value
    elseif (type(value) == "nil") then
-      self.mpathA = path2pathA("")
+      self.mpathA = {} -- path2pathA("")
    end
 end
 
@@ -1158,7 +1186,7 @@ function M.getMTfromFile(self,tt)
       if (not activeT[sn]) then
          dbg.print{"did not find activeT sn: ",sn,"\n"}
          aa[#aa+1] = sn
-         t[sn]     = nil -- do not need to check hash for a non-existant module
+         t[sn]     = nil -- do not need to check hash for a non-existent module
       end
    end
 
@@ -1216,7 +1244,8 @@ function M.hideMpathRefCountT(self, refCountT)
 end
 
 function M.resetMPATH2system(self)
-   self.mpathA = path2pathA(self.systemBaseMPATH)
+   local clearDblSlash = true
+   self.mpathA         = path2pathA(self.systemBaseMPATH,':',clearDblSlash)
    return self.systemBaseMPATH
 end
 
