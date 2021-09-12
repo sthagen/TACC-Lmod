@@ -174,15 +174,15 @@ local function registerLoaded(fullName, fn)
    local modFn    = "_LMFILES_"
    local nodups   = true
    local priority = 0
-   local sep      = ":"
+   local delim    = ":"
    if (varT[modList] == nil) then
-      varT[modList] = Var:new(modList, nil, nodups, sep)
+      varT[modList] = Var:new(modList, nil, nodups, delim)
    end
 
    varT[modList]:append(fullName, nodups, priority)
 
    if (varT[modFn] == nil) then
-      varT[modFn] = Var:new(modFn, nil, nodups, sep)
+      varT[modFn] = Var:new(modFn, nil, nodups, delim)
    end
 
    varT[modFn]:append(fn, nodups, priority)
@@ -200,18 +200,18 @@ local function registerUnloaded(fullName, fn)
    local modFn    = "_LMFILES_"
    local where    = "all"
    local nodups   = true
-   local sep      = ":"
+   local delim    = ":"
    local priority = 0
 
    if (varT[modList] == nil) then
-      varT[modList] = Var:new(modList, nil, nodups, sep)
+      varT[modList] = Var:new(modList, nil, nodups, delim)
    end
 
    varT[modList]:remove(fullName, where, priority)
 
 
    if (varT[modFn] == nil) then
-      varT[modFn] = Var:new(modFn, nil, nodups, sep)
+      varT[modFn] = Var:new(modFn, nil, nodups, delim)
    end
 
    varT[modFn]:remove(fn, where, priority)
@@ -386,11 +386,17 @@ function M.load(self, mA)
             mt:add(mname,"pending")
             loadModuleFile{file = fn, shell = shellNm, mList = mList, reportErr = true}
             mt = frameStk:mt()
-            mt:setStatus(sn, "active")
-            hook.apply("load",{fn = mname:fn(), modFullName = mname:fullName(), mname = mname})
+
+            -- A modulefile could the same named module over top of the current modulefile
+            -- Say modulefile abc/2.0 loads abc/.cpu/2.0.  Then in the case of abc/2.0 the filename
+            -- won't match.
+            if (mt:fn(sn) == fn) then
+               mt:setStatus(sn, "active")
+               hook.apply("load",{fn = mname:fn(), modFullName = mname:fullName(), mname = mname})
+               dbg.print{"Marking ",fullName," as active and loaded\n"}
+               registerLoaded(fullName, fn)
+            end
             frameStk:pop()
-            dbg.print{"Marking ",fullName," as active and loaded\n"}
-            registerLoaded(fullName, fn)
             loaded = true
          end
          mt = frameStk:mt()
@@ -930,6 +936,198 @@ local function regroup_avail_blocks(availStyle, availA)
    return newAvailA
 end
 
+function M.overview(self,argA)
+   dbg.start{"Master:overview(",concatTbl(argA,", "),")"}
+   local aa          = {}
+   local masterTbl   = masterTbl()
+   local mt          = FrameStk:singleton():mt()
+   local mpathA      = mt:modulePathA()
+   local availStyle  = masterTbl.availStyle
+   
+   local numDirs = 0
+   for i = 1,#mpathA do
+      local mpath = mpathA[i]
+      if (isDir(mpath)) then
+         numDirs = numDirs + 1
+      end
+   end
+
+   if (numDirs < 1) then
+      if (masterTbl.terse) then
+         dbg.fini("Master:overview")
+         return a
+      end
+      LmodError{msg="e_Avail_No_MPATH", name="overview"}
+      return a
+   end
+
+   local mrc         = MRC:singleton()
+   local use_cache   = false
+   local moduleA     = ModuleA:singleton{spider_cache=use_cache}
+   local availA      = moduleA:build_availA()
+   local twidth      = TermWidth()
+   local cwidth      = masterTbl.rt and LMOD_COLUMN_TABLE_WIDTH or twidth
+   local defaultT    = moduleA:defaultT()
+   local searchA     = argA
+   local showSN      = true
+   local defaultOnly = false
+   local alias2modT  = mrc:getAlias2ModT(mpathA)
+   local banner      = Banner:singleton()
+   
+   if (not masterTbl.regexp and argA and next(argA) ~= nil) then
+      searchA = {}
+      for i = 1, argA.n do
+         local s  = argA[i]
+         local ss = mrc:resolve(mpathA, s)
+         if (ss ~= s) then
+            searchA[i] = ss
+         else
+            searchA[i] = s:caseIndependent()
+         end
+      end
+      searchA.n = argA.n
+   end
+
+   availA = regroup_avail_blocks(availStyle, availA)
+   self:terse_avail(mpathA, availA, alias2modT, searchA, showSN, defaultOnly, defaultT, aa)
+
+   local label    = ""
+   local a        = {}
+   local b        = {}
+   local sn       = false
+   local sn_slash = false
+   local count    = 0
+
+   local function print_overview_block()
+      -- Write this block of overview
+      dbg.print{"printing overview block\n"}
+      local ct = ColumnTable:new{tbl=b, gap=1, len = length, width = cwidth}
+      a[#a+1] = "\n"
+      a[#a+1] = banner:bannerStr(label)
+      a[#a+1] = "\n"
+      a[#a+1] = ct:build_tbl()
+      a[#a+1] = "\n"
+      b       = {}
+   end
+
+   ---------------------------------------------------------------
+   -- This local function stores the current sn and count into the
+   -- b array and if the current entry is true then define the next 
+   -- sn to be entry (minus the trailing slash) and zero count.
+   local function register_sn_count_in_b(entry)
+      if (sn and count > 0) then
+         b[#b+1] = { sn, "(" .. tostring(count) .. ")  "}
+      end
+      if (entry) then
+         sn_slash = entry:escape()
+         sn       = entry:sub(1,-2) --> strip trailing slash
+         count    = 0
+      else
+         sn       = false
+         sn_slash = false
+      end
+   end
+
+   for i = 1,#aa do
+      local entry = aa[i]:sub(1,-2) --> strip trailing newline
+      repeat 
+         if (entry:find("(@")) then
+            break
+         end
+         dbg.print{"entry: ",entry,"\n"}
+         if (entry:find(":$")) then
+            register_sn_count_in_b(false)
+            if (next(b) ~= nil) then
+               print_overview_block()
+            end
+            label    = entry:sub(1,-2) -- strip trailing colon
+            dbg.print{"found label: ",label,"\n"}
+            break
+         end
+
+         if (entry:find("/$")) then
+            register_sn_count_in_b(entry)
+            dbg.print{"found sn:", sn,"\n"}
+            break
+         end
+         if (sn_slash and entry:find(sn_slash)) then
+            dbg.print{"found another entry: ", entry, " for sn: ",sn,"\n"}
+            count = count + 1
+            break
+         end
+         register_sn_count_in_b(false)
+         dbg.print{"found meta module: ", entry, "\n"}
+         b[#b+1] = { entry, "(1)  "}
+      until(true)
+   end
+
+   register_sn_count_in_b(false)
+   if (next(b) ~= nil) then
+      print_overview_block()
+   end
+
+   dbg.fini("Master:overview")
+   return a
+end
+
+function M.terse_avail(self, mpathA, availA, alias2modT, searchA, showSN, defaultOnly, defaultT, a)
+   dbg.start{"Master:terse_avail()"}
+   local mrc         = MRC:singleton()
+   local masterTbl   = masterTbl()
+
+   if (searchA.n > 0) then
+      for k, v in pairsByKeys(alias2modT) do
+         local fullName = mrc:resolve(mpathA, v)
+         for i = 1, searchA.n do
+            local s = searchA[i]
+            if (fullName:find(s)) then
+               a[#a+1] = k.."(@" .. fullName ..")\n"
+            end
+         end
+      end
+   else
+      for k, v in pairsByKeys(alias2modT) do
+         local fullName = mrc:resolve(mpathA, v)
+         a[#a+1] = k.."(@" .. fullName ..")\n"
+      end
+   end
+
+
+   for j = 1,#availA do
+      local A      = availA[j].A
+      local label  = availA[j].mpath
+      local aa     = {}
+      local prtSnT = {}  -- Mark if we have printed the sn?
+      
+      for i = 1,#A do
+         local sn, fullName, fn = availEntry(defaultOnly, label, searchA, defaultT, A[i])
+         if (sn) then
+            if (not prtSnT[sn] and sn ~= fullName and showSN) then
+               prtSnT[sn] = true
+               aa[#aa+1]  = sn .. "/\n"
+            end
+            local aliasA = mrc:getFull2AliasesT(mpathA, fullName)
+            if (aliasA) then
+               for i = 1,#aliasA do
+                  local fullName = mrc:resolve(mpathA, aliasA[i])
+                  aa[#aa+1]  = aliasA[i] .. "(@".. fullName ..")\n"
+               end
+            end
+            aa[#aa+1]     = fullName .. "\n"
+         end
+      end
+      if (next(aa) ~= nil) then
+         a[#a+1]  = label .. ":\n"
+         for i = 1,#aa do
+            a[#a+1] = aa[i]
+         end
+      end
+   end
+
+   dbg.fini("Master:terse_avail")
+   return a
+end
+
 
 function M.avail(self, argA)
    dbg.start{"Master:avail(",concatTbl(argA,", "),")"}
@@ -949,9 +1147,10 @@ function M.avail(self, argA)
 
    if (numDirs < 1) then
       if (masterTbl.terse) then
+         dbg.fini("Master:avail")
          return a
       end
-      LmodError{msg="e_Avail_No_MPATH"}
+      LmodError{msg="e_Avail_No_MPATH",name = "avail"}
       return a
    end
 
@@ -966,18 +1165,19 @@ function M.avail(self, argA)
    local defaultT      = moduleA:defaultT()
    local searchA       = argA
    local defaultOnly   = masterTbl.defaultOnly
-   local showSN        = not defaultOnly
    local alias2modT    = mrc:getAlias2ModT(mpathA)
+   local showSN        = not defaultOnly
 
-   dbg.print{"defaultOnly: ",defaultOnly,", showSN: ",showSN,"\n"}
+   if (showSN) then
+      showSN = argA.n == 0
+   end
+
+   dbg.print{"defaultOnly: ",defaultOnly,"\n"}
 
    dbg.printT("defaultT:",defaultT)
 
 
    if (not masterTbl.regexp and argA and next(argA) ~= nil) then
-      if (showSN) then
-         showSN = argA.n == 0
-      end
       searchA = {}
       for i = 1, argA.n do
          local s  = argA[i]
@@ -994,55 +1194,7 @@ function M.avail(self, argA)
    if (masterTbl.terse) then
       --------------------------------------------------
       -- Terse output
-      dbg.printT("availA",availA)
-      if (searchA.n > 0) then
-         for k, v in pairsByKeys(alias2modT) do
-            local fullName = mrc:resolve(mpathA, v)
-            for i = 1, searchA.n do
-               local s = searchA[i]
-               if (fullName:find(s)) then
-                  a[#a+1] = k.."(@" .. fullName ..")\n"
-               end
-            end
-         end
-      else
-         for k, v in pairsByKeys(alias2modT) do
-            local fullName = mrc:resolve(mpathA, v)
-            a[#a+1] = k.."(@" .. fullName ..")\n"
-         end
-      end
-
-
-      for j = 1,#availA do
-         local A      = availA[j].A
-         local label  = availA[j].mpath
-         local aa     = {}
-         local prtSnT = {}  -- Mark if we have printed the sn?
-
-         for i = 1,#A do
-            local sn, fullName, fn = availEntry(defaultOnly, label, searchA, defaultT, A[i])
-            if (sn) then
-               if (not prtSnT[sn] and sn ~= fullName and showSN) then
-                  prtSnT[sn] = true
-                  aa[#aa+1]  = sn .. "/\n"
-               end
-               local aliasA = mrc:getFull2AliasesT(mpathA, fullName)
-               if (aliasA) then
-                  for i = 1,#aliasA do
-                     local fullName = mrc:resolve(mpathA, aliasA[i])
-                     aa[#aa+1]  = aliasA[i] .. "(@".. fullName ..")\n"
-                  end
-               end
-               aa[#aa+1]     = fullName .. "\n"
-            end
-         end
-         if (next(aa) ~= nil) then
-            a[#a+1]  = label .. ":\n"
-            for i = 1,#aa do
-               a[#a+1] = aa[i]
-            end
-         end
-      end
+      self:terse_avail(mpathA, availA, alias2modT, searchA, showSN, defaultOnly, defaultT, a)
 
       dbg.fini("Master:avail")
       return a
@@ -1227,6 +1379,8 @@ function M.avail(self, argA)
    dbg.fini("Master:avail")
    return a
 end
+
+
 
 
 return M

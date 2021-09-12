@@ -72,6 +72,10 @@ function M.name(self)
    return self.my_name
 end
 
+function M.type(self)
+   return self.myType or self:name()
+end
+
 function M.set_my_name(self, name)
    self.my_name = name
 end
@@ -264,6 +268,7 @@ local function createShellTbl()
       local Perl         = require('Perl')
       local Python       = require('Python')
       local R            = require('R')
+      local Rc           = require('Rc')
       local Ruby         = require('Ruby')
       s_shellTbl = {
          ["sh"]     = Bash,
@@ -281,6 +286,7 @@ local function createShellTbl()
          ["bare"]   = Bare,
          ["r"]      = R,
          ["R"]      = R,
+         ["rc"]     = Rc,
          ["ruby"]   = Ruby,
       }
    end

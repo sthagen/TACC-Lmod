@@ -2,7 +2,7 @@
 step 1
 lua ProjectDIR/src/lmod.in.lua bash --regression_testing --version
 ===========================
-Modules based on Lua: Version 8.4.19  2020-12-13 13:58 -06:00
+Modules based on Lua: Version 8.5.10  2021-07-22 16:39 -05:00
     by Robert McLay mclay@tacc.utexas.edu
 ===========================
 step 2
@@ -29,17 +29,20 @@ The following modules were not unloaded:
 step 5
 lua ProjectDIR/src/lmod.in.lua bash --regression_testing avail
 ===========================
-ProjectDIR/rt/helios/mf/Compilers/intel14.0
+ProjectDIR/rt/hook_avail/mf/Compilers/intel14.0
    mpi/mvapich2/1.9    mpi/openmpi/1.6.5 (L,D)    mpi/openmpi/1.8.1
-ProjectDIR/rt/helios/mf/Core
+ProjectDIR/rt/hook_avail/mf/Core
    StdEnv (S,L)    apps/buildtools/20140527 (L)    foo/1.0
-ProjectDIR/rt/helios/mf/Core-helios
+ProjectDIR/rt/hook_avail/mf/Core-helios
    apps/lua/5.1.4.6          compilers/intel/14.0 (L)
    apps/moab        (S,L)    foo/1.1              (D)
   Where:
    D:  Default Module
    L:  Module is loaded
    S:  Module is Sticky, requires --force to unload or purge
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
 Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
 ===========================
@@ -56,6 +59,9 @@ Core Modules
    D:  Default Module
    L:  Module is loaded
    S:  Module is Sticky, requires --force to unload or purge
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
 Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
 ===========================
@@ -72,6 +78,9 @@ Core Modules
    D:  Default Module
    L:  Module is loaded
    S:  Module is Sticky, requires --force to unload or purge
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
 Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
 ===========================
@@ -88,6 +97,9 @@ Modules de base
    D:  Default Module
    L:  Module is loaded
    S:  Module is Sticky, requires --force to unload or purge
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
 Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
 ===========================
@@ -104,5 +116,17 @@ Core Modules
    D:  Default Module
    L:  Module is loaded
    S:  Module is Sticky, requires --force to unload or purge
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
 Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
+===========================
+step 10
+lua ProjectDIR/src/lmod.in.lua bash --regression_testing overview
+===========================
+Complr Dep.
+mpi/mvapich2 (1)   mpi/openmpi (2)
+Core Modules
+apps/buildtools (1)   apps/moab       (1)   foo    (2)
+apps/lua        (1)   compilers/intel (1)   StdEnv (1)

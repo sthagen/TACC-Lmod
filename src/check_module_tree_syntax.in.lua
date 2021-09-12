@@ -139,7 +139,7 @@ function walk_spiderT(spiderT, mt, mList, errorT)
 
       if (next(v.fileT) ~= nil) then
          for fullName, vv in pairs(v.fileT) do
-            if (show_hidden or mrc:isVisible({fullName=fullName,sn=sn,fn=vv.fn})) then
+            if (show_hidden or mrc:isVisible{fullName=fullName,sn=sn,fn=vv.fn}) then
                check_syntax(mpath, mt, mList, sn, vv.fn, fullName, errorT.syntaxA)
             end
          end
@@ -395,13 +395,13 @@ function main()
    end
 
    if (tracing == "no" and not dbg.active()) then
-      turn_off_stderr()
+      turn_off_stdio()
    end
    walk_spiderT(spiderT, mt, mList, errorT)
 
    sandbox_set_os_exit(exit)
    if (tracing == "no" and not dbg.active()) then
-      turn_on_stderr()
+      turn_on_stdio()
    end
 
    local ierr = 0

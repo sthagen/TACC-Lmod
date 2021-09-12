@@ -1,0 +1,253 @@
+\documentclass{beamer}
+
+% You can also use a 16:9 aspect ratio:
+%\documentclass[aspectratio=169]{beamer}
+\usetheme{TACC16}
+
+% It's possible to move the footer to the right:
+%\usetheme[rightfooter]{TACC16}
+
+\begin{document}
+\title[Lmod]{Lmod hooks}
+\author{Robert McLay} 
+\date{Sept. 7, 2021}
+
+% page 1
+\frame{\titlepage} 
+
+\section{Introduction}
+
+% page 2
+\begin{frame}{Lmod Hooks Discussion}
+  \center{\includegraphics[width=.9\textwidth]{Lmod-4color@2x.png}}
+  \begin{itemize}
+    \item History: How to track module usage?
+    \item How do hooks work?
+    \item What Hooks are available?
+  \end{itemize}
+\end{frame}
+
+% page 3
+\begin{frame}{How to track module usage?}
+  \begin{itemize}
+    \item No extra code in modulefiles.
+    \item Must work with modulefiles written in Lua or TCL.
+    \item Must not be built-in to Lmod.
+    \item $\Rightarrow$ Hooks
+  \end{itemize}
+\end{frame}
+
+% page 4
+\begin{frame}{Hooks}
+  \begin{itemize}
+    \item I am an emacs user 
+    \item Is there any other editor worth using?
+    \item Emacs has hooks to modify behavior
+    \item Hooks and SitePackage.lua was born.
+  \end{itemize}
+\end{frame}
+
+% page 5
+\begin{frame}{SitePackage.lua}
+  \begin{itemize}
+    \item SitePackage.lua is ``sourced'' on every module command.
+    \item It provides functions available for every Lua module file.
+    \item Site should set \$LMOD\_PACKAGE\_PATH to the directory
+      containing it.
+    \item See sandbox\_registration\{\} to see how to add your own functions.
+  \end{itemize}
+\end{frame}
+
+% page 6
+\begin{frame}{Hooks}
+  \begin{itemize}
+    \item Functions name can be stored in variable, arrays, etc.
+    \item In particular, Lua can store strings and a matching function
+    \item Lmod has default implementations that do nothing
+    \item Site can override hooks with their own implementation.
+  \end{itemize}
+\end{frame}
+
+% page 7
+\begin{frame}[fragile]
+  \frametitle{Hooks in SitePackage.lua}
+    {\small
+\begin{semiverbatim}
+local function load_hook(t)
+   -- ...
+   -- ...
+end
+
+local hook = require("hook")
+hook.register("load", load_hook)
+\end{semiverbatim}
+    }
+\end{frame}
+
+
+% page 8
+\begin{frame}{What can a site do with a load hook?}
+  \begin{itemize}
+    \item The load hooks is called on every load.
+    \item TACC uses the load hook to track module usage
+    \item Many EasyBuild sites track only ``user'' loads 
+    \item Compute Canada track usage, set properties, and much more
+  \end{itemize}
+\end{frame}
+
+% page 9
+\begin{frame}[fragile]
+  \frametitle{Contrib/more\_hooks/SitePackage.lua}
+    {\small
+\begin{semiverbatim}
+  local frameStk = FrameStk:singleton()
+  local userload = (frameStk:atTop()) and
+                   "yes" or "no"
+
+  local logTbl       = \{\}
+  logTbl[\#logTbl+1]  = \{"userload", userload\}
+  logTbl[\#logTbl+1]  = \{"module", t.modFullName\}
+  logTbl[\#logTbl+1]  = \{"fn", t.fn\}
+
+  logmsg(logTbl)
+\end{semiverbatim}
+    }
+\end{frame}
+
+% page 10
+\begin{frame}[fragile]
+  \frametitle{Compute Canada}
+  \begin{itemize}
+    \item https://github.com/ComputeCanada/software-stack-config/blob/main/lmod/SitePackage.lua\#L261-L272
+    {\tiny
+\begin{semiverbatim}
+     local function load\_hook(t)
+        local valid = validate\_license(t)
+        set\_props(t)
+        set\_family(t)
+        default\_module\_change\_warning(t)
+        log\_module\_load(t,true)
+        set\_local\_paths(t)
+     end
+\end{semiverbatim}
+    }
+    \item Setting families: https://github.com/ComputeCanada/software-stack-config/blob/main/lmod/SitePackage\_families.lua
+    \item Logging code:
+      https://github.com/ComputeCanada/software-stack-config/blob/main/lmod/SitePackage\_logging.lua
+    \item  Module properties https://github.com/ComputeCanada/software-stack-config/blob/main/lmod/SitePackage\_properties.lua
+    \item https://github.com/ComputeCanada/software-stack-config/blob/main/lmod/SitePackage\_visible.lua
+    \end{itemize}
+\end{frame}
+
+% page 11
+\begin{frame}{What hooks are available?}
+  \begin{itemize}
+    \item Basic hooks
+    \item Shared home Filesystem hook
+    \item Advanced Hooks
+  \end{itemize}
+\end{frame}
+
+% page 12
+\begin{frame}{Basic hooks}
+  \begin{itemize}
+    \item load hook - Called on every load
+    \item avail - Map directories into labels
+    \item startup - called at startup
+    \item finalize - called just before Lmod is about to finish
+    \item isVisibleHook - Reports whether a module should be visible
+      to avail and spider.
+    \item SiteName - Hook to specify Site Name
+      (\emph{site}\_FAMILY\_\emph{something}) for family prefix for
+      hierarchical module layout: TACC\_FAMILY\_COMPILER
+  \end{itemize}
+\end{frame}
+
+% page 13
+\begin{frame}{isVisibleHook}
+  \begin{itemize}
+    \item isVisibleHook(modT): Reports whether a module should be visible
+      to avail and spider.
+    \item modT=\{fullName=..., sn=..., fn=...\}
+    \item Where fullName is name/version, sn = name and fn is fileName
+  \end{itemize}
+\end{frame}
+
+% page 14
+\begin{frame}{Shared Home Filesystem hook}
+  \begin{itemize}
+    \item groupName - This hook adds the arch and os name to
+      moduleT.lua to make it safe on shared filesystems.
+  \end{itemize}
+\end{frame}
+
+% page 15
+\begin{frame}{Advanced Hooks}
+  \begin{itemize}
+    \item unload - Called on every unload
+    \item msgHook - Hook to print message after avail, list, spider
+    \item errWarnMsgHook - Hook to print messages after LmodError LmodWarning, LmodMessage    
+    \item restore - Hook to run after a restore operation.
+    \item load\_spider - This hook is run for evaluating modules for spider/avail.
+    \item listHook - This hook gets the list of active modules
+    \item spider\_decoration -  This hook adds decoration to spider
+      level one output. It can be the category or a property.
+
+  \end{itemize}
+\end{frame}
+
+% page 16
+\begin{frame}{HookArray}
+  \begin{itemize}
+    \item A module can load other modules
+    \item Module X loads modules A, B, and C
+    \item Suppose that A, B load and C errors out.
+    \item Use load\_hook() to save loads in an array
+    \item Use the HookArray to report loads via syslog.
+  \end{itemize}
+\end{frame}
+
+% page 17
+\begin{frame}[fragile]
+  \frametitle{Contrib/TACC/SitePackage.lua: }
+    {\tiny
+\begin{semiverbatim}
+local s\_msgA = \{\}
+local function load_hook(t)
+   -- the arg t is a table:
+   --     t.modFullName:  the module full name: (i.e: gcc/4.7.2)
+   --     t.fn:           The file name: (i.e /apps/mfiles/Core/gcc/4.7.2.lua)
+   if (mode() ~= "load") then return end
+   local currentTime = epoch()
+   local msg         = string.format("user=%s module=%s path=%s host=%s time=%f",
+                                     user, t.modFullName, t.fn, 
+                                     host or "<unknown_syshost>", currentTime)
+   local a           = s\_msgA
+   a[#a+1]           = msg
+   dbg.fini()
+end
+local function report_loads()
+   local a = s\_msgA
+   for i = 1,#a do
+      local msg = a[i]
+      lmod_system_execute("logger -t ModuleUsageTracking -p local0.info " .. msg)
+   end
+end
+
+ExitHookA.register(report_loads)
+hook.register("load",           load_hook)
+\end{semiverbatim}
+    }
+\end{frame}
+
+
+% page 18
+\begin{frame}{Other hooks in the documentation}
+  \begin{itemize}
+    \item Avail: https://lmod.readthedocs.io/en/latest/200\_avail\_custom.html
+    \item msgHook: https://lmod.readthedocs.io/en/latest/170\_hooks.html
+  \end{itemize}
+\end{frame}
+
+
+\end{document}

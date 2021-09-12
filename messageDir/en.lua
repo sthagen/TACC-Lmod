@@ -104,7 +104,7 @@ return {
  with command: %{cmdName}, one or more arguments are not strings.
 ]==], --
      e_Args_Not_Strings_short = "command: %{cmdName}, one or more arguments are not strings.",
-     e_Avail_No_MPATH      = "module avail is not possible. MODULEPATH is not set or not set with valid paths.\n",
+     e_Avail_No_MPATH      = "module %{name} is not possible. MODULEPATH is not set or not set with valid paths.\n",
      e_BrokenCacheFn       = "Spider cache fn: \"%{fn}\" appears broken",
      e_BrokenQ             = "Internal error: broken module Q\n",
      e_Conflict            = "Cannot load module \"%{name}\" because these module(s) are loaded:\n   %{module_list}\n",
@@ -344,6 +344,9 @@ The system default contains no modules
      list9                 = "Print whatis information about module",
      list10                = "Search all name and whatis that contain \"string\".",
 
+     ov1                   = "List all available modules by short names with number of versions",
+     ov2                   = "List available modules by short names with number of versions that contain \"string\"",
+
      srch_title            = "Searching with Lmod:\n" ..
                              "--------------------",
      srch0                 = "  All searching (spider, list, avail, keyword) support regular expressions:",
@@ -437,7 +440,12 @@ The system default contains no modules
      HiddenM   = "Hidden Module",
      Extension = "Extension that is provided by another module",
 
-     avail     = [==[Use "module spider" to find all possible modules and extensions.
+     avail     = [==[If the avail list is too long consider trying:
+
+"module --default avail" or "ml -d av"  to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
+
+Use "module spider" to find all possible modules and extensions.
 Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
 ]==],
      list      = " ",
