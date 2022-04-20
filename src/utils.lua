@@ -38,6 +38,7 @@ require("strict")
 --------------------------------------------------------------------------
 
 require("capture")
+require("declare")
 require("fileOps")
 require("myGlobals")
 require("pairsByKeys")
@@ -55,6 +56,7 @@ local encode64     = base64.encode64
 local floor        = math.floor
 local getenv       = os.getenv
 local huge         = math.huge
+local load         = (_VERSION == "Lua 5.1") and loadstring or load
 local min          = math.min
 local open         = io.open
 local readlink     = posix.readlink
@@ -78,6 +80,7 @@ end
 function __LINE__()
    return debug.getinfo(2, 'l').currentline
 end
+
 
 --------------------------------------------------------------------------
 -- Generate a message that will fix the available terminal width.
@@ -676,7 +679,7 @@ end
 --------------------------------------------------------------------------
 -- Convert number and string to a quoted string.
 -- @param v input number or string.
-local function arg2str(v)
+local function l_arg2str(v)
    if (v == nil) then return v end
    local s = tostring(v)
    if (type(v) ~= "boolean") then
@@ -712,7 +715,7 @@ function ShowCmdStr(name, ...)
       hasKeys = true
    end
    for i = 1, n do
-      local s = arg2str(t[i])
+      local s = l_arg2str(t[i])
       if (s ~= nil) then
          a[#a + 1] = s
       end
@@ -726,7 +729,7 @@ function ShowCmdStr(name, ...)
             local strV = tostring(v)
             if (s_defaultsT[k] ~= strV) then
                hasKeys = true
-               a[#a+1] = k.."="..arg2str(v)
+               a[#a+1] = k.."="..l_arg2str(v)
             end
          end
       end
@@ -845,7 +848,7 @@ end
 --------------------------------------------------------------------------
 -- determine which version of runTCLprog to use
 
-local function build_runTCLprog()
+local function l_build_runTCLprog()
    local fast_tcl_interp = cosmic:value("LMOD_FAST_TCL_INTERP")
    if (fast_tcl_interp == "no") then
       _G.runTCLprog = l_runTCLprog
@@ -854,13 +857,9 @@ local function build_runTCLprog()
    end
 end
 
-if (not runTCLprog) then
-   build_runTCLprog()
-end
-
 --------------------------------------------------------------------------
 -- Create the accept functions to allow or ignore TCL modulefiles.
-local function build_accept_function()
+local function l_build_accept_function()
    local allow_tcl = cosmic:value("LMOD_ALLOW_TCL_MFILES")
 
    if (allow_tcl == "no") then
@@ -874,11 +873,7 @@ local function build_accept_function()
    end
 end
 
-if (not accept_fn) then
-   build_accept_function()
-end
-
-local function build_allow_dups_function()
+local function l_build_allow_dups_function()
    local dups = cosmic:value("LMOD_DUPLICATE_PATHS")
    if (dups == "yes") then
       _G.allow_dups = function (dupsIn)
@@ -891,11 +886,7 @@ local function build_allow_dups_function()
    end
 end
 
-if (not allow_dups) then
-   build_allow_dups_function()
-end
-
-local function build_epoch_function()
+local function l_build_epoch_function()
    if (posix.gettimeofday) then
       local gettimeofday = posix.gettimeofday
       local x1, x2 = gettimeofday()
@@ -922,7 +913,7 @@ local function build_epoch_function()
 end
 
 if (not epoch) then
-   build_epoch_function()
+   l_build_epoch_function()
 end
 
 
@@ -930,7 +921,7 @@ end
 -- Return the *prepend_order* function.  This function control which order
 -- are prepends handled when there are multiple paths passed to a single
 -- call.
-local function build_prepend_order_function()
+local function l_build_prepend_order_function()
    local ansT = {
       no      = "reverse",
       reverse = "reverse",
@@ -951,10 +942,6 @@ local function build_prepend_order_function()
    end
 end
 
-if (not prepend_order) then
-   build_prepend_order_function()
-end
-
 local s_checkSyntaxMode = false
 function setSyntaxMode(state)
    s_checkSyntaxMode = state
@@ -963,4 +950,62 @@ function checkSyntaxMode()
    return s_checkSyntaxMode
 end
 
+declare("QuarantineT")
+
+local function l_build_quarantineT()
    
+   QuarantineT = {}
+   if (LMOD_QUARANTINE_VARS) then
+      local qA = path2pathA(LMOD_QUARANTINE_VARS)
+      for i = 1,#qA do
+         QuarantineT[qA[i]] = true
+      end
+   end
+end
+
+------------------------------------------------------------
+-- Initialize Lmod 
+
+function initialize_lmod()
+   -- Push Lmod version into environment
+   setenv_lmod_version()
+
+   ------------------------------------------------------------------------
+   --  The StandardPackage is where Lmod registers hooks.  Sites may
+   --  override the hook functions in SitePackage.
+   ------------------------------------------------------------------------
+   require("StandardPackage")
+
+   ------------------------------------------------------------------------
+   -- Load a SitePackage Module.
+   ------------------------------------------------------------------------
+
+   local configDir = cosmic:value("LMOD_CONFIG_DIR")
+   local fn        = pathJoin(configDir,"lmod_config.lua")
+   if (isFile(fn)) then
+      assert(loadfile(fn))()
+   end
+
+   build_i18n_messages()
+   l_build_runTCLprog()
+   l_build_accept_function()   
+   l_build_allow_dups_function()
+   l_build_prepend_order_function()
+   if (not QuarantineT) then
+      l_build_quarantineT()
+   end
+
+   local lmodPath = cosmic:value("LMOD_PACKAGE_PATH")
+   for path in lmodPath:split(":") do
+      path = path .. "/"
+      path = path:gsub("//+","/")
+      package.path  = path .. "?.lua;"      ..
+                      path .. "?/init.lua;" ..
+                      package.path
+
+      package.cpath = path .. "../lib/?.so;"..
+                      package.cpath
+   end
+
+   require("SitePackage")
+end

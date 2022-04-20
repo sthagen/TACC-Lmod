@@ -3,6 +3,7 @@ local posix      = require("posix")
 
 require("strict")
 require("utils")
+initialize_lmod()
 require("fileOps")
 require("serializeTbl")
 require("StandardPackage")
@@ -15,6 +16,7 @@ local cosmic     = require("Cosmic"):singleton()
 local dbg        = require("Dbg"):dbg()
 local getenv     = os.getenv
 local testDir    = "spec/Spider"
+setenv_lmod_version()
 describe("Testing Spider Class #Spider.",
          function()
             it("Core directory Test",
@@ -316,6 +318,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "5.9.2",
                            ["fullName"] = "gcc/5.9.2",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/Core",
                            ["pV"] = "000000005.000000009.000000002.*zfinal",
                            ["wV"] = "000000005.000000009.000000002.*zfinal",
                         },
@@ -325,6 +328,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "17.200.3",
                            ["fullName"] = "mpich/17.200.3",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/Compiler/gcc/5.9",
                            ["pV"] = "000000017.000000200.000000003.*zfinal",
                            parentAA = {
                               {
@@ -339,6 +343,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "4.0.3",
                            ["fullName"] = "parmetis/4.0.3",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/MPI/gcc/5.9/mpich/17.200",
                            ["pV"] = "000000004.000000000.000000003.*zfinal",
                            parentAA = {
                               {
@@ -353,6 +358,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "2.7.9",
                            ["fullName"] = "python/2.7.9",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/Compiler/gcc/5.9",
                            ["pV"] = "000000002.000000007.000000009.*zfinal",
                            parentAA = {
                               {
@@ -365,6 +371,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "2.7.9",
                            ["fullName"] = "python/2.7.9",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/Core",
                            ["pV"] = "000000002.000000007.000000009.*zfinal",
                            ["wV"] = "000000002.000000007.000000009.*zfinal",
                         },
@@ -372,6 +379,7 @@ describe("Testing Spider Class #Spider.",
                            ["Version"] = "2.7.9",
                            ["fullName"] = "python/2.7.9",
                            ["hidden"] = false,
+                           ["mpath"] = "%ProjDir%/spec/Spider/h/mf/MPI/gcc/5.9/mpich/17.200",
                            ["pV"] = "000000002.000000007.000000009.*zfinal",
                            parentAA = {
                               {

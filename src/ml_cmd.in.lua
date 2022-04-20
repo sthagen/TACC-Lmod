@@ -103,7 +103,7 @@ local concatTbl = table.concat
 --------------------------------------------------------------------------
 -- Wrap an entity in single quotes.
 -- @param a an entity to wrap in quotes.
-local function quoteWrap(a)
+local function l_quoteWrap(a)
    return "'" .. tostring(a) .. "'"
 end
 
@@ -122,7 +122,7 @@ end
 -- The main program.  Process options and generate module command.
 function main()
 
-   build_i18n_messages()
+   initialize_lmod()
    local argA     = {}
    local optA     = {}
    local cmdA     = {}
@@ -317,9 +317,9 @@ function main()
       local u = {}
       for i = 1,#argA do
          if (argA[i]:sub(1,1) == "-") then
-            u[#u+1] = quoteWrap(argA[i]:sub(2,-1))
+            u[#u+1] = l_quoteWrap(argA[i]:sub(2,-1))
          else
-            b[#b+1] = quoteWrap(argA[i])
+            b[#b+1] = l_quoteWrap(argA[i])
          end
       end
       if (#u > 0) then
@@ -337,7 +337,7 @@ function main()
       end
    else
       for i = 1,#argA do
-         a[#a+1] = quoteWrap(argA[i])
+         a[#a+1] = l_quoteWrap(argA[i])
       end
    end
 

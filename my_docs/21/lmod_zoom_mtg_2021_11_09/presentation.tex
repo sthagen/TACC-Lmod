@@ -1,0 +1,234 @@
+\documentclass{beamer}
+
+% You can also use a 16:9 aspect ratio:
+%\documentclass[aspectratio=169]{beamer}
+\usetheme{TACC16}
+
+% It's possible to move the footer to the right:
+%\usetheme[rightfooter]{TACC16}
+
+\begin{document}
+\title[Lmod]{Lmod 8.6 New Features}
+\author{Robert McLay} 
+\date{Nov. 9, 2021}
+
+% page 1
+\frame{\titlepage} 
+
+\section{Introduction}
+
+% page 2
+\begin{frame}{Lmod 8.6 New Features}
+  \center{\includegraphics[width=.9\textwidth]{Lmod-4color@2x.png}}
+  \begin{itemize}
+    \item Release of Lmod 8.6
+    \item New Features in Lmod web page
+    \item \$LMOD\_QUARANTINE\_VARS
+    \item \texttt{/etc/lmod/lmod\_config.lua} configuration file
+    \item \texttt{source\_sh()} sourcing shell scripts inside a
+      modulefile
+    \item \texttt{LmodBreak()}: Stop processing modulefile but keep
+      going!
+    \item Now released as Lmod 8.5.23
+  \end{itemize}
+\end{frame}
+
+% page 3
+\begin{frame}{New Features in Lmod web page}
+  \begin{itemize}
+    \item https://lmod.readthedocs.io/en/latest/025\_new.html
+    \item A place where new features are and will continue to be announced.
+  \end{itemize}
+\end{frame}
+
+% page 4
+\begin{frame}{\$LMOD\_QUARANTINE\_VARS}
+  \begin{itemize}
+    \item A module at TACC turn-off  \$LMOD\_PAGER
+    \item This \!\@\#\%\& module made me mad.
+    \item Tmod has a new feature kinda like this.
+    \item \$LMOD\_QUARANTINE\_VARS was invented.
+  \end{itemize}
+\end{frame}
+
+% page 5
+\begin{frame}{\$LMOD\_QUARANTINE\_VARS (II)}
+  \begin{itemize}
+    \item export LMOD\_QUARANTINE\_VARS=LMOD\_PAGER:LMOD\_REDIRECT
+    \item This means that a module can't change those variables.
+    \item This only works with regular env. vars.
+    \item You can't quarantine PATH like variables.
+    \item A user sets this variable in their $\sim$/.bashrc or similar
+      file.
+    \item This obviously won't work for modules loaded during the
+      processing of /etc/profile.d/*.sh files
+    \item Use https://github.com/TACC/ShellStartupDebug support users.
+  \end{itemize}
+\end{frame}
+
+% page 6
+\begin{frame}[fragile]
+  \frametitle{/etc/lmod/lmod\_config.lua configuration file}
+  \begin{itemize}
+    \item This file is evaluated during Lmod startup. 
+    \item This location is the default during configuration.
+    \item A site can change this location at configuration.
+  \end{itemize}
+    {\small
+\begin{semiverbatim}
+-- Example /etc/lmod/lmod\_config.lua
+require("strict")
+local cosmic = require("Cosmic"):singleton()
+
+cosmic:assign("LMOD\_SITE\_NAME", "XYZZY")
+local function foo()
+  ...
+end
+sandbox\_registration \{ foo = foo \}
+\end{semiverbatim}
+}
+\end{frame}
+
+% page 7
+\begin{frame}{Sourcing shell scripts inside a modulefile w/ source\_sh()}
+  \begin{itemize}
+    \item This was implemented in Tmod 4.7
+    \item Xavier told me that he did this during Covid Lockdown in France.
+    \item Lmod 8.6 re-implements this feature in a similar way.
+    \item It knows about env. vars and shell functions and aliases.
+  \end{itemize}
+\end{frame}
+
+% page 8
+\begin{frame}{source\_sh() Implementation}
+  \begin{itemize}
+    \item It captures the env. vars/functions/alias before and after
+      the running the shell script.
+    \item It computes the difference and saves it into the ModuleTable
+      in env.
+    \item It can be safely unloaded, shown.
+    \item script path and arguments must not change between load and unload.
+    \item \texttt{module refresh} works
+    \item Obvious points:
+      \begin{itemize}
+        \item It is better to use sh\_to\_modulefile and convert once.
+        \item But sh\_to\_modulefile is not dynamic (e.g. \$HOME)
+        \item Can't have run the script in the user environment before
+          loading the script.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% page 9
+\begin{frame}[fragile]
+  \frametitle{ml --mt}
+    {\tiny
+\begin{semiverbatim}
+\_ModuleTable\_ = \{
+  MTversion = 3,
+  mT = \{
+    wrapperSh = \{
+      fn = "/home/user/w/lmod/rt/sh_to_modulefile/mf/wrapperSh/1.0.lua",
+      fullName = "wrapperSh/1.0",
+      loadOrder = 1,
+      mcmdT = {
+        ["/home/user/w/lmod/rt/sh_to_modulefile/second.sh arg1"] = \{
+          "setenv(\\"SECOND\\",\\"FOO_BAR\\")",
+        \},
+        ["/home/user/w/lmod/rt/sh_to_modulefile/tstScript.sh"] = \{
+          "setenv(\\"MY_NAME\",\\"tstScript.sh\\")",
+          "prepend_path(\\"PATH\\",\\"/home/user/w/lmod/rt/sh_to_modulefile/bin\\")",
+          "set_alias(\\"fooAlias\\",\\"foobin -q -l\\")"
+          , [[set_shell_function("banner"," \\
+    local str=\\"$1\\";\\
+    local RED='\\27[1;31m';\\
+    local NONE='\\27[0m';\\
+    echo \\"${RED}${str}${NONE}\\"\\
+")]], 
+        \},
+      \},
+    \},
+  \},
+}
+\end{semiverbatim}
+    }
+\end{frame}
+
+% page 10
+\begin{frame}{LmodBreak()}
+  \begin{itemize}
+    \item Tmod3 had a function called \texttt{break}
+    \item It stop processing current module
+    \item But it kept going otherwise.
+    \item So it is different than erroring out.
+    \item Lmod: If there is an error, no modules are loaded.
+  \end{itemize}
+\end{frame}
+
+% page 11
+\begin{frame}{LmodBreak() (II)}
+  \begin{itemize}
+    \item Lmod 8.6 adds \texttt{LmodBreak(msg)} function. 
+    \item TCL Modules use \texttt{break msg}
+    \item No changes to environment from current module are kept.
+    \item All other changes are kept.
+  \end{itemize}
+\end{frame}
+
+% page 12
+\begin{frame}[fragile]
+  \frametitle{LmodBreak() (III)}
+    {\tiny
+\begin{semiverbatim}
+--Stdenv.lua
+load(A)
+load(BRK)
+load(C)
+
+--A/1.0.lua
+setenv("A","1.0")
+
+--BRK/1.0.lua
+setenv("BRK","1.0")
+LmodBreak()
+
+--C/1.0.lua
+setenv("C","1.0")
+\end{semiverbatim}
+    }
+\end{frame}
+
+% page 13
+\begin{frame}[fragile]
+  \frametitle{ml StdEnv}
+    {\tiny
+\begin{semiverbatim}
+    export A=1.0
+    export C=1.0
+\end{semiverbatim}
+    }
+\end{frame}
+
+% page 14
+\begin{frame}{Conclusions}
+  \begin{itemize}
+    \item Many new features added to Lmod 8.6
+    \item \$LMOD\_QUARANTINE\_VARS
+    \item \texttt{/etc/lmod/lmod\_config.lua} configuration file
+    \item \texttt{source\_sh()} 
+    \item \texttt{LmodBreak()}: 
+  \end{itemize}
+\end{frame}
+
+% page 15
+\begin{frame}{Future Topics}
+  \begin{itemize}
+    \item Lmod Testing System?
+    \item More internals of Lmod?
+    \item Settarg?
+    \item collections?
+    \item Guest Presentation of special issues?
+  \end{itemize}
+\end{frame}
+
+\end{document}

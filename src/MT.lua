@@ -56,8 +56,9 @@ local ReadLmodRC   = require("ReadLmodRC")
 local base64       = require("base64")
 local concatTbl    = table.concat
 local cosmic       = require("Cosmic"):singleton()
-local dbg          = require("Dbg"):dbg()
+local decode64     = base64.decode64
 local encode64     = base64.encode64
+local dbg          = require("Dbg"):dbg()
 local floor        = math.floor
 local getenv       = os.getenv
 local hook         = require("Hook")
@@ -77,19 +78,19 @@ function M.name(self)
    return s_name
 end
 
-local function mt_version()
+local function l_mt_version()
    return 3
 end
 
 
-local function new(self, s, restoreFn)
-   dbg.start{"MT new(s,restoreFn:",restoreFn,")"}
+local function l_new(self, s, restoreFn)
+   dbg.start{"MT l_new(s,restoreFn:",restoreFn,")"}
    local o         = {}
 
    o.c_rebuildTime   = false
    o.c_shortTime     = false
    o.mT              = {}
-   o.MTversion       = mt_version()
+   o.MTversion       = l_mt_version()
    o.family          = {}
    o.mpathA          = {}
    o.depthT          = {}
@@ -112,7 +113,7 @@ local function new(self, s, restoreFn)
       o.depthT          = paired2pathT(maxdepth)
       dbg.print{"LMOD_MAXDEPTH: ",maxdepth,"\n"}
       dbg.print{"s is nil\n"}
-      dbg.fini("MT new")
+      dbg.fini("MT l_new")
       return o
    end
 
@@ -152,6 +153,12 @@ local function new(self, s, restoreFn)
       end
    end
 
+   -- remove any mcmdT connected to a mT entry
+   local mT = o.mT
+   for sn, entry in pairs(mT) do
+      entry.mcmdT = nil
+   end
+
    local icount = 0
    for k in pairs(o.mT) do
       icount = icount + 1
@@ -167,7 +174,7 @@ local function new(self, s, restoreFn)
       o.mpathA            = path2pathA(currentMPATH,':',clearDblSlash)
    end
 
-   dbg.fini("MT new")
+   dbg.fini("MT l_new")
    return o
 end
 
@@ -180,7 +187,7 @@ function M.singleton(self, t)
    end
    if (not s_mt) then
       dbg.start{"MT:singleton()"}
-      s_mt        = new(self, getMT())
+      s_mt        = l_new(self, getMT())
       dbg.fini("MT:singleton")
    end
    return s_mt
@@ -261,7 +268,7 @@ function M.reportContents(self, t)
       return a
    end
    local s            = f:read("*all")
-   local l_mt         = new(self, s, t.fn)
+   local l_mt         = l_new(self, s, t.fn)
    local pin_versions = cosmic:value("LMOD_PIN_VERSIONS")
    local kind         = (pin_versions == "no") and "userName" or "fullName"
    local activeA      = l_mt:list(kind, "active")
@@ -291,6 +298,37 @@ function M.reset_MPATH_change_flag(self)
 end
 
 
+function M.add_sh2mf_cmds(self, sn, script, mcmdA)
+   local entry = self.mT[sn]
+   if (entry ~= nil) then
+      local a64 = {}
+      for i =1, #mcmdA do
+         a64[i] = encode64(mcmdA[i]) 
+      end
+      if (entry.mcmdT_64 == nil) then
+         entry.mcmdT_64 = {}
+      end
+      local script64 = encode64(script)
+      entry.mcmdT_64[script64] = a64
+   end
+end
+
+function M.get_sh2mf_cmds(self, sn, script)
+   local entry = self.mT[sn]
+   if (entry ~= nil and entry.mcmdT_64  ~= nil
+          and next(entry.mcmdT_64)      ~= nil) then
+      local script64 = encode64(script)
+      local a64 = entry.mcmdT_64[script64]
+      if (  a64 == nil ) then return nil end
+      local a = {}
+      for i = 1,#a64 do
+         a[i] = decode64(a64[i])
+      end
+      return a
+   end
+   return nil
+end
+   
 function M.setStatus(self, sn, status)
    local entry = self.mT[sn]
    if (entry ~= nil) then
@@ -329,7 +367,7 @@ end
 --------------------------------------------------------------------------
 -- Set the load order by using MT:list()
 -- @param self An MT object.
-local function setLoadOrder(self)
+local function l_setLoadOrder(self)
    local a  = self:list("short","active")
    local mT = self.mT
    local sz = #a
@@ -341,19 +379,38 @@ local function setLoadOrder(self)
 end
 
 function M.serializeTbl(self, state)
-   local indent = (state == "pretty")
-   local mt     = self
-   if (masterTbl().rt) then
-      mt               = deepcopy(self)
+   local make_pretty = (state == "pretty")
+   local mt     = deepcopy(self)
+   local rTest  = masterTbl().rt
+   if (rTest) then
       mt.c_rebuildTime = false
       mt.c_shortTime   = false
    end
+   l_setLoadOrder(mt)
 
-   setLoadOrder(mt)
-   local s = serializeTbl{indent = indent, name = self.name(), value = mt}
-   if (not indent) then
-      s = s:gsub("%s+","")
+   if (make_pretty)  then
+      local mT = mt.mT
+      for sn, v in pairs(mT) do
+         local mcmdT_64 = mT[sn].mcmdT_64 
+         if (mcmdT_64 and next(mcmdT_64) ~= nil) then
+            local t = {}
+            for script64, mcmdA_64 in pairsByKeys(mcmdT_64) do
+               local a = {}
+               for i = 1,#mcmdA_64 do
+                  a[i] = decode64(mcmdA_64[i])
+               end
+               local script = decode64(script64)
+               t[script] = a
+            end
+            mT[sn].mcmdT = t
+            if (rTest) then
+               mT[sn].mcmdT_64 = nil
+            end
+         end
+      end
    end
+
+   local s = serializeTbl{indent = make_pretty, name = self.name(), value = mt}
    return s
 end
 
@@ -371,7 +428,7 @@ function M.remove(self, sn)
    mT[sn]    = nil
 end
 
-local function build_AB(a,b, loadOrder, name, value)
+local function l_build_AB(a,b, loadOrder, name, value)
    if (loadOrder > 0) then
       a[#a+1] = { loadOrder, name, value }
    else
@@ -405,7 +462,7 @@ function M.list(self, kind, status)
       for k, v in pairs(mT) do
          if ((status == "any" or status == v.status) and
              (v.status ~= "pending")) then
-            a, b = build_AB(a, b,  v.loadOrder , k, k)
+            a, b = l_build_AB(a, b,  v.loadOrder , k, k)
          end
       end
    elseif (kind == "userName" or kind == "fullName") then
@@ -415,25 +472,25 @@ function M.list(self, kind, status)
             local obj = { sn = k, fullName = v.fullName, userName = v.userName,
                           name = v[kind], fn = v.fn, loadOrder = v.loadOrder,
                           stackDepth = v.stackDepth, ref_count = v.ref_count}
-            a, b = build_AB(a, b, v.loadOrder, v[kind], obj )
+            a, b = l_build_AB(a, b, v.loadOrder, v[kind], obj )
          end
       end
    elseif (kind == "both") then
       for k, v in pairs(mT) do
          if ((status == "any" or status == v.status) and
              (v.status ~= "pending")) then
-            a, b = build_AB(a, b, v.loadOrder, v.userName, v.userName )
+            a, b = l_build_AB(a, b, v.loadOrder, v.userName, v.userName )
             if (v.userName ~= k) then
-               a, b = build_AB(a, b, v.loadOrder, k, k)
+               a, b = l_build_AB(a, b, v.loadOrder, k, k)
             end
             if (v.userName ~= v.fullName) then
-               a, b = build_AB(a, b, v.loadOrder, v.fullName, v.fullName )
+               a, b = l_build_AB(a, b, v.loadOrder, v.fullName, v.fullName )
             end
          end
       end
    end
 
-   local function loadOrder_cmp(x,y)
+   local function l_loadOrder_cmp(x,y)
       if (x[1] == y[1]) then
          return x[2] < y[2]
       else
@@ -441,8 +498,8 @@ function M.list(self, kind, status)
       end
    end
 
-   sort (a, loadOrder_cmp)
-   sort (b, loadOrder_cmp)
+   sort (a, l_loadOrder_cmp)
+   sort (b, l_loadOrder_cmp)
 
    local B = {}
 
@@ -591,20 +648,48 @@ function M.have(self, sn, status)
    return ((status == "any") or (status == entry.status))
 end
 
-function M.lookup_w_userName(self,userName)
-   -- Check if userName is an 
-   if (self:exists(userName)) then
-      return userName
-   end
-   -- Check to see if userName is fullName by looping over entries.
-   local mT = self.mT
-   dbg.printT("lookup_w: mT",mT)
-   for sn, v in pairs(mT) do
-      if (userName == self:fullName(sn)) then
-         return sn
+function M.find_possible_sn(self, userName)
+   local sn_match = false
+   local sn = userName
+   while true do
+      if (self:exists(sn)) then
+         sn_match = true
+         break
       end
+      local idx = sn:match("^.*()/")
+      if (idx == nil) then break end
+      sn = sn:sub(1,idx-1)
+   end
+   if (not sn_match) then
+      sn = userName
+   end
+   return sn_match, sn
+end
+
+
+function M.lookup_w_userName(self,userName)
+   -- Check if userName is a sn
+
+   local sn_match, sn = self:find_possible_sn(userName)
+
+   if (not sn_match) then return false end
+
+   -- Case 1:  userName -> sn ?
+   if (userName == sn) then
+      return sn
+   end
+   
+   -- Case 2:  userName -> fullName ?
+   local fullName = self:fullName(sn)
+   if (userName == fullName) then
+      return sn
    end
 
+   -- Case 3: Partial match?
+   local partial_match = ("^"..userName:escape().."/"):gsub('//+','/')
+   if (fullName:find(partial_match)) then
+      return sn
+   end
    return false
 end
 
@@ -770,7 +855,7 @@ end
 
 --------------------------------------------------------------------------
 -- Generate a columeTable with a title.
-local function columnList(stream, msg, a)
+local function l_columnList(stream, msg, a)
    local cwidth = masterTbl().rt and LMOD_COLUMN_TABLE_WIDTH or TermWidth()
    local t      = {}
    sort(a)
@@ -830,19 +915,19 @@ function M.reportChanges(self)
 
    if (#inactiveA > 0) then
       entries = true
-      columnList(io.stderr,i18n("m_Inactive_Modules",{}), inactiveA)
+      l_columnList(io.stderr,i18n("m_Inactive_Modules",{}), inactiveA)
    end
    if (#activeA > 0) then
       entries = true
-      columnList(io.stderr,i18n("m_Activate_Modules",{}), activeA)
+      l_columnList(io.stderr,i18n("m_Activate_Modules",{}), activeA)
    end
    if (#reloadA > 0) then
       entries = true
-      columnList(io.stderr,i18n("m_Reload_Modules",{}), reloadA)
+      l_columnList(io.stderr,i18n("m_Reload_Modules",{}), reloadA)
    end
    if (#changedA > 0) then
       entries = true
-      columnList(io.stderr,i18n("m_Reload_Version_Chng",{}), changedA)
+      l_columnList(io.stderr,i18n("m_Reload_Version_Chng",{}), changedA)
    end
 
    if (entries) then
@@ -854,7 +939,7 @@ end
 
 --------------------------------------------------------------------------
 -- Build the name of the *family* env. variable.
-local function buildFamilyPrefix()
+local function l_buildFamilyPrefix()
    if (not s_familyA) then
       s_familyA    = {}
       s_familyA[1] = "LMOD_FAMILY_"
@@ -875,7 +960,7 @@ end
 function M.setfamily(self,familyNm,mName)
    local results = self.family[familyNm]
    self.family[familyNm] = mName
-   local familyA = buildFamilyPrefix()
+   local familyA = l_buildFamilyPrefix()
    for i = 1,#familyA do
       local n = familyA[i] .. familyNm:upper()
       MCP:setenv(n, mName)
@@ -889,7 +974,7 @@ end
 -- @param self An MT object
 -- @param familyNm
 function M.unsetfamily(self,familyNm)
-   local familyA = buildFamilyPrefix()
+   local familyA = l_buildFamilyPrefix()
    for i = 1,#familyA do
       local n = familyA[i] .. familyNm:upper()
       MCP:unsetenv(n, "")
@@ -1060,7 +1145,7 @@ function M.getMTfromFile(self,tt)
 
    local restoreFn = tt.fn
    dbg.print{"s: ",s,"\n"}
-   local l_mt       = new(self, s, restoreFn)
+   local l_mt       = l_new(self, s, restoreFn)
    local activeA    = l_mt:list("userName","active")
    local savedMPATH = concatTbl(l_mt.mpathA,":")
    local tracing    = cosmic:value("LMOD_TRACING")
@@ -1104,8 +1189,11 @@ function M.getMTfromFile(self,tt)
 
    dbg.print{"(1) mt.systemBaseMPATH: ",mt.systemBaseMPATH,"\n"}
    dbg.print{"savedBaseMPATH: ",savedBaseMPATH,"\n"}
-   s              = serializeTbl{indent=true, name=s_name, value=mt}
-   dbg.print{"mt after purge",s,"\n"}
+   s              = self:serializeTbl()
+   if (dbg.active()) then
+      local ss = self:serializeTbl("pretty")
+      dbg.print{"mt after purge",ss,"\n"}
+   end
    local envMT = build_MT_envT(s)
    for k,v in pairs(envMT) do
       posix_setenv(k,v,true)
@@ -1241,6 +1329,35 @@ function M.getMTfromFile(self,tt)
    dbg.fini("MT:getMTfromFile")
    return true
 end
+
+function M.extractModulesFiles(self)
+   local a = self:list("fullName","active")
+   local loadA = {}
+   local fileA = {}
+   local status = true
+   for i = 1,#a do
+      loadA[#loadA+1] = a[i].fullName
+      fileA[#fileA+1] = a[i].fn
+   end
+   local loadStr = nil
+   local fileStr = nil
+   if (next (loadA) ~= nil) then
+      loadStr = concatTbl(loadA,":")
+      fileStr = concatTbl(fileA,":")
+   end
+
+   local oldV = getenv("LOADEDMODULES") 
+   dbg.print{"RTM: oldV: ",oldV,", loadStr: ",loadStr,"\n"}
+
+   if (oldV == loadStr) then
+      status = false
+   elseif (oldV and not loadStr) then
+      loadStr = nil
+      fileStr = nil
+   end
+   return status, loadStr, fileStr
+end
+
 
 function M.setMpathRefCountT(self, refCountT)
    self.mpathRefCountT = refCountT

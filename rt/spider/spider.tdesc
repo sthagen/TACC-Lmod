@@ -5,7 +5,7 @@ testdescript = {
    description = [[
 	 Test initial module load
    ]],
-   keywords = {"load" },
+   keywords = {"spider" },
 
    active = 1,
    testName = "spider",
@@ -129,6 +129,18 @@ testdescript = {
      runLmod                   --show_hidden spider  GROMACS                  #63
      runLmod load    GROMACS/.2016.x-drude-20180214-g3f7439a                  #64
      runLmod list                                                             #65
+
+     unsetMT
+
+     export MODULEPATH_ROOT2=$testDir/mf2
+     export MODULEPATH=$MODULEPATH_ROOT2/Core
+
+     runLmod      spider                                                      #66
+     runBase runSpiderCmd -o spiderT $MODULEPATH                              #67
+     runBase runSpiderCmd -o dbT     $MODULEPATH                              #68
+     runLmod      spider GROMACS/2018                                         #69
+     runLmod      spider GROMACS/2019                                         #70
+
 
      HOME=$ORIG_HOME
 

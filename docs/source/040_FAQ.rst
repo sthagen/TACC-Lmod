@@ -186,11 +186,11 @@ Why doesn't the module command work in shell scripts?
 
 How do I use the initializing shell script that comes with this application with Lmod?
 
- The short answer is you don't. Among the many problems is that there
- is no way to unload that shell script. If the script is simple you
- can read it through and create a modulefile. To simplify this task,
- Lmod provides the ``sh_to_modulefile`` script to convert shell
- scripts to modulefiles. See :ref:`sh_to_modulefile-label` for more details.
+  New in Lmod 8.6+, a modulefile can contain **source_sh** ("shell",
+  "shell_script arg1 arg2 ...") to source a shell script by
+  automatically converting it into module commands. Sites can use
+  $LMOD_DIR/sh_to_modulefile to convert the script once.  See
+  :ref:`sh_to_modulefile-label` for details.
 
 Why is the output of ``module avail`` not filling the width of the terminal?
 
@@ -295,7 +295,7 @@ How to use module commands inside a Makefile?
 
 
       module_list:
-             source $$MODULESHOME/init/bash; module list
+             source $$MODULESHOME/init/bash; module listt
 
 What to do if new modules are missing when doing ``module avail``?
 
@@ -331,3 +331,36 @@ How to edit a modulefile?
        function edit_modulefile () {
           $EDITOR $(module --redirect --location $1)
        }
+
+
+If my startup shell is bash or tcsh and I start zsh, why do I get a
+message that is like: "/etc/zsh/zshrc:48: compinit: function definition file not found"
+
+   Lmod supports both zsh and ksh. Both these shell use shell
+   var. FPATH but in very different ways.  The issue is that some bash
+   or tcsh users run ksh scripts and need access to the module
+   command. In the K-shell, the env. var. FPATH is exported and is the
+   path to where the module shell function is found.  Z-shell also
+   uses FPATH to point to tool like compinit and others.  By exporting
+   FPATH, Z-shell does not change the value of FPATH which means that
+   the zsh user can not find all the functions that make it work.
+
+   The solution is to add "unset FPATH" in your startup files before
+   "exec zsh".
+
+Why doesn't setting CC in compiler and mpi modulefiles work always
+work reliably in a software hierarchy?
+
+   When Lmod sees changes to $MODULEPATH it immediately checks to
+   see whether all the currently loaded modules should still be
+   loaded.  This means that setting CC with a pushenv() before
+   modifying $MODULEPATH is unsafe.  The correct way to modify
+   $MODULEPATH is in the beginning of the modulefile.  So for the gcc
+   modulefile you might have::
+
+       prepend_path("MODULEPATH","...")
+       pushenv("CC","gcc")
+
+   and not the other way around.
+
+   

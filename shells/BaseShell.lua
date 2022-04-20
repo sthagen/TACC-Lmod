@@ -113,6 +113,13 @@ function M.initialize(self)
    -- normalize nothing happens here on most shells
 end
 
+--------------------------------------------------------------------------
+-- BaseShell:finalize(): Do this first.
+
+function M.finalize(self)
+   -- normalize nothing happens here on most shells
+end
+
 function M.report_failure(self)
    local line = "\nfalse\n"
    stdout:write(line)
@@ -140,9 +147,14 @@ function M.expand(self, tbl)
       return
    end
 
-   self:initialize()
+   local init = false
 
    for k,v in pairsByKeys(tbl) do
+      if (not init) then
+         self:initialize()
+         init = true
+      end
+
       local vstr, vType, priorityStrT, refCountT = v:expand()
       if (next(priorityStrT) ~= nil) then
          for prtyKey,prtyStr in pairs(priorityStrT) do
@@ -166,13 +178,20 @@ function M.expand(self, tbl)
          self:alias(k,vstr)
       elseif (vType == "shell_function") then
          self:shellFunc(k,vstr)
+      elseif (vType == "complete") then
+         self:complete(k,vstr)
       elseif (not vstr) then
          self:unset(k, vType)
       elseif (k == "_ModuleTable_") then
          self:expandMT(vstr)
       else
-         self:expandVar(k,vstr,vType)
+         if (not QuarantineT[k]) then
+            self:expandVar(k,vstr,vType)
+         end
       end
+   end
+   if (init) then
+      self:finalize()
    end
    self:report_success()
    dbg.fini("BaseShell:expand")
@@ -206,7 +225,7 @@ function M.expandMT(self, vstr)
       local frameStk = require("FrameStk"):singleton()
       local mt       = frameStk:mt()
       local indent   = dbg.indent()
-      local s        = serializeTbl{indent=true, name="_ModuleTable_", value=mt}
+      local s        = mt:serializeTbl("pretty")
       for line in s:split("\n") do
          io.stderr:write(indent,line,"\n")
       end
@@ -215,6 +234,12 @@ function M.expandMT(self, vstr)
    dbg.fini("BaseShell:expandMT")
 end
 
+
+function M.complete(self, name, value)
+   -- This base function does nothing.
+   -- The shell functions must do something with it
+   -- if they want anything to happen.
+end
 
 function M.echo(self, ...)
    local LMOD_REDIRECT = cosmic:value("LMOD_REDIRECT")
@@ -248,7 +273,7 @@ end
 -- valid_shell:  returns the valid shell name if it is in the shellTbl or
 --               bare otherwise.
 
-local function valid_shell(shellTbl, shell_name)
+local function l_valid_shell(shellTbl, shell_name)
    if (not shellTbl[shell_name]) then
       return shellTbl.bare
    end
@@ -257,7 +282,7 @@ end
 
 local s_shellTbl = false
 
-local function createShellTbl()
+local function l_createShellTbl()
    if (not s_shellTbl) then
       local CMake        = require('CMake')
       local Csh          = require('Csh')
@@ -294,7 +319,7 @@ end
 
 
 function M.isValid(shell_name)
-   createShellTbl()
+   l_createShellTbl()
    return s_shellTbl[shell_name]
 end
 
@@ -302,9 +327,9 @@ end
 -- BaseShell:build():  This is the factory that builds the derived shell.
 
 function M.build(self, shell_name)
-   createShellTbl()
+   l_createShellTbl()
    local shellNm = shell_name:lower()
-   local o       = valid_shell(s_shellTbl, shellNm):create()
+   local o       = l_valid_shell(s_shellTbl, shellNm):create()
    o._active     = true
    o:set_my_name(shellNm)
    return o

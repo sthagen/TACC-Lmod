@@ -121,22 +121,18 @@ function programName()
 end
 
 require("string_utils")
-require("serializeTbl")
 require("pairsByKeys")
 require("fileOps")
-require("capture")
 require("utils")
-MF_Base = require("MF_Base")
 
 local Version      = "0.0"
 local dbg          = require("Dbg"):dbg()
 local Optiks       = require("Optiks")
+local concatTbl    = table.concat
 local getenv       = os.getenv
 local getenv_posix = posix.getenv
 local setenv_posix = posix.setenv
-local concatTbl    = table.concat
 local s_master     = {}
-local load         = (_VERSION == "Lua 5.1") and loadstring or load
 local pack         = (_VERSION == "Lua 5.1") and argsPack or table.pack -- luacheck: compat
 envT               = false
 
@@ -157,177 +153,12 @@ local execT = {
    bash   = 'keep',
 }
 
-local ignoreA = {
-   "BASH_ENV",
-   "COLUMNS",
-   "DISPLAY",
-   "EDITOR",
-   "ENV",
-   "ENV2",
-   "GROUP",
-   "HISTFILE",
-   "HISTSIZE",
-   "HOME",
-   "HOST",
-   "HOSTTYPE",
-   "LC_ALL",
-   "LINES",
-   "LMOD_CMD",
-   "LMOD_DIR",
-   "LMOD_PKG",
-   "LMOD_ROOT",
-   "LMOD_SETTARG_CMD",
-   "LMOD_SETTARG_FULL_SUPPORT",
-   "LMOD_VERSION",
-   "LOGNAME",
-   "MACHTYPE",
-   "MAILER",
-   "MODULESHOME",
-   "OLDPWD",
-   "OSTYPE",
-   "PAGER",
-   "PRINTER",
-   "PS1",
-   "PS2",
-   "PWD",
-   "REMOTEHOST",
-   "REPLYTO",
-   "SHELL",
-   "SHLVL",
-   "SSH_ASKPASS",
-   "SSH_CLIENT",
-   "SSH_CONNECTION",
-   "SSH_TTY",
-   "TERM",
-   "TTY",
-   "TZ",
-   "USER",
-   "VENDOR",
-   "VISUAL",
-   "_",
-   "module",
-}
-
-
-
---------------------------------------------------------------------------
--- Capture output and exit status from *cmd*
--- @param cmd A string that contains a unix command.
--- @param envT A table that contains environment variables to be set/restored when running *cmd*.
-function capture(cmd, envT)
-   dbg.start{"capture(",cmd,")"}
-   if (dbg.active()) then
-      dbg.print{"cwd: ",posix.getcwd(),"\n",level=2}
-   end
-
-   local newT = {}
-   envT = envT or {}
-
-   for k, v in pairs(envT) do
-      dbg.print{"envT[",k,"]=",v,"\n"}
-      newT[k] = getenv(k)
-      dbg.print{"newT[",k,"]=",newT[k],"\n"}
-      setenv_posix(k, v, true)
-   end
-
-   -- in Lua 5.1, p:close() does not return exit status,
-   -- so we append 'echo $?' to the command to determine the exit status
-   local ec_msg = "Lmod Capture Exit Code"
-   if _VERSION == "Lua 5.1" then
-      cmd = cmd .. '; echo "' .. ec_msg .. ': $?"'
-   end
-
-   local out
-   local status
-   local p   = io.popen(cmd)
-   if (p ~= nil) then
-      out    = p:read("*all")
-      status = p:close()
-   end
-
-   -- trim 'exit code: <value>' from the end of the output and determine exit status
-   if _VERSION == "Lua 5.1" then
-      local exit_code = out:match(ec_msg .. ": (%d+)\n$")
-      if not exit_code then
-         LmodError("Failed to find '" .. ec_msg .. "' in output: " .. out)
-      end
-      status = exit_code == '0'
-      out = out:gsub(ec_msg .. ": %d+\n$", '')
-   end
-
-   for k, v in pairs(newT) do
-      setenv_posix(k,v, true)
-   end
-
-   if (dbg.active()) then
-      dbg.start{"capture output()",level=2}
-      dbg.print{out}
-      dbg.fini("capture output")
-   end
-   dbg.print{"status: ",status,", type(status): ",type(status),"\n"}
-   dbg.fini("capture")
-   return out, status
-end
 
 function masterTbl()
    return s_master
 end
 
-function wrtEnv(fn)
-   local envT = getenv_posix()
-   local s    = serializeTbl{name="envT", value = envT, indent = true}
-   if (fn == "-") then
-      io.stdout:write(s)
-   else
-      local f    = io.open(fn,"w")
-      if (f) then
-         f:write(s,"\n")
-         f:close()
-      end
-   end
-end
-
-function splice(a, is, ie)
-   local b = {}
-   for i = 1, is-1 do
-      b[i] = a[i]
-   end
-
-   for i = ie+1, #a do
-      b[#b+1] = a[i]
-   end
-   return b
-end
-
-function path_regularize(value)
-   if (value == nil) then return nil end
-   local tail = (value:sub(-1,-1) == "/") and "/" or ""
-
-   value = value:gsub("^%s+","")
-   value = value:gsub("%s+$","")
-   value = value:gsub("//+","/")
-   value = value:gsub("/%./","/")
-   value = value:gsub("/$","")
-   return value .. tail
-end
-
-function path2pathA(path)
-   local delim = ":"
-   if (not path) then
-      return {}
-   end
-   if (path == '') then
-      return { '' }
-   end
-
-   local pathA = {}
-   for v  in path:split(delim) do
-      pathA[#pathA + 1] = path_regularize(v)
-   end
-   return pathA
-end
-
-local function cleanPath(value)
+local function l_cleanPath(value)
 
    local pathT  = {}
    local pathA  = {}
@@ -382,63 +213,7 @@ local function cleanPath(value)
    return concatTbl(pathA,':')
 end
 
-function indexPath(old, oldA, new, newA)
-   dbg.start{"indexPath(",old, ", ", new,")"}
-   local oldN = #oldA
-   local newN = #newA
-   local idxM = newN - oldN + 1
-
-   dbg.print{"oldN: ",oldN,", newN: ",newN,"\n"}
-
-   if (oldN >= newN or newN == 1) then
-      if (old == new) then
-         dbg.fini("(1) indexPath")
-         return 1
-      end
-      dbg.fini("(2) indexPath")
-      return -1
-   end
-
-   local icnt = 1
-
-   local idxO = 1
-   local idxN = 1
-
-   while (true) do
-      local oldEntry = oldA[idxO]
-      local newEntry = newA[idxN]
-
-      icnt = icnt + 1
-      if (icnt > newN) then
-         break
-      end
-
-
-      if (oldEntry == newEntry) then
-         idxO = idxO + 1
-         idxN = idxN + 1
-
-         if (idxO > oldN) then break end
-      else
-         idxN = idxN + 2 - idxO
-         idxO = 1
-         if (idxN > idxM) then
-            dbg.fini("(3) indexPath")
-            return -1
-         end
-      end
-   end
-
-   idxN = idxN - idxO + 1
-
-   dbg.print{"idxN: ", idxN, "\n"}
-
-   dbg.fini("indexPath")
-   return idxN
-
-end
-
-function cleanEnv()
+function l_cleanEnv()
    local envT = getenv_posix()
 
    for k, v in pairs(envT) do
@@ -446,73 +221,40 @@ function cleanEnv()
       if (not keep) then
          setenv_posix(k, nil, true)
       elseif (keep == 'neat') then
-         setenv_posix(k, cleanPath(v), true)
+         setenv_posix(k, l_cleanPath(v), true)
       end
    end
 end
-
-
 
 function main()
    ------------------------------------------------------------------------
    -- evaluate command line arguments
    options()
-   local masterTbl = masterTbl()
-   local pargs     = masterTbl.pargs
-
-   local ignoreT = {}
-   for i = 1, #ignoreA do
-      ignoreT[ignoreA[i]] = true
-   end
+   local masterTbl    = masterTbl()
+   local pargs        = masterTbl.pargs
+   local script       = concatTbl(pargs," ")
+   local convertSh2MF = require("convertSh2MF")
 
    if (masterTbl.debug > 0) then
       dbg:activateDebug(masterTbl.debug)
    end
 
-
-   if (masterTbl.saveEnvFn) then
-      wrtEnv(masterTbl.saveEnvFn)
-      os.exit(0)
-   end
-
-   local LuaCmd = findLuaProg()
-
+   initialize_lmod()
    if (masterTbl.cleanEnv) then
-      cleanEnv()
+      l_cleanEnv()
    end
 
-   local oldEnvT = getenv_posix()
-   local cmdA    = false
+   local shellName = masterTbl.inStyle:lower()
 
-   if(masterTbl.inStyle:lower() == "csh") then
-      cmdA    = {
-         "csh", "-f","-c",
-         "\"source " ..concatTbl(pargs," ") .. '>& /dev/null; '.. LuaCmd .. " " .. programName() .. " --saveEnv -\""
-      }
-   else -- Assume bash unless told otherwise
-      cmdA    = {
-         "bash", "--noprofile","--norc","-c",
-         "\". " ..concatTbl(pargs," ") .. '>/dev/null 2>&1; '.. LuaCmd .. " " .. programName() .. " --saveEnv -\""
-      }
+   local success, msg, a = convertSh2MF(shellName, masterTbl.style, script)
+   if (not success) then
+      io.stderr:write(msg,"\n")
+      os.exit(1)
    end
 
-   dbg.print{"cmd: ",concatTbl(cmdA," "),"\n"}
 
-   local s = capture(concatTbl(cmdA," "))
+   local s = concatTbl(a,"\n")
 
-   if (masterTbl.debug > 0) then
-      local f = io.open("s.log","w")
-      if (f) then
-         f:write(s)
-         f:close()
-      end
-   end
-
-   local factory = MF_Base.build(masterTbl.style)
-
-   assert(load(s))()
-
-   s = concatTbl(factory:process(ignoreT, oldEnvT, envT),"\n")
    if (masterTbl.outFn) then
       local f = io.open(masterTbl.outFn,"w")
       if (f) then
@@ -528,7 +270,7 @@ function main()
 end
 
 function usage()
-   return "Usage: sh_to_modulefile [options] bash_shell_script [script_options]"
+   return "Usage: $LMOD_DIR/sh_to_modulefile [options] bash_shell_script [script_options]"
 end
 
 

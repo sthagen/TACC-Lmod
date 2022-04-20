@@ -12,9 +12,10 @@ local respect = "true"
 setenv("SETTARG_TAG1", "OBJ", respect )
 setenv("SETTARG_TAG2", "_"  , respect )
 
-local full_support = (os.getenv("LMOD_FULL_SETTARG_SUPPORT") or
-                      os.getenv("LMOD_SETTARG_FULL_SUPPORT") or "no"):lower()
-if (full_support ~= "no") then
+local settarg_funcs = (os.getenv("LMOD_SETTARG_FUNCTIONS") or
+                       os.getenv("LMOD_FULL_SETTARG_SUPPORT") or
+                       os.getenv("LMOD_SETTARG_FULL_SUPPORT") or "no"):lower()
+if (settarg_funcs ~= "no" )  then
    set_alias("cdt", "cd $TARG")
    set_shell_function("targ",  'builtin echo $TARG', 'echo $TARG')
    set_shell_function("dbg",   'settarg "$@" dbg',   'settarg $* dbg')
@@ -27,12 +28,13 @@ local myShell = myShellName()
 local exitCmd = "eval `" .. "@path_to_lua@ " .. settarg_cmd .. " -s " .. myShell .. " --destroy`"
 execute{cmd=exitCmd, modeA = {"unload"}}
 
-local titlebar_support = (os.getenv("LMOD_SETTARG_TITLE_BAR") or "no"):lower()
-local term             = os.getenv("TERM") or " "
+local define_prompt_cmd = (os.getenv("LMOD_SETTARG_IN_PROMPT") or "yes"):lower()
+local titlebar_support  = (os.getenv("LMOD_SETTARG_TITLE_BAR") or "no"):lower()
+local term              = os.getenv("TERM") or " "
 
-if (titlebar_support == "yes") then
+if (define_prompt_cmd ~= "no") then
    if (myShellName() == "bash" or myShellName() == "zsh") then
-      local precmd = [==[{
+      local precmd = [==[
              local tilde="~";
              local H=${HOSTNAME-$(hostname)};
              H=${H%%.*};
@@ -40,10 +42,9 @@ if (titlebar_support == "yes") then
              eval $(${LMOD_SETTARG_CMD:-:} -s bash);
              ${SET_TITLE_BAR:-:} "${TARG_TITLE_BAR_PAREN}${USER}@${SHOST}:${PWD/#$HOME/$tilde}";
              ${USER_PROMPT_CMD:-:};
-           }
       ]==]
       set_shell_function("precmd",precmd,"")
-      if (term:find("xterm")) then
+      if (titlebar_support == "yes" and term:find("xterm")) then
          setenv("SET_TITLE_BAR","xSetTitleLmod")
          execute{cmd='echo -n -e "\\033]2; \\007"',modeA={"unload"}}
       end
@@ -110,16 +111,24 @@ the executables and object files are placed in $TARG.  You can also use
 $TARG_COMPILER_FAMILY to know which compiler you are using so that you
 can set the appropriate compiler flags.
 
-If the environment variable LMOD_SETTARG_FULL_SUPPORT is set to "yes"
+If the environment variable LMOD_SETTARG_FUNCTIONS is set to "yes"
 then helpful aliases are defined to set the debug/optimize/max debug
 build scenerio
 
-If the environment variable LMOD_SETTARG_TITLE_BAR is set to "yes" then
-the xterm title will be set with along with important modules like the
-compiler and mpi stack.
+If the environment variable LMOD_SETTARG_IN_PROMPT is NOT set to "no",
+then the settarg module will define the PROMPT_COMMAND in bash and
+precmd in zsh
+
+If the environment variable LMOD_SETTARG_TITLE_BAR is set to "yes" and
+LMOD_SETTARG_IN_PROMPT is not "no", then the xterm title will be set with
+along with important modules like the compiler and mpi stack.
+
 
 
 Settarg can do more.  Please see the Lmod website for more details.
 ]]
 
+whatis([==[Description:
+The settarg module provides a way to connect the loaded modules with your build system by setting environment variables.
+]==])
 help(helpMsg)

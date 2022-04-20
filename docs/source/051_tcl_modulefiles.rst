@@ -28,6 +28,12 @@ standard TCL language.
    *char* . Also the last optional argument can specify a priority. 
    (See :ref:`path_priority-label` for details.)
 
+**complete shell name arg1 arg2 ...** "
+   Bash and tcsh support the complete function.  Note that the
+   shellName must match the name of the shell given on the Lmod
+   command.  There is no error if the shell names do not match. The
+   command is ignored.  See rt/complete/mf/tcl_spack/1.0.lua for an example.
+
 **conflict A B** :
    The current modulefile will only load if all listed modules are NOT loaded.
 
@@ -35,6 +41,17 @@ standard TCL language.
    Loads all modules.  When unloading only dependent modules are
    unloaded.  See :ref:`dependent_modules-label` for details.
    
+**break** msg :
+   This command causes the evaluation of the
+   current modulefile to stop and all changed in the user's
+   environment to be ignored from the current modulefile.  However,
+   all other modulefiles are evaluated.  
+
+   In other words, this command does not stop the operation, where as
+   **exit** stops all evaluations. New in Lmod 8.6+
+
+   **Note** As of Lmod 8.6.16: break does nothing when unloading.
+
 **exit** *number* :
    Exits the module.  No changes in the environment occur if this
    command is found.
@@ -139,6 +156,10 @@ standard TCL language.
 **reportError** *string* :
   Report an error and abort processing of the modulefile.
 
+  **Note**: During unloading, this command reports the error message
+  but does not abort the processing of the modulefile. (as of Lmod 8.6.16+)
+
+
 **require-fullname** :
   Reports an error if the user specified name is not the fullname of
   the module (e.g. **module load gcc/10.1** vs **module load gcc**.
@@ -147,6 +168,26 @@ standard TCL language.
       if { [ module-info mode load ] } {
           require-fullname
       }
+
+**source-sh** *shellName* *shell_script* *arg1* ...
+     source a shell script as part of a module. Supported shellNames
+     are *sh*, *dash*, *bash*, *zsh*, *csh*, *tcsh*, *ksh*.  When
+     loading, Lmod automatically converts the shell script into module
+     commands and saves the module commands in the environment.  It
+     does this by sourcing the shell script string in a subshell and
+     comparing the environment before and after sourcing the shell
+     script string. When unloading, the saved module commands from the
+     environment are used. Aliases and shell functions are tracked.
+
+     Note that shell script string must not change between loading and
+     unloading as the full string is used to reference the saved
+     module commands.
+
+     Other shells could be supported with help from the community that
+     uses that shell.  (New in version 8.6)
+
+     This feature was introduced in Tmod 4.6 and was shamelessly
+     studied and re-implemented in Lmod 8.6+.
 
 **set-alias NAME** *value* :
   Define an alias to **NAME** with *value*.

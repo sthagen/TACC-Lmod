@@ -48,7 +48,7 @@ local M            = {}
 
 local s_CmdLineOptions = {}
 
-local function new(self)
+local function l_new(self)
    local o = {}
 
    setmetatable(o,self)
@@ -60,7 +60,7 @@ end
 function  M.options(self)
    if ( next(s_CmdLineOptions) ) then return s_CmdLineOptions end
 
-   s_CmdLineOptions = new(self)
+   s_CmdLineOptions = l_new(self)
 
    local Optiks = require("Optiks")
 
@@ -142,6 +142,12 @@ function  M.options(self)
    cmdlineParser:add_option{
       name   = {'--no_cpu_model'},
       dest   = 'noCpuModel',
+      action = 'store_true',
+   }
+
+   cmdlineParser:add_option{
+      name   = {'--generic_arch'},
+      dest   = 'genericArch',
       action = 'store_true',
    }
 

@@ -68,7 +68,7 @@ local mpath_avail  = cosmic:value("LMOD_MPATH_AVAIL")
 
 local s_master = false
 
-local function new(self, safe)
+local function l_new(self, safe)
    local o = {}
 
    setmetatable(o,self)
@@ -84,7 +84,7 @@ end
 function M.singleton(self, safe)
    dbg.start{"Master:singleton(safe: ",safe,")"}
    if (not s_master) then
-      s_master = new(self, safe)
+      s_master = l_new(self, safe)
    end
    dbg.print{"s_master: ",tostring(s_master), ", safe: ",s_master.__safe,"\n"}
    dbg.fini("Master:singleton")
@@ -167,7 +167,7 @@ end
 -- This function marks a module name as loaded and saves
 -- it to LOADEDMODULES and _LMFILES_.   This is only for
 -- compatibility with Tmod.
-local function registerLoaded(fullName, fn)
+local function l_registerLoaded(fullName, fn)
    local frameStk = FrameStk:singleton()
    local varT     = frameStk:varT()
    local modList  = "LOADEDMODULES"
@@ -193,7 +193,7 @@ end
 -- This function marks a module name as unloaded and
 -- saves it to LOADEDMODULES and _LMFILES_.   This is
 -- only for compatibility with Tmod.
-local function registerUnloaded(fullName, fn)
+local function l_registerUnloaded(fullName, fn)
    local frameStk = FrameStk:singleton()
    local varT     = frameStk:varT()
    local modList  = "LOADEDMODULES"
@@ -363,7 +363,7 @@ function M.load(self, mA)
             local mcp_old = mcp
             local mcp     = MCP
             dbg.print{"Setting mcp to ", mcp:name(),"\n"}
-            mcp:unload{MName:new("mt",sn)}
+            unload_internal{MName:new("mt",sn)}
             mname:reset()  -- force a new lazyEval
             local status = mcp:load_usr{mname}
             mcp          = mcp_old
@@ -384,17 +384,17 @@ function M.load(self, mA)
             frameStk:push(mname)
             mt = frameStk:mt()
             mt:add(mname,"pending")
-            loadModuleFile{file = fn, shell = shellNm, mList = mList, reportErr = true}
+            local status = loadModuleFile{file = fn, shell = shellNm, mList = mList, reportErr = true}
             mt = frameStk:mt()
 
             -- A modulefile could the same named module over top of the current modulefile
             -- Say modulefile abc/2.0 loads abc/.cpu/2.0.  Then in the case of abc/2.0 the filename
             -- won't match.
-            if (mt:fn(sn) == fn) then
+            if (mt:fn(sn) == fn and status) then
                mt:setStatus(sn, "active")
                hook.apply("load",{fn = mname:fn(), modFullName = mname:fullName(), mname = mname})
                dbg.print{"Marking ",fullName," as active and loaded\n"}
-               registerLoaded(fullName, fn)
+               --l_registerLoaded(fullName, fn)
             end
             frameStk:pop()
             loaded = true
@@ -422,7 +422,7 @@ function M.load(self, mA)
             local force = true
             for j = 1,#b do
                s_stk[#s_stk + 1] = "stuff"
-               mcp:unload_usr(b[j].umA, force)
+               unload_usr_internal(b[j].umA, force)
                mcp:load(b[j].lmA)
                remove(s_stk)
             end
@@ -488,12 +488,6 @@ function M.unload(self,mA)
    local a        = {}
    local mt
 
-   local mcp_old = mcp
-
-   mcp = _G.MasterControl.build("unload")
-   dbg.print{"Setting mcp to ", mcp:name(),"\n"}
-
-
    for i = 1, #mA do
       mt             = frameStk:mt()
       local mname    = mA[i]
@@ -525,7 +519,7 @@ function M.unload(self,mA)
       if (mt:have(sn,"inactive")) then
          dbg.print{"Removing inactive module: ", userName, "\n"}
          mt:remove(sn)
-         registerUnloaded(mt:fullName(sn), mt:fn(sn))
+         --l_registerUnloaded(mt:fullName(sn), mt:fn(sn))
          a[#a + 1] = true
       elseif (mt:have(sn,"active")) then
          dbg.print{"Master:unload: \"",userName,"\" from file: \"",fn,"\"\n"}
@@ -537,14 +531,17 @@ function M.unload(self,mA)
          end
 
          mt:setStatus(sn,"pending")
-         local mList = concatTbl(mt:list("both","active"),":")
-	 loadModuleFile{file=fn, mList=mList, shell=shellNm, reportErr=false}
-         mt = frameStk:mt()
-         mt:remove(sn)
-         registerUnloaded(fullName, fn)
-         hook.apply("unload",{fn = mname:fn(), modFullName = mname:fullName()})
+         local mList  = concatTbl(mt:list("both","active"),":")
+	 local status = loadModuleFile{file=fn, mList=mList, shell=shellNm, reportErr=false}
+         dbg.print{"status from loadModulefile: ",status,"\n"}
+         if (status) then
+            mt = frameStk:mt()
+            mt:remove(sn)
+            --l_registerUnloaded(fullName, fn)
+            hook.apply("unload",{fn = mname:fn(), modFullName = mname:fullName()})
+         end
          frameStk:pop()
-         a[#a+1] = true
+         a[#a+1] = status
       else
          a[#a+1] = false
       end
@@ -558,7 +555,6 @@ function M.unload(self,mA)
       self:reloadAll()
    end
 
-   mcp = mcp_old
    dbg.print{"Setting mcp to ", mcp:name(),"\n"}
    dbg.fini("Master:unload")
    return a
@@ -633,7 +629,7 @@ function M.reloadAll(self, force_update)
                          " a[i].userName: \"",userName,"\"",
                          "\n"}
                dbg.print{"Master:reloadAll(",ReloadAllCntr,"): Unloading module: \"",sn,"\"\n"}
-               mcp:unload({mname_old})
+               unload_internal{mname_old}
                mt_uName = mt:userName(sn)
                dbg.print{"Master:reloadAll(",ReloadAllCntr,"): mt:userName(sn): \"",mt_uName,"\"\n"}
                mname    = MName:new("load", mt:userName(sn))
@@ -779,7 +775,7 @@ function M.reload_sticky(self, force)
    local mcp_old  = mcp
    mcp            = MCP
    local reload   = false
-   for i = 1, #stickyA do
+   for i = #stickyA, 1, -1 do
       local entry = stickyA[i]
       local mname = MName:new("load",entry.userName)
       local fn    = mname:fn()
@@ -825,7 +821,7 @@ function M.safeToUpdate()
    return s_master.__safe
 end
 
-local function availEntry(defaultOnly, label, searchA, defaultT, entry)
+local function l_availEntry(defaultOnly, label, searchA, defaultT, entry)
    if (defaultOnly) then
       local fn    = entry.fn
       if (not defaultT[fn]) then
@@ -1031,10 +1027,10 @@ function M.overview(self,argA)
    for i = 1,#aa do
       local entry = aa[i]:sub(1,-2) --> strip trailing newline
       repeat 
-         if (entry:find("(@")) then
+         dbg.print{"RTM: entry: ",entry,"\n"}
+         if (entry:find("%(@")) then
             break
          end
-         dbg.print{"entry: ",entry,"\n"}
          if (entry:find(":$")) then
             register_sn_count_in_b(false)
             if (next(b) ~= nil) then
@@ -1100,7 +1096,7 @@ function M.terse_avail(self, mpathA, availA, alias2modT, searchA, showSN, defaul
       local prtSnT = {}  -- Mark if we have printed the sn?
       
       for i = 1,#A do
-         local sn, fullName, fn = availEntry(defaultOnly, label, searchA, defaultT, A[i])
+         local sn, fullName, fn = l_availEntry(defaultOnly, label, searchA, defaultT, A[i])
          if (sn) then
             if (not prtSnT[sn] and sn ~= fullName and showSN) then
                prtSnT[sn] = true
@@ -1254,7 +1250,7 @@ function M.avail(self, argA)
          local b = {}
          for j = 1,#A do
             local entry = A[j]
-            local sn, fullName, fn = availEntry(defaultOnly, label, searchA, defaultT, entry)
+            local sn, fullName, fn = l_availEntry(defaultOnly, label, searchA, defaultT, entry)
             if (sn) then
                local dflt = false
                if (not defaultOnly and mark_as_default(entry, defaultT)) then
@@ -1316,23 +1312,48 @@ function M.avail(self, argA)
    local spiderT,dbT,
          mpathMapT, providedByT = cache:build()
    
+   dbg.printT("providedByT", providedByT)
+
+
+
    if (extensions and providedByT and next(providedByT) ~= nil) then
+      local mpathT = {}
+      for i = 1, #mpathA do
+         mpathT[mpathA[i]] = true
+      end
+
+      dbg.printT("mpathT",mpathT)
+      dbg.printT("providedByT",providedByT)
+
       local b = {}
       for k,v in pairsByKeys(providedByT) do
          local found = false
          if (searchA.n > 0) then
             for i = 1, searchA.n do
-               for kk in pairs(v) do
-                  local s = searchA[i]
-                  if (kk:find(s)) then
+               for kk,vv in pairs(v) do
+                  local s        = searchA[i]
+                  for i = 1,#vv do
+                     local vvv = vv[i]
+                     if (kk:find(s) and mpathT[vvv.mpath] and (not vvv.hidden)) then
+                        found = true
+                        break
+                     end
+                  end
+                  if (found) then break end
+               end
+               if (found) then break end
+            end
+         else
+            for kk,vv in pairs(v) do
+               for i = 1,#vv do
+                  local vvv = vv[i]
+                  if (mpathT[vvv.mpath] and (not vvv.hidden)) then
                      found = true
                      break
                   end
                end
                if (found) then break end
             end
-         else
-            found = true
          end
          if (found) then
             b[#b + 1] = {"    " .. colorize("blue",k),"(E)"}
@@ -1367,12 +1388,12 @@ function M.avail(self, argA)
       a[#a+1]  = "\n"
    end
 
-   if (isNVV) then
-      a[#a+1] = "\n"
-      a[#a+1] = i18n("m_IsNVV");
-   end
 
    if (not quiet()) then
+      if (isNVV) then
+         a[#a+1] = "\n"
+         a[#a+1] = i18n("m_IsNVV");
+      end
       a = hook.apply("msgHook", "avail", a) or a
    end
 

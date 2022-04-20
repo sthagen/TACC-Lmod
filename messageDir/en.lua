@@ -63,7 +63,7 @@ return {
 
    Any module command can be given after ml:
 
-   if name is a subcommand like avail, save, restore, show, swap,...
+   if name is a subcommand like avail, save, load, restore, show, swap,...
        $ ml name  arg1 arg2 ...
 
    All options must go before the subcommand:
@@ -72,8 +72,6 @@ return {
    Then this is the same :
        $ module name arg1 arg2 ...
 
-   In other words you can not load a module named: show swap etc.
-
    Shorthand:
    ----------
        ml r  -> ml restore
@@ -81,12 +79,13 @@ return {
        ml sl -> ml savelist
        ml sw -> ml swap
    
-   Loading modules same as commands:
-   ---------------------------------
+   Loading Modules named "r" or "spider" or other module commands
+   --------------------------------------------------------------
 
-      If you want to load a module that has the same name then for example for "spider":
+   Any modules named "r" or any other module commands must be loaded like this:
 
-         ml load spider  # instead ml spider
+      ml load r
+      ml load spider
 ]==],
      ml_opt                = [==[Option: "%{v}" is unknown.
   Try ml --help for usage.
@@ -152,6 +151,7 @@ Lmod does not support modulefiles that start with two or more underscores
      e_MT_corrupt          = [==[The module table stored in the environment is corrupt.
 please execute the command \" clearMT\" and reload your modules.
 ]==],
+     e_No_table            = "%{name} is not table",
      e_No_AutoSwap         = [==[Your site prevents the automatic swapping of modules with same name. You must explicitly unload the loaded version of "%{oldFullName}" before you can load the new one. Use swap to do this:
 
    $ module swap %{oldFullName} %{newFullName}
@@ -172,6 +172,8 @@ Alternatively, you can set the environment variable LMOD_DISABLE_SAME_NAME_AUTOS
    $ module spider %{sn}
 
 for available versions.]==],
+     e_Sh_Error            = "Error in script \"%{script}\": %{errorMsg}",
+     e_Sh_convertSh2MF     = "convertSh2MF script failed to produce 7 blocks\n",
      e_Spdr_Timeout        = "Spider search timed out.\n",
      e_Swap_Failed         = "Swap failed: \"%{name}\" is not loaded.\n",
      e_Unable_2_Load       = "Unable to load module because of error when evaluating modulefile: %{name}\n     %{fn}: %{message}\n     Please check the modulefile and especially if there is a line number specified in the above message",
@@ -184,6 +186,7 @@ for available versions.]==],
      e_missing_table       = "sandbox_registration: The argument passed is: \"%{kind}\". It should be a table.",
      e_setStandardPaths    = "Unknown Key: \"%{key}\" in setStandardPaths.\n",
 
+     
      --------------------------------------------------------------------------
      -- LmodMessages
      --------------------------------------------------------------------------
@@ -235,7 +238,7 @@ To search the contents of modules for matching words execute:
      m_Reload_Modules      = "\nDue to MODULEPATH changes, the following have been reloaded:\n",
      m_Reload_Version_Chng = "\nThe following have been reloaded with a version change:\n",
      m_Restore_Coll        = "Restoring modules from %{msg}\n",
-     m_Reset_SysDflt       = "Resetting modules to system default. Reseting $MODULEPATH back to system default. All extra directories will be removed from $MODULEPATH.\n",
+     m_Reset_SysDflt       = "Running \"module reset\". Resetting modules to system default. The following $MODULEPATH directories have been removed: %{pathA}\n",
      m_Save_Coll           = "Saved current collection of modules to: \"%{a}\"%{msgTail}\n",
      m_Spdr_L1             = [==[%{border}  For detailed information about a specific "%{key}" package (including how to load the modules) use the module's full name.
   Note that names that have a trailing (E) are extensions provided by other modules.

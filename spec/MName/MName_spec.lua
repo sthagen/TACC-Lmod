@@ -3,6 +3,7 @@ local posix     = require("posix")
 
 require("strict")
 require("utils")
+initialize_lmod()
 require("fileOps")
 
 local MName     = require("MName")
@@ -13,6 +14,7 @@ local concatTbl = table.concat
 local cosmic    = require("Cosmic"):singleton()
 local dbg       = require("Dbg"):dbg()
 local testDir   = "spec/MName"
+setenv_lmod_version()
 describe("Testing MName Class #MName.",
          function()
             it("Test finding modules with NVV files",

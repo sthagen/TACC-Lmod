@@ -58,8 +58,10 @@ local M                = MC_Spider
 
 M.always_load          = MasterControl.quiet
 M.always_unload        = MasterControl.quiet
-M.conflict             = MasterControl.quiet
+M.build_unload         = MasterControl.do_not_build_unload
 M.color_banner         = MasterControl.quiet
+M.complete             = MasterControl.quiet
+M.conflict             = MasterControl.quiet
 M.depends_on           = MasterControl.quiet
 M.error                = MasterControl.quiet
 M.execute              = MasterControl.execute
@@ -77,7 +79,9 @@ M.remove_path          = MasterControl.quiet
 M.report               = MasterControl.warning
 M.set_alias            = MasterControl.quiet
 M.set_shell_function   = MasterControl.quiet
+M.source_sh            = MasterControl.quiet
 M.try_load             = MasterControl.quiet
+M.uncomplete           = MasterControl.quiet
 M.unload               = MasterControl.quiet
 M.unload_usr           = MasterControl.quiet
 M.unsetenv             = MasterControl.quiet
@@ -85,6 +89,7 @@ M.unset_alias          = MasterControl.quiet
 M.unset_shell_function = MasterControl.quiet
 M.usrload              = MasterControl.quiet
 M.warning              = MasterControl.warning
+M.LmodBreak            = MasterControl.quiet
 
 function argsPack(...)
    local arg = { n = select("#", ...), ...}

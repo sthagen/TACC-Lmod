@@ -107,6 +107,45 @@ unset during unloading.
      errors will be reported.
 
 
+**complete** ("shellName","name","args"):
+     Bash and tcsh support the complete function.  Note that the
+     shellName must match the name of the shell given on the Lmod
+     command.  There is no error if the shell names do not match. The
+     command is ignored.  See rt/complete/mf/spack/1.0.lua for an example.
+
+**source_sh** ("shellName","shell_script arg1 ...")
+     source a shell script as part of a module. Supported shellNames
+     are *sh*, *dash*, *bash*, *zsh*, *csh*, *tcsh*, *ksh*.  When
+     loading, Lmod automatically converts the shell script into module
+     commands and saves the module commands in the environment.  It
+     does this by sourcing the shell script string in a subshell and
+     comparing the environment before and after sourcing the shell
+     script string. When unloading, the saved module commands from the
+     environment are used.
+
+     Note that shell script string must not change between loading and
+     unloading as the full string is used to reference the saved
+     module commands.
+
+     Other shells could be supported with help from the community that
+     uses that shell.  (New in version 8.6) 
+
+     This feature was introduced in Tmod 4.6 and was shamelessly
+     studied and re-implemented in Lmod 8.6+.
+
+**LmodBreak** (msg):
+     LmodBreak() modulefile function causes the evaluation of the
+     current modulefile to stop and all changed in the user's
+     environment to be ignored from the current modulefile.  However,
+     all other modulefiles are evaluated.  In TCL modulefiles it is
+     **break**.  
+
+     In other words, this function does not stop, where as
+     **LmodError()** stops all evaluations. New in Lmod 8.6+
+
+     **Note** As of Lmod 8.6.16: LmodBreak() does nothing when unloading.
+
+
 **userInGroups** ("group1", "group2", ...):
      Returns true if user is root or a member of one of the groups listed.
 
@@ -190,8 +229,14 @@ The entries below describe several useful commands that come with Lmod that can 
 **LmodMessage** ("string", ...):
     Prints a message to the user.
 
+**LmodWarning** ("string", ...):
+    Prints a warning message to the user.
+
 **LmodError** ("string", "..."):
     Print Error string and exit without loading the modulefile.
+
+    **Note** that LmodError() is treated as a warning when unloading
+    as of Lmod 8.6.16
 
 **mode** ():
     Returns the string "load" when a modulefile is being loaded,
@@ -201,6 +246,12 @@ The entries below describe several useful commands that come with Lmod that can 
 
 **isloaded** ("NAME"):
     Return true when module "NAME" is loaded.
+
+**isPending** ("NAME"):
+    Return true when module "NAME" is in the middle of a load().
+    This function is rarely needed.  It can be useful when checking
+    if one depends_on() package is currently being loaded.
+
 
 **isAvail** ("NAME"):
     Return true when "NAME" is possible to load.  Note that it

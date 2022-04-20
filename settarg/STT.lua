@@ -52,40 +52,45 @@ local load      = (_VERSION == "Lua 5.1") and loadstring or load
 
 s_stt = false
 
-local function stt_version()
+local function l_stt_version()
    return 1
 end
 
-local function new(self, s)
-   dbg.start{"STT:new(s)"}
+local function l_new(self, s)
+   dbg.start{"STT:l_new(s)"}
    local o   = {}
 
    if (not s) then
+      dbg.print{"No _SettargTable_ in the env.\n"}
       o.buildScenarioState = "unknown"
       o.targA              = {}
       o.extraT             = {}
-      o.version            = stt_version()
+      o.version            = l_stt_version()
    else
+      dbg.print{"_SettargTable_: ",s,"\n"}
       assert(load(s))()
       local _SettargTable_ = _G._SettargTable_
       for k, v in pairs(_SettargTable_) do
          o[k] = v
       end
 
-      if (o.version ~= stt_version()) then
+      if (o.version ~= l_stt_version()) then
          STError("Settarg Table Versions do not match: ",
-                 "\n  settarg table version: ",stt_version(),
+                 "\n  settarg table version: ",l_stt_version(),
                  "\n  environment version: ", o.version,"\n")
       end
    end
 
    dbg.print{"buildScenarioState: ",o.buildScenarioState,"\n"}
 
-
    setmetatable(o, self)
    self.__index  = self
-   dbg.fini("STT:new")
+   dbg.fini("STT:l_new")
    return o
+end
+
+function M.get_targA(self)
+   return self.targA
 end
 
 function M.add2ExtraT(self,key)
@@ -138,8 +143,10 @@ end
 
 function M.registerVars(self,tbl)
    local a = {}
-   for k in pairsByKeys(tbl) do
-      a[#a+1] = k
+   for k,v in pairsByKeys(tbl) do
+      if (v) then
+         a[#a+1] = k
+      end
    end
    self.targA = a
 end
@@ -158,7 +165,7 @@ end
 function M.stt(self)
    if (not s_stt) then
       dbg.start{"STT:stt()"}
-      s_stt = new(self, getSTT())
+      s_stt = l_new(self, getSTT())
       dbg.fini("STT:stt")
    end
    return s_stt

@@ -2,6 +2,8 @@ _G._DEBUG=false
 local posix   = require("posix")
 
 require("strict")
+require("utils")
+initialize_lmod()
 
 _G.MasterControl = require("MasterControl")
 local DirTree    = require("DirTree")
@@ -12,6 +14,7 @@ local ModuleA    = require("ModuleA")
 local cosmic     = require("Cosmic"):singleton()
 local dbg        = require("Dbg"):dbg()
 local testDir    = "spec/MRC"
+setenv_lmod_version()
 
 describe("Testing MRC class #MRC.",
          function()

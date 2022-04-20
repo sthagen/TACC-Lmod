@@ -51,7 +51,9 @@ M.my_tcl_mode          = "load"
 M.always_load          = MasterControl.load_usr
 M.always_unload        = MasterControl.quiet
 M.append_path          = MasterControl.append_path
+M.build_unload         = MasterControl.do_not_build_unload
 M.color_banner         = MasterControl.quiet
+M.complete             = MasterControl.quiet
 M.conflict             = MasterControl.quiet
 M.depends_on           = MasterControl.quiet
 M.execute              = MasterControl.quiet
@@ -75,13 +77,16 @@ M.report               = MasterControl.error
 M.setenv               = MasterControl.setenv
 M.set_alias            = MasterControl.set_alias
 M.set_shell_function   = MasterControl.set_shell_function
+M.source_sh            = MasterControl.quiet
 M.try_load             = MasterControl.quiet
+M.uncomplete           = MasterControl.quiet
 M.unload               = MasterControl.quiet
 M.unload_usr           = MasterControl.quiet
 M.unsetenv             = MasterControl.unsetenv
 M.unset_alias          = MasterControl.unset_alias
 M.unset_shell_function = MasterControl.unset_shell_function
 M.whatis               = MasterControl.quiet
+M.LmodBreak            = MasterControl.quiet
 
 
 -- Internally these function do not actually to anything when either

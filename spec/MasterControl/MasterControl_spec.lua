@@ -2,7 +2,8 @@ _G._DEBUG=false
 local posix         = require("posix")
 
 require("strict")
-require("myGlobals")
+require("utils")
+initialize_lmod()
 
 require("fileOps")
 require("loadModuleFile")
@@ -18,6 +19,7 @@ local dbg           = require("Dbg")
 local getenv        = os.getenv
 local testDir       = "spec/MasterControl"
 
+setenv_lmod_version()
 describe("Testing MasterControl Class #MasterControl.",
          function()
             it("Building mcp",
@@ -92,7 +94,7 @@ describe("Testing MasterControl Class #MasterControl.",
                   varT     = frameStk:varT()
                   assert.are.equal("BLUE",varT["BAZ_COLOR"]:expand())
                   assert.are.equal("bash",varT["MY_SHELL"]:expand())
-                  mcp:unload{mname}
+                  unload_internal{mname}
                   assert.are.equal("GREEN",getenv("BAZ_COLOR"))
                end)
          end

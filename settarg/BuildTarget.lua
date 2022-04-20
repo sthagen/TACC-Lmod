@@ -159,8 +159,8 @@ function M.default_BUILD_SCENARIO(tbl)
    return v
 end
 
-local function string2Tbl(s,tbl)
-   dbg.start{"string2Tbl(\"",s,"\", tbl)"}
+local function l_string2Tbl(s,tbl)
+   dbg.start{"l_string2Tbl(\"",s,"\", tbl)"}
    local stt           = STT:stt()
    local stringKindTbl = masterTbl().stringKindTbl
    for v in s:split("%s+") do
@@ -181,7 +181,7 @@ local function string2Tbl(s,tbl)
          end
       end
    end
-   dbg.fini("string2Tbl")
+   dbg.fini("l_string2Tbl")
 end
 
 function M.buildTbl(targetTbl)
@@ -197,6 +197,7 @@ function M.buildTbl(targetTbl)
       if (v == nil) then
          local ss = "default_" .. K
          if (M[ss]) then
+            dbg.print{"Calling ss: ",ss,"\n"}
             v = M[ss](tbl)
          end
          dbg.print{"ss: ", ss," v: ",v,"\n"}
@@ -241,7 +242,7 @@ function M.buildTbl(targetTbl)
    return tbl
 end
 
-local function readDotFiles()
+local function l_readDotFiles()
    local masterTbl = masterTbl()
 
    -------------------------------------------------------
@@ -359,7 +360,7 @@ function M.exec(shell)
 
    masterTbl.envVarsTbl  = envVarsTbl
 
-   readDotFiles()
+   l_readDotFiles()
    local targetList = masterTbl.targetList
    local familyTbl  = masterTbl.familyTbl
    local targetTbl = {}
@@ -371,7 +372,7 @@ function M.exec(shell)
 
    local tbl = M.buildTbl(targetTbl)
 
-   string2Tbl(concatTbl(masterTbl.pargs," ") or '',tbl)
+   l_string2Tbl(concatTbl(masterTbl.pargs," ") or '',tbl)
    processModuleTable(shell:getMT(), targetTbl, tbl)
 
 
@@ -394,8 +395,11 @@ function M.exec(shell)
       local K     = "TARG_" .. v:upper()
       local KK    = K .. "_FAMILY"
       local entry = tbl[K]
+      dbg.print{"K:  ",K,"\n"}
+      dbg.print{"KK: ",KK,"\n"}
       if (not entry) then
          envVarsTbl[KK] = false
+         dbg.print{"removing KK: ",KK,"\n"}
       else
          entryA[#entryA + 1] = entry
          a[#a+1]             = entry:display(true)  -- The true says change '/' into '-'
@@ -406,12 +410,16 @@ function M.exec(shell)
       end
    end
 
+   dbg.print{"1. envVarsTbl.TARG_OS: ",envVarsTbl.TARG_OS,"\n"}
+
 
    for k in pairs(tbl) do
       if (tbl[k]) then
          envVarsTbl[k] = tbl[k]:display()
       end
    end
+
+   dbg.print{"2. envVarsTbl.TARG_OS: ",envVarsTbl.TARG_OS,"\n"}
 
    target = concatTbl(a,"_")
    target = target:gsub("_+","_")
@@ -457,12 +465,13 @@ function M.exec(shell)
       end
    end
 
+   dbg.print{"3. envVarsTbl.TARG_OS: ",envVarsTbl.TARG_OS,"\n"}
    local aa = {}
    for i = 1,#entryA do
       local t     = entryA[i]:value()
       local name  = t.value or t.sn
-      local tname = TitleTbl[name]
-      local s     = tname or name
+      local tname = TitleTbl[name] or name
+      local s     = tname
       if (s) then
          if (tname and t.version and t.version ~= "") then
             s = tname .. "/" .. t.version
@@ -470,20 +479,6 @@ function M.exec(shell)
          aa[#aa+1] = s
       end
    end
-
-   --local aa = {}
-   --for _,v in ipairs(a) do
-   --   local _, _, name, version = v:find("([^-]*)-?(.*)")
-   --   if (v:len() > 0) then
-   --      local s = TitleTbl[name] or v
-   --      if (s) then
-   --         if (TitleTbl[name] and version ~= "" ) then
-   --            s = TitleTbl[name] .. "/" .. version
-   --         end
-   --         aa[#aa+1] = s
-   --      end
-   --   end
-   --end
    local s                          = concatTbl(aa," "):trim()
    local paren_s                    = ""
    if (s ~= "") then
@@ -505,9 +500,22 @@ function M.exec(shell)
       envVarsTbl.TARG_TITLE_BAR_PAREN = " "
    end
 
+   local targA = stt:get_targA()
+   for i = 1,#targA do
+      local v = targA[i]
+      if (not envVarsTbl[v]) then
+         envVarsTbl[v] = false
+      end
+   end
+
+   dbg.print{"3. envVarsTbl.TARG_OS: ",envVarsTbl.TARG_OS,"\n"}
+   
    stt:registerVars(envVarsTbl)
    local old_stt = getSTT() or ""
    local new_stt = stt:serializeTbl()
+   dbg.print{"old_stt: ",old_stt,"\n"}
+   dbg.print{"new_stt: ",new_stt,"\n"}
+
    if (old_stt ~= new_stt) then
       envVarsTbl._SettargTable_ = new_stt
    end

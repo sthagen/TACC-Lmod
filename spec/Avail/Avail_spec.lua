@@ -3,6 +3,7 @@ local posix      = require("posix")
 
 require("strict")
 require("utils")
+initialize_lmod()
 require("fileOps")
 
 _G.MasterControl = require("MasterControl")
@@ -14,6 +15,7 @@ local cosmic     = require("Cosmic"):singleton()
 local concatTbl  = table.concat
 local getenv     = os.getenv
 local testDir    = "spec/Avail"
+setenv_lmod_version()
 describe("Testing The Avail command #Avail.",
          function()
             it("Avail in terse and regular mode",
@@ -88,6 +90,7 @@ describe("Testing The Avail command #Avail.",
                   -------------------------------------------------------
                   -- Test 5 avail output in regular mode
 
+                  posix.setenv("LMOD_QUIET","yes")
                   masterTbl.terse       = nil
                   a  = master:avail(pack()) or {}
                   _a = {}
@@ -103,10 +106,10 @@ describe("Testing The Avail command #Avail.",
                      "   bio/bowtie/32/1.0    bio/bowtie/64/2.0 (D)\n" ..
                      "   bio/bowtie/32/2.0    bio/genomics",
                      "\n",
+                     "\n  Where:\n",
+                     "   D:  Default Module",
                      "\n",
                   }
-                  --print("availA:\n", concatTbl(_a,""))
-                  --print("gold_availA:\n", concatTbl(gold_availA,""))
                   assert.are.same(gold_availA, _a)
                end)
          end

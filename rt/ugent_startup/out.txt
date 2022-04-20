@@ -10,7 +10,7 @@ __LMOD_REF_COUNT_MODULEPATH=ProjectDIR/rt/ugent_startup/mf/Core:1;
 export __LMOD_REF_COUNT_MODULEPATH;
 MODULEPATH=ProjectDIR/rt/ugent_startup/mf/Core;
 export MODULEPATH;
-_ModuleTable_='_ModuleTable_={["MTversion"]=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},["systemBaseMPATH"]="ProjectDIR/rt/ugent_startup/mf/Core",}';
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},systemBaseMPATH="ProjectDIR/rt/ugent_startup/mf/Core",}';
 export _ModuleTable_;
 ===========================
 step 3
@@ -18,7 +18,7 @@ lua ProjectDIR/src/lmod.in.lua bash --regression_testing --show_hidden avail
 ===========================
 MODULEPATH=ProjectDIR/rt/ugent_startup/mf/Core;
 export MODULEPATH;
-_ModuleTable_='_ModuleTable_={["MTversion"]=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},["systemBaseMPATH"]="ProjectDIR/rt/ugent_startup/mf/Core",}';
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},systemBaseMPATH="ProjectDIR/rt/ugent_startup/mf/Core",}';
 export _ModuleTable_;
 ===========================
 step 4
@@ -28,8 +28,6 @@ LMOD_FAMILY_CLUSTER=cluster;
 export LMOD_FAMILY_CLUSTER;
 LMOD_FAMILY_CLUSTER_VERSION=delcatty;
 export LMOD_FAMILY_CLUSTER_VERSION;
-__LMOD_REF_COUNT_LOADEDMODULES=cluster/delcatty:1;
-export __LMOD_REF_COUNT_LOADEDMODULES;
 LOADEDMODULES=cluster/delcatty;
 export LOADEDMODULES;
 MODULEPATH=ProjectDIR/rt/ugent_startup/mf/Core;
@@ -44,11 +42,9 @@ VSC_INSTITUTE_LOCAL=gent;
 export VSC_INSTITUTE_LOCAL;
 VSC_OS_LOCAL=CO7;
 export VSC_OS_LOCAL;
-__LMOD_REF_COUNT__LMFILES_=ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua:1;
-export __LMOD_REF_COUNT__LMFILES_;
 _LMFILES_=ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua;
 export _LMFILES_;
-_ModuleTable_='_ModuleTable_={["MTversion"]=3,depthT={},family={["cluster"]="cluster",},mT={cluster={["fn"]="ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua",["fullName"]="cluster/delcatty",["loadOrder"]=1,propT={lmod={["sticky"]=1,},},["stackDepth"]=1,["status"]="active",["userName"]="cluster/delcatty",["wV"]="*delcatty.*zfinal",},},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},["systemBaseMPATH"]="ProjectDIR/rt/ugent_startup/mf/Core",}';
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={cluster="cluster",},mT={cluster={fn="ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua",fullName="cluster/delcatty",loadOrder=1,propT={lmod={sticky=1,},},stackDepth=1,status="active",userName="cluster/delcatty",wV="*delcatty.*zfinal",},},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},systemBaseMPATH="ProjectDIR/rt/ugent_startup/mf/Core",}';
 export _ModuleTable_;
 ===========================
 step 5
@@ -56,5 +52,5 @@ lua ProjectDIR/src/lmod.in.lua bash --regression_testing list
 ===========================
 MODULEPATH=ProjectDIR/rt/ugent_startup/mf/Core;
 export MODULEPATH;
-_ModuleTable_='_ModuleTable_={["MTversion"]=3,depthT={},family={["cluster"]="cluster",},mT={cluster={["fn"]="ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua",["fullName"]="cluster/delcatty",["loadOrder"]=1,propT={lmod={["sticky"]=1,},},["stackDepth"]=1,["status"]="active",["userName"]="cluster/delcatty",["wV"]="*delcatty.*zfinal",},},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},["systemBaseMPATH"]="ProjectDIR/rt/ugent_startup/mf/Core",}';
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={cluster="cluster",},mT={cluster={fn="ProjectDIR/rt/ugent_startup/mf/Core/cluster/delcatty.lua",fullName="cluster/delcatty",loadOrder=1,propT={lmod={sticky=1,},},stackDepth=1,status="active",userName="cluster/delcatty",wV="*delcatty.*zfinal",},},mpathA={"ProjectDIR/rt/ugent_startup/mf/Core",},systemBaseMPATH="ProjectDIR/rt/ugent_startup/mf/Core",}';
 export _ModuleTable_;

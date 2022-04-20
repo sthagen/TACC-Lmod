@@ -335,7 +335,6 @@ function main()
       {cmd = 'whatis',       min = 1, action = whatisTbl   },
    }
 
-   build_i18n_messages()
    dbg.set_prefix(colorize("red","Lmod"))
 
    local shellNm = barefilename(arg[1])
@@ -349,32 +348,9 @@ function main()
    MCP = MasterControl.build("load")
    mcp = MasterControl.build("load")
 
-   -- Push Lmod version into environment
-   setenv_lmod_version()
-
-   ------------------------------------------------------------------------
-   --  The StandardPackage is where Lmod registers hooks.  Sites may
-   --  override the hook functions in SitePackage.
-   ------------------------------------------------------------------------
-   require("StandardPackage")
-
-   ------------------------------------------------------------------------
-   -- Load a SitePackage Module.
-   ------------------------------------------------------------------------
-
-   local lmodPath = getenv("LMOD_PACKAGE_PATH") or ""
-   for path in lmodPath:split(":") do
-      path = path .. "/"
-      path = path:gsub("//+","/")
-      package.path  = path .. "?.lua;"      ..
-                      path .. "?/init.lua;" ..
-                      package.path
-
-      package.cpath = path .. "../lib/?.so;"..
-                      package.cpath
-   end
-
-   require("SitePackage")
+   ------------------------------------------------------------------
+   -- initialize lmod with SitePackage and /etc/lmod/lmod_config.lua
+   initialize_lmod()
 
    local cmdLineUsage = "Usage: module [options] sub-command [args ...]"
    Options:singleton(cmdLineUsage)
@@ -399,9 +375,15 @@ function main()
       dbg.print{"Lmod Version: ",Version.name(),"\n"}
       dbg.print{"package.path: ",package.path,"\n"}
       dbg.print{"package.cpath: ",package.cpath,"\n"}
-      dbg.print{"lmodPath: ", lmodPath,"\n"}
+      dbg.print{"lmodPath: ", cosmic:value("LMOD_PACKAGE_PATH"),"\n"}
+      dbg.print{"LOADEDMODULES: ",getenv("LOADEDMODULES"),"\n"}
    end
+
    -- dumpversion and quit if requested.
+   if (masterTbl.dumpversion) then
+      io.stderr:write(Version.tag(),"\n")
+      os.exit(0)
+   end
 
    -- Build Shell object from shellNm
    Shell = BaseShell:build(shellNm)
@@ -417,11 +399,6 @@ function main()
       a[#a + 1] = concatTbl(arg," ")
       a[#a + 1] = "\n"
       Shell:echo(concatTbl(a,""))
-   end
-
-   if (masterTbl.dumpversion) then
-      io.stderr:write(Version.tag(),"\n")
-      os.exit(0)
    end
 
    -- gitversion and quit if requested.
@@ -500,21 +477,30 @@ function main()
       os.exit(0)
    end
 
+   -- Report ModuleTable if requested and exit.
    if (masterTbl.reportMT) then
       local mt = FrameStk:singleton():mt()
       io.stderr:write(mt:serializeTbl("pretty"),"\n")
       os.exit(0)
    end
 
+
+   -- Print usage and error out for unknown command.
    if (not cmdT) then
       io.stderr:write(version())
       io.stderr:write(Usage(),"\n")
       LmodErrorExit()
-   else
-      local cmd  = cmdT.cmd
-      dbg.print{"cmd name: ", cmdT.name,"\n"}
-      cmd(unpack(masterTbl.pargs))
+      os.exit(1)
    end
+
+
+   ------------------------------------------------------------
+   -- Do the work of Lmod 
+   ------------------------------------------------------------
+
+   local cmd  = cmdT.cmd
+   dbg.print{"cmd name: ", cmdT.name,"\n"}
+   cmd(unpack(masterTbl.pargs))
 
    ------------------------------------------------------------
    -- After running command reset frameStk and mt as the
@@ -532,17 +518,30 @@ function main()
    --------------------------------------------------------
    -- Report any missing dependent modules
    -- Note that is safe to run every time.
-   mcp:reportMissingDepModules()
+   mcp:performDependencyCk()
 
    -- Report any changes (worth reporting from original MT)
    if (not quiet()) then
       mt:reportChanges()
    end
 
+   -- Convert MT into a variable _ModuleTable_
+
    local varT     = frameStk:varT()
    local n        = mt:name()
    varT[n]        = Var:new(n)
    varT[n]:set(mt:serializeTbl())
+
+   -- Extract Loaded modules and filenames into
+   -- LOADEDMODULES and _LMFILES_
+   local status, loadedmodules, lmfiles = mt:extractModulesFiles()
+   dbg.print{"status: ",status,", loadedmodules: \"",loadedmodules,"\"\n"}
+   if (status) then 
+      varT['LOADEDMODULES'] = Var:new('LOADEDMODULES')
+      varT['LOADEDMODULES']:set(loadedmodules)
+      varT['_LMFILES_'] = Var:new('_LMFILES_')
+      varT['_LMFILES_']:set(lmfiles)
+   end
 
    local vPATH = varT["PATH"]
    if (vPATH) then

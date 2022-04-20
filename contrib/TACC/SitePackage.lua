@@ -52,9 +52,9 @@ Pkg = PkgBase.build("PkgTACC")
 --------------------------------------------------------------------------
 -- load_hook(): Here we record the any modules loaded.
 
-local s_msgA = {}
+local s_msgT = {}
 
-local function load_hook(t)
+local function l_load_hook(t)
    -- the arg t is a table:
    --     t.modFullName:  the module full name: (i.e: gcc/4.7.2)
    --     t.fn:           The file name: (i.e /apps/modulefiles/Core/gcc/4.7.2.lua)
@@ -66,7 +66,7 @@ local function load_hook(t)
    --     user
    --  c) Write the same information directly to some database.
 
-   dbg.start{"load_hook(t)"}
+   dbg.start{"l_load_hook(t)"}
 
    if (mode() ~= "load") then return end
    local user        = os.getenv("USER")
@@ -83,13 +83,11 @@ local function load_hook(t)
    local currentTime = epoch()
    local msg         = string.format("user=%s module=%s path=%s host=%s time=%f",
                                      user, t.modFullName, t.fn, host or "<unknown_syshost>", currentTime)
-   local a           = s_msgA
-   a[#a+1]           = msg
-
+   s_msgT[t.modFullName] = msg
    dbg.fini()
 end
 
-local function parse_updateFn_hook(updateSystemFn, t)
+local function l_parse_updateFn_hook(updateSystemFn, t)
    local attr = lfs.attributes(updateSystemFn)
    if (not attr or type(attr) ~= "table") then
       return
@@ -127,14 +125,13 @@ local mapT =
 
 
 
-function avail_hook(t)
+local function l_avail_hook(t)
    dbg.print{"avail hook called\n"}
    local availStyle = masterTbl().availStyle
    local styleT     = mapT[availStyle]
    if (not availStyle or availStyle == "system" or styleT == nil) then
       return
    end
-
 
    for k,v in pairs(t) do
       for pat,label in pairs(styleT) do
@@ -146,12 +143,9 @@ function avail_hook(t)
    end
 end
 
-local function report_loads()
-
-   local a = s_msgA
-   for i = 1,#a do
-      local msg = a[i]
-      lmod_system_execute("logger -t ModuleUsageTracking -p local0.info " .. msg)
+local function l_report_loads()
+   for k,msg in pairs(s_msgT) do
+      lmod_system_execute("logger -t ModuleUsageTracking -p local0.info " .. msg)      
    end
 end
 
@@ -166,12 +160,12 @@ end
 
 
 
-ExitHookA.register(report_loads)
+ExitHookA.register(l_report_loads)
 
 
-hook.register("avail",          avail_hook)
-hook.register("load",           load_hook)
-hook.register("parse_updateFn", parse_updateFn_hook)
+hook.register("avail",          l_avail_hook)
+hook.register("load",           l_load_hook)
+hook.register("parse_updateFn", l_parse_updateFn_hook)
 
 sandbox_registration { Pkg      = Pkg,
                        tonumber = safe_tonumber,

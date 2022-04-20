@@ -49,7 +49,9 @@ M.always_load          = MasterControl.load_usr
 M.always_unload        = MasterControl.unload
 M.add_property         = MasterControl.add_property
 M.append_path          = MasterControl.append_path
+M.build_unload         = MasterControl.build_unload
 M.color_banner         = MasterControl.color_banner
+M.complete             = MasterControl.complete
 M.conflict             = MasterControl.conflict
 M.depends_on           = MasterControl.depends_on
 M.execute              = MasterControl.execute
@@ -78,7 +80,9 @@ M.report               = MasterControl.error
 M.setenv               = MasterControl.setenv
 M.set_alias            = MasterControl.set_alias
 M.set_shell_function   = MasterControl.set_shell_function
+M.source_sh            = MasterControl.source_sh
 M.try_load             = MasterControl.try_load
+M.uncomplete           = MasterControl.uncomplete
 M.unload               = MasterControl.unload
 M.unload_usr           = MasterControl.unload_usr
 M.unsetenv             = MasterControl.unsetenv
@@ -86,5 +90,6 @@ M.unset_alias          = MasterControl.unset_alias
 M.unset_shell_function = MasterControl.unset_shell_function
 M.usrload              = MasterControl.usrload
 M.whatis               = MasterControl.quiet
+M.LmodBreak            = MasterControl.LmodBreak
 
 return M

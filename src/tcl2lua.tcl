@@ -337,6 +337,16 @@ proc currentMode {} {
     return $mode
 }
 
+proc currentModeLmod {} {
+    global g_modeStack
+    set mode [lindex $g_modeStack end]
+    set returnVal "load"
+    if { $mode == "remove" } {
+	set returnVal "unload"
+    }
+    return $returnVal
+}
+
 proc pushMode {mode} {
     global g_modeStack
     lappend g_modeStack $mode
@@ -422,8 +432,20 @@ proc module-whatis { args } {
     }
 
     regsub -all {[\n]} $msg  " " msg2
+    set msg2 [string trimright $msg2]
     lappend g_outputA  "whatis(\[===\[$msg2\]===\])\n"
 }
+
+proc myBreak { args } {
+    set msg ""
+    foreach item $args {
+       append msg $item
+       append msg " "
+    }
+    set msg [string trimright $msg]
+    cmdargs "LmodBreak" $msg
+}
+
 
 proc setenv { var val args } {
     global env g_varsT
@@ -567,6 +589,13 @@ proc unset-alias { var } {
     cmdargs "unset_alias" $var
 }
 
+proc set-function { var val } {
+    cmdargs "set_shell_function" $var $val ""
+}
+proc unset-function { var } {
+    cmdargs "unset_shell_function" $var "" ""
+}
+
 proc add-property { var val } {
     cmdargs "add_property" $var $val
 }
@@ -575,17 +604,20 @@ proc remove-property { var val } {
     cmdargs "remove_property" $var $val
 }
 
-proc doubleQuoteEscaped {text} {
-    regsub -all "\"" $text "\\\"" text
-    return $text
+proc doubleQuoteEscaped {str} {
+    set charlist {\\\t"\n}
+    # "
+    return [regsub -all "\(\[$charlist\]\)" $str {\\\1}]
 }
 
 proc cmdargs { cmd args } {
     global g_outputA
     foreach arg $args {
-        set val [doubleQuoteEscaped $arg]
-        lappend cmdArgsL "\"$val\""
+	set val [string trimright $arg "\r\n "]
+        set val [doubleQuoteEscaped $val]
+	lappend cmdArgsL "\"$val\""
     }
+
     if {[info exists cmdArgsL]} {
         set cmdArgs [join $cmdArgsL ","]
 	lappend g_outputA  "$cmd\($cmdArgs\)\n"
@@ -596,6 +628,21 @@ proc cmdargs { cmd args } {
 
 proc depends-on { args} {
     eval cmdargs "depends_on" $args
+}
+
+proc complete { shellName name args } {
+    global g_outputA
+    foreach arg $args {
+	set val [string trimright $arg "\r\n "]
+        set val [doubleQuoteEscaped $val]
+	lappend cmdArgsL $val
+    }
+    if {[info exists cmdArgsL]} {
+        set cmdArgs [join $cmdArgsL " "]
+	lappend g_outputA  "complete\(\"$shellName\",\"$name\",\"$cmdArgs\"\)\n"
+    } else {
+	lappend g_outputA  "complete\(\"$shellName\",\"$name\"\)\n"
+    }
 }
 
 proc my_exit { {code 1} } {
@@ -725,6 +772,7 @@ proc myPuts args {
 
     foreach {a b c} $args break
     set nonewline 0
+    set text "This string should never be seen!"
     switch [llength $args] {
         1 {
             set channel stdout
@@ -756,13 +804,16 @@ proc myPuts args {
         }
     }
     if { $putMode != "inHelp" } {
-        if { $nonewline == 0 } {
+        if { $nonewline == 0 && $channel  != "stdout" } {
             set text "$text\n"
         }
         set nonewline 0
         if { $channel == "stderr" } {
             set text "LmodMsgRaw(\[===\[$text\]===\])"
         } elseif { $channel == "stdout" } {
+	    set lmodMode [currentModeLmod]
+            set text "execute{cmd=\[===\[$text\]===\],modeA={\"$lmodMode\"}}"
+        } elseif { $channel == "prestdout" } {
             set text "io.stdout:write(\[===\[$text\]===\])"
         }
     }
@@ -929,6 +980,7 @@ proc execute-modulefile {modfile } {
     interp alias $child add-property   	 {} add-property
     interp alias $child always-load    	 {} always-load
     interp alias $child append-path    	 {} append-path
+    interp alias $child complete       	 {} complete
     interp alias $child conflict       	 {} conflict
     interp alias $child depends-on     	 {} depends-on
     interp alias $child exit     	 {} my_exit
@@ -941,6 +993,7 @@ proc execute-modulefile {modfile } {
     interp alias $child module-info    	 {} module-info
     interp alias $child module-whatis  	 {} module-whatis
     interp alias $child myPuts         	 {} myPuts
+    interp alias $child myBreak      	 {} myBreak
     interp alias $child prepend-path   	 {} prepend-path
     interp alias $child prereq         	 {} prereq
     interp alias $child prereq-any     	 {} prereq-any
@@ -951,12 +1004,14 @@ proc execute-modulefile {modfile } {
     interp alias $child reportError      {} reportError
     interp alias $child require-fullname {} require-fullname
     interp alias $child set-alias        {} set-alias
+    interp alias $child set-function     {} set-function
     interp alias $child setPutMode       {} setPutMode
     interp alias $child setenv           {} setenv
     interp alias $child showResults      {} showResults
     interp alias $child system           {} system
     interp alias $child uname            {} uname
     interp alias $child unset-alias      {} unset-alias
+    interp alias $child unset-function   {} unset-function
     interp alias $child unsetenv         {} unsetenv
     interp alias $child versioncmp       {} versioncmp
 
@@ -988,6 +1043,16 @@ proc execute-modulefile {modfile } {
             setPutMode "normal"
         }
         if {$sourceFailed} {
+	    if { $sourceFailed == 4 || $errorMsg == {invoked "continue" outside of a loop}} {
+		set returnVal 0
+		showResults
+		return $returnVal
+	    } elseif { $sourceFailed == 3 || $errorMsg == {invoked "break" outside of a loop}} {
+		set returnVal 1
+		myBreak
+		showResults
+		return $returnVal
+	    }
             reportError $errorMsg
 	    set returnVal 1
         }

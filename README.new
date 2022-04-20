@@ -1,28 +1,4 @@
-Lmod 8.5+
-   (8.5.1)  * Issue #513:  module avail <name1> <name2> ... now only prints matching aliases.  Search names are resolved.
-              Tests added to the rt/modulerc directory.
-   (8.5.2)  * Failed to register new version with github.  Pushing a new version to fix that.
-   (8.5.3)  * Issue #515: Set LMOD_VERSION for fish shell
-            * Add link to isVisible() hook in documentation for hide_version() function.
-   (8.5.4)  * Issue #517: use pkg-config --cflags-only-I option and do not post-process the results.
-   (8.5.5)  * Issue #517: use pkg-config --cflags-only-I option and post-process the results for LUA_INCLUDE
-   (8.5.6)  * Issue #517: Add PKG_CONFIG_ALLOW_SYSTEM_CFLAGS to pkg-config tests
-   (8.5.7)  * Issue #518: Change lazyEval "mt" to use exact match of userName to either sn or fullName.
-            * Issue #519: Add docs for LMOD_AVAIL_STYLE in docs/sources/090_configuring_lmod.rst
-   (8.5.8)  * Issue #520: Adding debugging style stmts from XALT for store_module_data and LMODdb.py
-   (8.5.9)  * Issue #520: Also report line number and module name
-            * Issue #520: Print dataT table when there is an Exception.
-   (8.5.10) * When evaluating modules under spider now block both stdout and stderr (instead of just stderr).
-            * New command added: "module overview"
-   (8.5.11) * Added msg to avail to point to "ml -d av" and "ml ov"
-   (8.5.12) * Issue #524: Only register one sn when different modulefiles with the same sn
-              load on top of each other.  See test rt/ref_count and loading module abc.
-   (8.5.13) * Added comments to the ksh_funcs files because they are copied to a
-              zsh function directory.
-            * Issue #527: Changed docs to use the word "delim" instead of "sep"
-            * Issue #529: Rename "sep" to "delim" internally as well.
-            * Change MasterControl:myShellType() to use Shell:type() and change shells to report
-              have local variable myType.
-            * Issue #528: Added support for the RC shell.
-   (8.5.14) * Added spiderPathFilter hook so that sites can control what paths are kept or ignored.
-   
+Lmod 8.7+
+   (8.7.1)  * 
+	    
+            

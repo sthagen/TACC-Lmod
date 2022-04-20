@@ -71,6 +71,7 @@ how to have their own personal modules should read the Advanced User Guide.
    015_writing_modules
    040_FAQ
    020_advanced
+   025_new
 
 Installing Lmod
 ^^^^^^^^^^^^^^^
@@ -131,12 +132,20 @@ Advanced Topics
    340_inherit
    350_community
 
+Internal Structure of Lmod
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 1
+
+   400_code_conventions
+
+
 Topics yet to be written
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Optional Software layout, two digit rule
-#. Advanced Topics: priority path, .modulerc tricks
-#. internal structure of lmod.
+#. Advanced Topics: priority path,
 
 
 

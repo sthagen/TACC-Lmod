@@ -10,6 +10,7 @@ local cosmic    = require("Cosmic"):singleton()
 local dbg       = require("Dbg"):dbg()
 local testDir   = "spec/MT"
 
+setenv_lmod_version()
 describe("Testing MT Class #MT.",
          function()
             it("Test fake loading a module",
@@ -86,7 +87,6 @@ describe("Testing MT Class #MT.",
                   local rplmntA = { {projDir,"%%ProjDir%%"} }
 
 
-
                   local _mt     = deepcopy(mt)
                   local __mt    = {}
                   sanizatizeTbl(rplmntA, _mt, __mt)
@@ -95,10 +95,10 @@ describe("Testing MT Class #MT.",
                   local goldA = {
                      {input = "icr",        expected = "64/3.8"},
                      {input = "icr/64",     expected = "64/3.8"},
+                     {input = "icr/64/",    expected = "64/3.8"},
                      {input = "icr/64/3.8", expected = "64/3.8"},
                      {input = "TACC",       expected = false   },
                   }
-
                   for i = 1,#goldA do
                      local gold    = goldA[i]
                      local mname   = MName:new("mt", gold.input)

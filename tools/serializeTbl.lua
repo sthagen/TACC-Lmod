@@ -65,7 +65,7 @@ local quoteA = {
    {'[========[',']========]'},
 }
    
-local function quoteValue(value)
+local function l_quoteValue(value)
    for i = 1,#quoteA do
       local left = quoteA[i][1]
       local rght = quoteA[i][2]
@@ -77,11 +77,11 @@ local function quoteValue(value)
 end
 
 
-local function nsformat(value)
+local function l_nsformat(value)
    if (type(value) == 'string') then
       value = value:gsub("\\","\\\\")
       if (value:find("\n")) then
-         local left, rght = quoteValue(value)
+         local left, rght = l_quoteValue(value)
 	 value = left .. value .. rght
       else
          value = value:gsub('"','\\"')
@@ -109,12 +109,11 @@ local keywordT = {
    ['true']   = true,  ['until']  = true,    ['while']    = true,
 }
 
-
 local function wrap_name(indent, name)
    local str
-   if (name:find("[-+:./]") or keywordT[name] or name == " " or
-       name:sub(1,1):find("[0-9]")) then
-      str = indent .. "[\"" .. name .. "\"] "
+   if (name:find("[^0-9A-Za-z_]") or keywordT[name] or name == " " or
+       name:sub(1,1):find("[0-9]") ) then
+      str = indent .. "[\"" .. name .. "\"]"
    else
       str = indent .. name
    end
@@ -126,14 +125,14 @@ end
 -- This is the work-horse for this collections.  It is recursively for
 -- sub-tables.  It also ignores keys that start with "__".
 
-local function outputTblHelper(indentIdx, name, T, a, level)
+local function outputTblHelper(indentIdx, name, T, keepDUnderScore, a, level)
 
    -------------------------------------------------
    -- Remove all keys in table that start with "__"
 
    local t = {}
    for key in pairs(T) do
-      if (type(key) == "number" or key:sub(1,2) ~= '__') then
+      if (type(key) == "number" or keepDUnderScore or key:sub(1,2) ~= '__') then
          t[key] = T[key]
       end
    end
@@ -190,7 +189,7 @@ local function outputTblHelper(indentIdx, name, T, a, level)
       a[#a+1] = indent
       w       = w + indent:len()
       for i = 1,#t-1 do
-         a[#a+1] = nsformat(t[i])
+         a[#a+1] = l_nsformat(t[i])
          w       = w + tostring(a[#a]):len()
          a[#a+1] = ", "
          w       = w + a[#a]:len()
@@ -200,21 +199,21 @@ local function outputTblHelper(indentIdx, name, T, a, level)
          end
       end
       if (#t > 0) then
-         a[#a+1] = nsformat(t[#t])
+         a[#a+1] = l_nsformat(t[#t])
          a[#a+1] = ",\n"
       end
    else
       for key, value in pairsByKeys(t) do
          if (type(value) == 'table') then
-            outputTblHelper(indentIdx, key, t[key], a, level+1)
+            outputTblHelper(indentIdx, key, t[key], keepDUnderScore, a, level+1)
          else
             if (type(key) == "string") then
-               str = indent .. '[\"'..key ..'\"] = '
+               str = wrap_name(indent, key) .. ' = '
             else
                str = indent
             end
             a[#a+1] = str
-            a[#a+1] = nsformat(t[key])
+            a[#a+1] = l_nsformat(t[key])
             a[#a+1] = ",\n"
          end
       end
@@ -233,11 +232,12 @@ end
 -- if no file name is given.
 -- @param options input table.
 function serializeTbl(options)
-   local a         = {}
-   local n         = options.name
-   local level     = 0
-   local value     = options.value
-   local indentIdx = -1
+   local a               = {}
+   local n               = options.name
+   local level           = 0
+   local value           = options.value
+   local keepDUnderScore = options.keep_double_underscore
+   local indentIdx       = -1
    if (options.indent) then
       indentIdx = 0
       if (type(options.indent) == 'string' and options.indent:find("^  *$")) then
@@ -246,7 +246,7 @@ function serializeTbl(options)
    end
 
    if (type(value) == "table") then
-      outputTblHelper(indentIdx, options.name, options.value, a, level)
+      outputTblHelper(indentIdx, options.name, options.value, keepDUnderScore, a, level)
    else
       a[#a+1] = wrap_name("",n)
       a[#a+1] = " = "

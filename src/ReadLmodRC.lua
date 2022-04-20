@@ -41,31 +41,35 @@ require("strict")
 --
 --------------------------------------------------------------------------
 require("utils")
+require("myGlobals")
 
 
 local M       = {}
 local dbg     = require("Dbg"):dbg()
+local cosmic  = require("Cosmic"):singleton()
 local getenv  = os.getenv
 local open    = io.open
-local RCFileA = {
-   pathJoin(cmdDir(),"../init/lmodrc.lua"),
-   pathJoin(cmdDir(),"../../etc/lmodrc.lua"),
-   pathJoin("/etc/lmodrc.lua"),
-   pathJoin(getenv("HOME"),".lmodrc.lua"),
-}
 
 local s_classObj    = false
 
-local function buildRC(self)
-   dbg.start{"buildRC(self)"}
+local function l_buildRC(self)
+   dbg.start{"l_buildRC(self)"}
 
    declare("propT",       false)
    declare("scDescriptT", false)
    local s_propT       = {}
    local s_scDescriptT = {}
    local s_rcFileA     = {}
+   local configDir     = cosmic:value("LMOD_CONFIG_DIR")
+   local RCFileA       = {
+      pathJoin(cmdDir(),"../init/lmodrc.lua"),
+      pathJoin(cmdDir(),"../../etc/lmodrc.lua"),
+      pathJoin(configDir, "lmodrc.lua"),
+      "/etc/lmodrc.lua",
+      pathJoin(getenv("HOME"),".lmodrc.lua"),
+   }
 
-   local lmodrc_env = getenv("LMOD_RC") or ""
+   local lmodrc_env = cosmic:value("LMOD_RC")
    if (lmodrc_env:len() > 0) then
       for rc in lmodrc_env:split(":") do
          RCFileA[#RCFileA+1] = rc
@@ -97,19 +101,19 @@ local function buildRC(self)
    self.__scDescriptT = s_scDescriptT
    self.__rcFileA     = s_rcFileA
 
-   dbg.fini("buildRC")
+   dbg.fini("l_buildRC")
 end
 
 
-local function new(self)
-   dbg.start{"ReadLmodRC:new()"}
+local function l_new(self)
+   dbg.start{"ReadLmodRC:l_new()"}
    local o = {}
    setmetatable(o,self)
    self.__index = self
 
-   buildRC(o)
+   l_buildRC(o)
 
-   dbg.fini("ReadLmodRC:new")
+   dbg.fini("ReadLmodRC:l_new")
    return o
 end
 
@@ -139,7 +143,7 @@ end
 function M.singleton(self)
    dbg.start{"ReadLmodRC:singleton()"}
    if (not s_classObj) then
-      s_classObj = new(self)
+      s_classObj = l_new(self)
    end
    dbg.fini("ReadLmodRC:singleton")
    return s_classObj

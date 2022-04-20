@@ -49,8 +49,10 @@ M.my_tcl_mode          = "load"
 M.always_load          = MasterControl.fake_load
 M.always_unload        = MasterControl.fake_load
 M.add_property         = MasterControl.add_property
+M.build_unload         = MasterControl.do_not_build_unload
 M.append_path          = MasterControl.append_path
 M.color_banner         = MasterControl.color_banner
+M.complete             = MasterControl.complete
 M.conflict             = MasterControl.conflict
 M.depends_on           = MasterControl.fake_load
 M.execute              = MasterControl.execute
@@ -79,7 +81,9 @@ M.report               = MasterControl.error
 M.setenv               = MasterControl.setenv
 M.set_alias            = MasterControl.set_alias
 M.set_shell_function   = MasterControl.set_shell_function
+M.source_sh            = MasterControl.source_sh
 M.try_load             = MasterControl.fake_load
+M.uncomplete           = MasterControl.uncomplete
 M.unload               = MasterControl.fake_load
 M.unload_usr           = MasterControl.fake_load
 M.unsetenv             = MasterControl.unsetenv
@@ -87,5 +91,6 @@ M.unset_alias          = MasterControl.unset_alias
 M.unset_shell_function = MasterControl.unset_shell_function
 M.usrload              = MasterControl.fake_load
 M.whatis               = MasterControl.quiet
+M.LmodBreak            = MasterControl.LmodBreak
 
 return M

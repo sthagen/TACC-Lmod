@@ -62,6 +62,7 @@ local getenv       = os.getenv
 local hook         = require("Hook")
 local i18n         = require("i18n")
 local lfs          = require("lfs")
+local sort         = table.sort
 local pack         = (_VERSION == "Lua 5.1") and argsPack or table.pack  -- luacheck: compat
 local unpack       = (_VERSION == "Lua 5.1") and unpack or table.unpack  -- luacheck: compat
 
@@ -73,24 +74,24 @@ local system_name  = cosmic:value("LMOD_SYSTEM_NAME")
 -- and M.access.  The mcp.accessMode function activates one or the other
 -- depending on what mode Access is called with.
 -- @param mode Whether this function has be called via *Help* or *Whatis*.
-local function Access(mode, ...)
+local function l_Access(mode, ...)
    local master    = Master:singleton()
    local shell     = _G.Shell
    local masterTbl = masterTbl()
-   dbg.start{"Access(", concatTbl({...},", "),")"}
+   dbg.start{"l_Access(", concatTbl({...},", "),")"}
    mcp = MasterControl.build("access", mode)
    mcp:setAccessMode(mode,true)
 
    local n = select('#',...)
    if (n < 1) then
       shell:echo(masterTbl.cmdHelpMsg, "\n", Usage(), "\n", version())
-      dbg.fini("Access")
+      dbg.fini("l_Access")
       return
    end
 
    master:access(...)
    mcp:setAccessMode(mode,false)
-   dbg.fini("Access")
+   dbg.fini("l_Access")
 end
 
 --------------------------------------------------------------------------
@@ -215,7 +216,7 @@ function Help(...)
       return concatTbl(a,"")
    end
 
-   Access("help",...)
+   l_Access("help",...)
 end
 
 function IsAvail(...)
@@ -333,13 +334,13 @@ function List(...)
       return
    end
 
-   b[#b+1] = "\n"
-   b[#b+1] = msg
-   b[#b+1] = msg2
-   b[#b+1] = "\n"
-
-   local kk = 0
+   b[#b+1]       = "\n"
+   b[#b+1]       = msg
+   b[#b+1]       = msg2
+   b[#b+1]       = "\n"
+   local kk      = 0
    local legendT = {}
+
    for i = 1, #activeA do
       local entry    = activeA[i]
       local fullName = entry.fullName
@@ -443,7 +444,8 @@ local function l_usrLoad(argA, check_must_load)
    end
 
    if (#uA > 0) then
-      MCP:unload_usr(uA)
+      local force = false
+      unload_usr_internal(uA, force)
    end
 
    local varT     = frameStk:varT()
@@ -514,11 +516,7 @@ function Purge(force)
       mA[#mA+1] = MName:new("mt",totalA[i])
    end
    dbg.start{"Purge(",concatTbl(totalA,", "),")"}
-
-   MCP:unload_usr(mA,force)
-
-   -- Make Default Path be the new MODULEPATH
-   -- mt:buildMpathA(mt:getBaseMPATH())
+   unload_usr_internal(mA, force)
 
    -- A purge should not set the warning flag.
    clearWarningFlag()
@@ -558,10 +556,48 @@ function Reset(msg)
 
    local force = true
    Purge(force)
+   local frameStk  = FrameStk:singleton()
+   local mt        = frameStk:mt()
+   local oldMpathA = mt:modulePathA()
 
    -- Change MODULEPATH back to systemBaseMPATH
-   FrameStk:singleton():resetMPATH2system()
+   frameStk:resetMPATH2system()
 
+   local newMpathA = mt:modulePathA()
+
+   local oldMpathT = {}
+   for i = 1, #oldMpathA do
+      oldMpathT[oldMpathA[i]] = i
+   end
+
+   local b = {}
+
+   for i = 1, #newMpathA do
+      oldMpathT[newMpathA[i]] = false
+   end
+
+   for k,v in pairs(oldMpathT) do
+      if (v) then
+         b[#b+1] = {k,v}
+      end
+   end
+   
+   local function cmp(a,b)
+      return a[2] < b[2]
+   end
+
+   sort(b,cmp)
+   local a = {}
+   for i = 1,#b do
+      a[#a+1] = b[i][1]
+   end
+
+   local pathA = "None"
+   if (next(a) ~= nil) then
+      pathA = concatTbl(a," ")
+   end
+
+   
    dbg.print{"default: \"",default,"\"\n"}
 
    default = default:trim()
@@ -569,7 +605,7 @@ function Reset(msg)
    default = default:gsub(" +",":")
 
    if (msg ~= false and not quiet()) then
-      io.stderr:write(i18n("m_Reset_SysDflt",{}))
+      io.stderr:write(i18n("m_Reset_SysDflt",{pathA=pathA}))
    end
 
 
@@ -721,7 +757,7 @@ function Save(...)
       f:write("-- -*- lua -*-\n")
       f:write("-- created: ",os.date()," --\n")
       local s0 = "-- Lmod ".. Version.name() .. "\n"
-      local s1 = serializeTbl{name=mt:name(), value=mt, indent = true}
+      local s1 = mt:serializeTbl("pretty")
       f:write(s0,s1)
       f:close()
    end
@@ -864,30 +900,31 @@ end
 --  loaded then it is registered with MT so that it won't be
 --  reported in a swap message.
 function Swap(...)
-   local a = select(1, ...) or ""
-   local b = select(2, ...) or ""
-   local s = {}
+   local a  = select(1, ...) or ""
+   local b  = select(2, ...) or ""
+   local s  = {}
+   local mt = FrameStk:singleton():mt()
 
    dbg.start{"Swap(",concatTbl({...},", "),")"}
 
    local n = select("#", ...)
    if (n ~= 2) then
       b = a
+      -- Trim any version info from a
+      local sn_match, sn = mt:find_possible_sn(a)
+      a = sn
    end
 
-   local mt    = FrameStk:singleton():mt()
    local mname = MName:new("mt", a)
    local sn    = mname:sn()
    if (not mt:have(sn,"any")) then
       LmodError{msg="e_Swap_Failed", name = a}
    end
 
-   local mA      = {}
-   local mcp_old = mcp
-   mcp           = MCP
-   dbg.print{"Setting mcp to ", mcp:name(),"\n"}
-   mA[1]         = mname
-   mcp:unload(mA)
+   local mA      = {mname}
+
+   local force   = false
+   unload_internal(mA, force)
    mA[1]         = MName:new("load",b)
    local status = mcp:load_usr(mA)
    if (not status) then
@@ -901,8 +938,6 @@ function Swap(...)
    sn          = mname:sn()
    local usrN  = (not masterTbl().latest) and b or mt:fullName(sn)
    mt:userLoad(sn,usrN)
-   mcp = mcp_old
-   dbg.print{"Setting mcp to ", mcp:name(),"\n"}
    dbg.fini("Swap")
 end
 
@@ -1034,7 +1069,8 @@ end
 -- Unload all requested modules
 function UnLoad(...)
    dbg.start{"UnLoad(",concatTbl({...},", "),")"}
-   MCP:unload_usr(MName:buildA("mt", ...))
+   local force = false
+   unload_usr_internal(MName:buildA("mt", ...), force)
    dbg.fini("UnLoad")
 end
 
@@ -1042,5 +1078,5 @@ end
 -- Run whatis on all request modules given the the command line.
 function Whatis(...)
    prtHdr    = function () return "" end
-   Access("whatis",...)
+   l_Access("whatis",...)
 end

@@ -92,6 +92,14 @@ configuration step.
    used but only **LMOD_MODULERCFILE** is used if both are specified.
    See :ref:`modulerc-label` for more details.
 
+**LMOD_QUARANTINE_VARS**:
+   A colon separated list of environment variables that Lmod will not
+   change. Note that only non-path like variable can be added to this
+   list. Having variables like PATH and LD_LIBRARY_PATH  in this list
+   are ignored.  In other words, they can be changed by Lmod. New in
+   Version 8.6+.
+
+
 Configuration time settings that can be overridden by env. vars.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -118,14 +126,12 @@ the configuration option which will set the action.
   stacks. 
 
 **LMOD_AVAIL_EXTENSIONS**:
-  [yes/no, default: yes, --with-availExtension] Display package
+  [yes/no, default: yes, --with-availExtensions] Display package
   extensions when doing "module avail".
 
-**LMOD_CACHED_LOADS**:
-  [yes/no, default:no, --with-cachedLoads] If "yes" then Lmod will use
-  the spider cache to load modulefiles and produce a terse avail instead
-  of walking all the directories in MODULEPATH as long as
-  LMOD_IGNORE_CACHE is not set.
+**LMOD_BASH_INITIALIZE**:
+  [yes/no, default:yes, --with-bashInitialize] If "yes" then Lmod will
+  disable file globbing when eval'ing the output from Lmod.
 
 **LMOD_CASE_INDEPENDENT_SORTING**:
   [yes/no, default: no, --with-caseIndependentSorting] Make avail and
@@ -231,4 +237,57 @@ Configuration only settings
 --**with-silentShellDebugging**:
   [yes/no, default: no] If yes then the module command will silence its output under shell debug.
 
+.. _lmod_config-label:
 
+Configuring Lmod with **/etc/lmod/lmod_config.lua**:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Lmod looks for a file named lmod_config.lua in the LMOD_CONFIG_DIR,
+which is by default /etc/lmod/. So normally the file is found here:
+/etc/lmod/lmod_config.lua.  It can be configured to any value with the
+configure option (--with-lmodConfigDir=) or setting the environment
+variable LMOD_CONFIG_DIR.  This file is used optionally.  It is not
+required.
+
+This file allows sites configure Lmod through Lua instead
+of setting environment variables for each shell. By using the
+cosmic:assign() functions this can be accomplished in one file.
+Here is a full example::
+
+    require("strict")
+    local cosmic       = require("Cosmic"):singleton()
+
+    cosmic:assign("LMOD_SITE_NAME",   "XYZZY")
+
+    -- Note that this directory could be anything including /etc/lmod
+    cosmic:assign("LMOD_PACKAGE_PATH", "/path/to/SitePackage_Dir/")
+
+    local function echoString(s)
+       io.stderr:write(s,"\n")
+    end
+
+    sandbox_registration {
+       echoString = echoString
+    }
+
+In the above example a site is setting its name and providing the path
+to the location directory where the SitePackage.lua file is.  Also the
+simple **echoString** function has been added and is callable from
+modulefiles because it has been registered in the sandbox.
+
+
+Sites wishing to change the default values of other Lmod configuration
+variables should study the src/myGlobals.lua file to see what the name
+of the variable is and then use the cosmic:assign() function to set
+the new value.  For example::
+
+    cosmic:assign("LMOD_PIN_VERSIONS","yes")
+    cosmic:assign("LMOD_CACHED_LOADS","yes")
+    ...
+
+
+To check that your installation is correct please run::
+
+    $ module --config
+
+to see that you got what you wanted.

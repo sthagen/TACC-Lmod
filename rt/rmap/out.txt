@@ -16,93 +16,93 @@ mrcT = {
 }
 mrcMpathT = {}
 spiderT = {
-  ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1"] = {
     impi = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["impi/4.1"]  = {
-          ["Version"] = "4.1",
-          ["canonical"] = "4.1",
-          ["family"] = "MPI",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
+        ["impi/4.1"] = {
+          Version = "4.1",
+          canonical = "4.1",
+          family = "MPI",
+          fn = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/lib"] = 1,
           },
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1",
-          ["pV"] = "000000004.000000001.*zfinal",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1",
+          pV = "000000004.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/bin"] = 1,
           },
-          ["wV"] = "000000004.000000001.*zfinal",
+          wV = "000000004.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0"] = {
     impi = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["impi/4.1"]  = {
-          ["Version"] = "4.1",
-          ["canonical"] = "4.1",
-          ["family"] = "MPI",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0/impi/4.1.lua",
+        ["impi/4.1"] = {
+          Version = "4.1",
+          canonical = "4.1",
+          family = "MPI",
+          fn = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0/impi/4.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
           },
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0",
-          ["pV"] = "000000004.000000001.*zfinal",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0",
+          pV = "000000004.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
           },
-          ["wV"] = "000000004.000000001.*zfinal",
+          wV = "000000004.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/Core"]  = {
+  ["ProjectDIR/rt/rmap/mf/Core"] = {
     intel = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["intel/13.1"]  = {
-          ["Version"] = "13.1",
-          ["canonical"] = "13.1",
-          ["family"] = "compiler",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
+        ["intel/13.1"] = {
+          Version = "13.1",
+          canonical = "13.1",
+          family = "compiler",
+          fn = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel/13.1/lib"] = 1,
           },
-          ["luaExt"] = 5,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/Core",
-          ["pV"] = "000000013.000000001.*zfinal",
+          luaExt = 5,
+          mpath = "ProjectDIR/rt/rmap/mf/Core",
+          pV = "000000013.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel/13.1/bin"] = 1,
           },
-          ["wV"] = "000000013.000000001.*zfinal",
+          wV = "000000013.000000001.*zfinal",
         },
-        ["intel/14.0.1"]  = {
-          ["Version"] = "14.0.1",
-          ["canonical"] = "14.0.1",
-          ["family"] = "compiler",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
+        ["intel/14.0.1"] = {
+          Version = "14.0.1",
+          canonical = "14.0.1",
+          family = "compiler",
+          fn = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
           },
-          ["luaExt"] = 7,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/Core",
-          ["pV"] = "000000014.000000000.000000001.*zfinal",
+          luaExt = 7,
+          mpath = "ProjectDIR/rt/rmap/mf/Core",
+          pV = "000000014.000000000.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
           },
-          ["wV"] = "000000014.000000000.000000001.*zfinal",
+          wV = "000000014.000000000.000000001.*zfinal",
         },
       },
     },
@@ -111,34 +111,34 @@ spiderT = {
       defaultT = {},
       dirT = {},
       fileT = {
-        ["symlink/1.0"]  = {
-          ["Version"] = "1.0",
-          ["canonical"] = "1.0",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/Core",
-          ["pV"] = "000000001.*zfinal",
+        ["symlink/1.0"] = {
+          Version = "1.0",
+          canonical = "1.0",
+          fn = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/Core",
+          pV = "000000001.*zfinal",
           pathA = {
             ["OutputDIR/my_bin"] = 1,
           },
-          ["wV"] = "000000001.*zfinal",
+          wV = "000000001.*zfinal",
         },
       },
     },
   },
-  ["version"] = 5,
+  version = 5,
 }
 mpathMapT = {
-  ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1"] = {
     ["intel/13.1"] = "ProjectDIR/rt/rmap/mf/Core",
   },
-  ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0"] = {
     ["intel/14.0.1"] = "ProjectDIR/rt/rmap/mf/Core",
   },
-  ["ProjectDIR/rt/rmap/mf/MPI/intel/13.1/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/MPI/intel/13.1/impi/4.1"] = {
     ["impi/4.1"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1",
   },
-  ["ProjectDIR/rt/rmap/mf/MPI/intel/14.0/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/MPI/intel/14.0/impi/4.1"] = {
     ["impi/4.1"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0",
   },
 }
@@ -151,15 +151,16 @@ timestampFn = {
 }
 dbT = {
   impi = {
-    ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua"]  = {
-      ["Version"] = "4.1",
-      ["family"] = "MPI",
-      ["fullName"] = "impi/4.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua"] = {
+      Version = "4.1",
+      family = "MPI",
+      fullName = "impi/4.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/lib"] = 1,
       },
-      ["pV"] = "000000004.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1",
+      pV = "000000004.000000001.*zfinal",
       parentAA = {
         {
           "intel/13.1",
@@ -168,17 +169,18 @@ dbT = {
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/bin"] = 1,
       },
-      ["wV"] = "000000004.000000001.*zfinal",
+      wV = "000000004.000000001.*zfinal",
     },
-    ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0/impi/4.1.lua"]  = {
-      ["Version"] = "4.1",
-      ["family"] = "MPI",
-      ["fullName"] = "impi/4.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/Compiler/intel/14.0/impi/4.1.lua"] = {
+      Version = "4.1",
+      family = "MPI",
+      fullName = "impi/4.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
       },
-      ["pV"] = "000000004.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/Compiler/intel/14.0",
+      pV = "000000004.000000001.*zfinal",
       parentAA = {
         {
           "intel/14.0.1",
@@ -187,49 +189,52 @@ dbT = {
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
       },
-      ["wV"] = "000000004.000000001.*zfinal",
+      wV = "000000004.000000001.*zfinal",
     },
   },
   intel = {
-    ["ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua"]  = {
-      ["Version"] = "13.1",
-      ["family"] = "compiler",
-      ["fullName"] = "intel/13.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua"] = {
+      Version = "13.1",
+      family = "compiler",
+      fullName = "intel/13.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel/13.1/lib"] = 1,
       },
-      ["pV"] = "000000013.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/Core",
+      pV = "000000013.000000001.*zfinal",
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel/13.1/bin"] = 1,
       },
-      ["wV"] = "000000013.000000001.*zfinal",
+      wV = "000000013.000000001.*zfinal",
     },
-    ["ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua"]  = {
-      ["Version"] = "14.0.1",
-      ["family"] = "compiler",
-      ["fullName"] = "intel/14.0.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua"] = {
+      Version = "14.0.1",
+      family = "compiler",
+      fullName = "intel/14.0.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
       },
-      ["pV"] = "000000014.000000000.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/Core",
+      pV = "000000014.000000000.000000001.*zfinal",
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
       },
-      ["wV"] = "000000014.000000000.000000001.*zfinal",
+      wV = "000000014.000000000.000000001.*zfinal",
     },
   },
   symlink = {
-    ["ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua"]  = {
-      ["Version"] = "1.0",
-      ["fullName"] = "symlink/1.0",
-      ["hidden"] = false,
-      ["pV"] = "000000001.*zfinal",
+    ["ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua"] = {
+      Version = "1.0",
+      fullName = "symlink/1.0",
+      hidden = false,
+      mpath = "ProjectDIR/rt/rmap/mf/Core",
+      pV = "000000001.*zfinal",
       pathA = {
         ["OutputDIR/my_bin"] = 1,
       },
-      ["wV"] = "000000001.*zfinal",
+      wV = "000000001.*zfinal",
     },
   },
 }
@@ -242,69 +247,69 @@ timestampFn = {
   false,
 }
 reverseMapT = {
-  ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/bin"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/bin"] = {
     flavor = {
       "default:intel/13.1",
     },
-    ["kind"] = "bin",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
-    ["pkg"] = "impi/4.1",
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
+    pkg = "impi/4.1",
   },
-  ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/lib"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel-13_1/impi/4.1/lib"] = {
     flavor = {
       "default:intel/13.1",
     },
-    ["kind"] = "lib",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
-    ["pkg"] = "impi/4.1",
+    kind = "lib",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Compiler/intel/13.1/impi/4.1.lua",
+    pkg = "impi/4.1",
   },
-  ["ProjectDIR/rt/rmap/apps/intel/13.1/bin"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel/13.1/bin"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "bin",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
-    ["pkg"] = "intel/13.1",
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
+    pkg = "intel/13.1",
   },
-  ["ProjectDIR/rt/rmap/apps/intel/13.1/lib"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel/13.1/lib"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "lib",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
-    ["pkg"] = "intel/13.1",
+    kind = "lib",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/intel/13.1.lua",
+    pkg = "intel/13.1",
   },
-  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "bin",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
-    ["pkg"] = "intel/14.0.1",
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
   },
-  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"]  = {
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "lib",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
-    ["pkg"] = "intel/14.0.1",
+    kind = "lib",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
   },
-  ["OutputDIR/more_apps/bin"]  = {
+  ["OutputDIR/more_apps/bin"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "bin",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
-    ["pkg"] = "symlink/1.0",
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
+    pkg = "symlink/1.0",
   },
-  ["OutputDIR/my_bin"]  = {
+  ["OutputDIR/my_bin"] = {
     flavor = {
       "default",
     },
-    ["kind"] = "bin",
-    ["moduleFn"] = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
-    ["pkg"] = "symlink/1.0",
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/Core/symlink/1.0.lua",
+    pkg = "symlink/1.0",
   },
 }
 xlibmap = {}
@@ -316,10 +321,21 @@ __LMOD_REF_COUNT_MODULEPATH=ProjectDIR/rt/rmap/mf/Core:1;
 export __LMOD_REF_COUNT_MODULEPATH;
 MODULEPATH=ProjectDIR/rt/rmap/mf/Core;
 export MODULEPATH;
-_ModuleTable_='_ModuleTable_={["MTversion"]=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/rmap/mf/Core",},["systemBaseMPATH"]="ProjectDIR/rt/rmap/mf/Core",}';
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/rmap/mf/Core",},systemBaseMPATH="ProjectDIR/rt/rmap/mf/Core",}';
 export _ModuleTable_;
 ===========================
 step 6
+lua ProjectDIR/src/lmod.in.lua bash --regression_testing spider
+===========================
+__LMOD_REF_COUNT_MODULEPATH=ProjectDIR/rt/rmap/mf/2Core:1;
+export __LMOD_REF_COUNT_MODULEPATH;
+MODULEPATH=ProjectDIR/rt/rmap/mf/2Core;
+export MODULEPATH;
+_ModuleTable_='_ModuleTable_={MTversion=3,depthT={},family={},mT={},mpathA={"ProjectDIR/rt/rmap/mf/2Core",},systemBaseMPATH="ProjectDIR/rt/rmap/mf/2Core",}';
+export _ModuleTable_;
+false
+===========================
+step 7
 buildSpiderT ProjectDIR/rt/rmap/mf/2Core
 ===========================
 timestampFn = {
@@ -332,86 +348,86 @@ mrcT = {
 }
 mrcMpathT = {}
 spiderT = {
-  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"] = {
     impi = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["impi/4.1"]  = {
-          ["Version"] = "4.1",
-          ["canonical"] = "4.1",
-          ["family"] = "MPI",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua",
+        ["impi/4.1"] = {
+          Version = "4.1",
+          canonical = "4.1",
+          family = "MPI",
+          fn = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
           },
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
-          ["pV"] = "000000004.000000001.*zfinal",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
+          pV = "000000004.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
           },
-          ["wV"] = "000000004.000000001.*zfinal",
+          wV = "000000004.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/2Core"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Core"] = {
     intel = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["intel/14.0.1"]  = {
-          ["Version"] = "14.0.1",
-          ["canonical"] = "14.0.1",
-          ["family"] = "compiler",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+        ["intel/14.0.1"] = {
+          Version = "14.0.1",
+          canonical = "14.0.1",
+          family = "compiler",
+          fn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
           },
-          ["luaExt"] = 7,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2Core",
-          ["pV"] = "000000014.000000000.000000001.*zfinal",
+          luaExt = 7,
+          mpath = "ProjectDIR/rt/rmap/mf/2Core",
+          pV = "000000014.000000000.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
           },
-          ["wV"] = "000000014.000000000.000000001.*zfinal",
+          wV = "000000014.000000000.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"] = {
     paraview = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["paraview/5.6"]  = {
-          ["Version"] = "5.6",
-          ["canonical"] = "5.6",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua",
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
-          ["pV"] = "000000005.000000006.*zfinal",
-          ["wV"] = "000000005.000000006.*zfinal",
+        ["paraview/5.6"] = {
+          Version = "5.6",
+          canonical = "5.6",
+          fn = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
+          pV = "000000005.000000006.*zfinal",
+          wV = "000000005.000000006.*zfinal",
         },
       },
     },
   },
-  ["version"] = 5,
+  version = 5,
 }
 mpathMapT = {
-  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"] = {
     ["intel/14.0.1"] = "ProjectDIR/rt/rmap/mf/2Core",
   },
-  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"] = {
     ["impi/4.1"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
   },
 }
 ===========================
-step 7
+step 8
 buildDbT ProjectDIR/rt/rmap/mf/2Core
 ===========================
 timestampFn = {
@@ -419,15 +435,16 @@ timestampFn = {
 }
 dbT = {
   impi = {
-    ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua"]  = {
-      ["Version"] = "4.1",
-      ["family"] = "MPI",
-      ["fullName"] = "impi/4.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua"] = {
+      Version = "4.1",
+      family = "MPI",
+      fullName = "impi/4.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
       },
-      ["pV"] = "000000004.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
+      pV = "000000004.000000001.*zfinal",
       parentAA = {
         {
           "intel/14.0.1",
@@ -436,43 +453,45 @@ dbT = {
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
       },
-      ["wV"] = "000000004.000000001.*zfinal",
+      wV = "000000004.000000001.*zfinal",
     },
   },
   intel = {
-    ["ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua"]  = {
-      ["Version"] = "14.0.1",
-      ["family"] = "compiler",
-      ["fullName"] = "intel/14.0.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua"] = {
+      Version = "14.0.1",
+      family = "compiler",
+      fullName = "intel/14.0.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
       },
-      ["pV"] = "000000014.000000000.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/2Core",
+      pV = "000000014.000000000.000000001.*zfinal",
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
       },
-      ["wV"] = "000000014.000000000.000000001.*zfinal",
+      wV = "000000014.000000000.000000001.*zfinal",
     },
   },
   paraview = {
-    ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua"]  = {
-      ["Version"] = "5.6",
-      ["fullName"] = "paraview/5.6",
-      ["hidden"] = false,
-      ["pV"] = "000000005.000000006.*zfinal",
+    ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua"] = {
+      Version = "5.6",
+      fullName = "paraview/5.6",
+      hidden = false,
+      mpath = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
+      pV = "000000005.000000006.*zfinal",
       parentAA = {
         {
           "intel/14.0.1", "impi/4.1",
         },
       },
-      ["wV"] = "000000005.000000006.*zfinal",
+      wV = "000000005.000000006.*zfinal",
     },
   },
 }
 provideByT = {}
 ===========================
-step 8
+step 9
 buildSpiderT ProjectDIR/rt/rmap/mf/2Core
 ===========================
 timestampFn = {
@@ -485,89 +504,89 @@ mrcT = {
 }
 mrcMpathT = {}
 spiderT = {
-  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"] = {
     impi = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["impi/4.1"]  = {
-          ["Version"] = "4.1",
-          ["canonical"] = "4.1",
-          ["family"] = "MPI",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua",
+        ["impi/4.1"] = {
+          Version = "4.1",
+          canonical = "4.1",
+          family = "MPI",
+          fn = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
           },
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
-          ["pV"] = "000000004.000000001.*zfinal",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
+          pV = "000000004.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
           },
-          ["wV"] = "000000004.000000001.*zfinal",
+          wV = "000000004.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/2Core"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Core"] = {
     intel = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["intel/14.0.1"]  = {
-          ["Version"] = "14.0.1",
-          ["canonical"] = "14.0.1",
-          ["family"] = "compiler",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+        ["intel/14.0.1"] = {
+          Version = "14.0.1",
+          canonical = "14.0.1",
+          family = "compiler",
+          fn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
           lpathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
           },
-          ["luaExt"] = 7,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2Core",
-          ["pV"] = "000000014.000000000.000000001.*zfinal",
+          luaExt = 7,
+          mpath = "ProjectDIR/rt/rmap/mf/2Core",
+          pV = "000000014.000000000.000000001.*zfinal",
           pathA = {
             ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
           },
-          ["wV"] = "000000014.000000000.000000001.*zfinal",
+          wV = "000000014.000000000.000000001.*zfinal",
         },
       },
     },
   },
-  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"] = {
     paraview = {
       defaultA = {},
       defaultT = {},
       dirT = {},
       fileT = {
-        ["paraview/5.6"]  = {
-          ["Version"] = "5.6",
-          ["canonical"] = "5.6",
-          ["fn"] = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua",
-          ["luaExt"] = 4,
-          ["mpath"] = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
-          ["pV"] = "000000005.000000006.*zfinal",
-          ["wV"] = "000000005.000000006.*zfinal",
+        ["paraview/5.6"] = {
+          Version = "5.6",
+          canonical = "5.6",
+          fn = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua",
+          luaExt = 4,
+          mpath = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
+          pV = "000000005.000000006.*zfinal",
+          wV = "000000005.000000006.*zfinal",
         },
       },
     },
   },
-  ["version"] = 5,
+  version = 5,
 }
 mpathMapT = {
-  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0"] = {
     ["intel/14.0.1"] = "ProjectDIR/rt/rmap/mf/2Core",
   },
-  ["ProjectDIR/rt/rmap/mf/2Core"]  = {
+  ["ProjectDIR/rt/rmap/mf/2Core"] = {
     ["paraview/5.6"] = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
   },
-  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"]  = {
+  ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1"] = {
     ["impi/4.1"] = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
   },
 }
 ===========================
-step 9
+step 10
 buildDbT ProjectDIR/rt/rmap/mf/2Core
 ===========================
 timestampFn = {
@@ -575,48 +594,111 @@ timestampFn = {
 }
 dbT = {
   impi = {
-    ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua"]  = {
-      ["Version"] = "4.1",
-      ["family"] = "MPI",
-      ["fullName"] = "impi/4.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0/impi/4.1.lua"] = {
+      Version = "4.1",
+      family = "MPI",
+      fullName = "impi/4.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/lib"] = 1,
       },
-      ["pV"] = "000000004.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/2Compiler/intel/14.0",
+      pV = "000000004.000000001.*zfinal",
       parentAA = {},
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel-14_0/impi/4.1/bin"] = 1,
       },
-      ["wV"] = "000000004.000000001.*zfinal",
+      wV = "000000004.000000001.*zfinal",
     },
   },
   intel = {
-    ["ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua"]  = {
-      ["Version"] = "14.0.1",
-      ["family"] = "compiler",
-      ["fullName"] = "intel/14.0.1",
-      ["hidden"] = false,
+    ["ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua"] = {
+      Version = "14.0.1",
+      family = "compiler",
+      fullName = "intel/14.0.1",
+      hidden = false,
       lpathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = 1,
       },
-      ["pV"] = "000000014.000000000.000000001.*zfinal",
+      mpath = "ProjectDIR/rt/rmap/mf/2Core",
+      pV = "000000014.000000000.000000001.*zfinal",
       parentAA = {},
       pathA = {
         ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = 1,
       },
-      ["wV"] = "000000014.000000000.000000001.*zfinal",
+      wV = "000000014.000000000.000000001.*zfinal",
     },
   },
   paraview = {
-    ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua"]  = {
-      ["Version"] = "5.6",
-      ["fullName"] = "paraview/5.6",
-      ["hidden"] = false,
-      ["pV"] = "000000005.000000006.*zfinal",
+    ["ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1/paraview/5.6.lua"] = {
+      Version = "5.6",
+      fullName = "paraview/5.6",
+      hidden = false,
+      mpath = "ProjectDIR/rt/rmap/mf/2MPI/intel/14.0/impi/4.1",
+      pV = "000000005.000000006.*zfinal",
       parentAA = {},
-      ["wV"] = "000000005.000000006.*zfinal",
+      wV = "000000005.000000006.*zfinal",
     },
   },
 }
 provideByT = {}
+===========================
+step 11
+buildRmapT ProjectDIR/rt/rmap/mf/2Core
+===========================
+timestampFn = {
+  false,
+}
+reverseMapT = {
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = {
+    flavor = {
+      "default",
+    },
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
+  },
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = {
+    flavor = {
+      "default",
+    },
+    kind = "lib",
+    moduleFn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
+  },
+  ["OutputDIR/otherBin"] = {
+    flavor = {
+      "default",
+    },
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
+  },
+}
+xlibmap = {}
+===========================
+step 12
+buildRmapT ProjectDIR/rt/rmap/mf/2Core
+===========================
+timestampFn = {
+  false,
+}
+reverseMapT = {
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/bin"] = {
+    flavor = {
+      "default",
+    },
+    kind = "bin",
+    moduleFn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
+  },
+  ["ProjectDIR/rt/rmap/apps/intel/14.0.1/lib"] = {
+    flavor = {
+      "default",
+    },
+    kind = "lib",
+    moduleFn = "ProjectDIR/rt/rmap/mf/2Core/intel/14.0.1.lua",
+    pkg = "intel/14.0.1",
+  },
+}
+xlibmap = {}

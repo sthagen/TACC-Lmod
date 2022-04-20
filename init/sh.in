@@ -2,7 +2,7 @@
 
 LMOD_ROOT="@lmod_root@"
 LMOD_PKG="@PKG@"
-LMOD_DIR="@PKG@/libexec/"
+LMOD_DIR="@PKG@/libexec"
 LMOD_CMD="@PKG@/libexec/lmod"
 MODULESHOME="@PKG@"
 export LMOD_CMD
@@ -12,13 +12,12 @@ export MODULESHOME
 
 module()
 {
-  eval `$LMOD_CMD sh "$@"`
+  eval "`$LMOD_CMD sh "$@"`"
 }
-export LMOD_DIR
 
 clearMT()
 {
-  eval $($LMOD_DIR/clearMT_cmd bash)
+  eval $($LMOD_DIR/clearLMOD_cmd --shell bash --simple)
 }
 
 ########################################################################
@@ -30,7 +29,7 @@ clearMT()
 #  It does much more do: "ml --help" for more information.
 ml()
 {
-  eval $($LMOD_DIR/ml_cmd "$@")
+  eval "$($LMOD_DIR/ml_cmd "$@")"
 }
 
 # Local Variables:

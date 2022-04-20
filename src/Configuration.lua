@@ -61,7 +61,7 @@ local M            = {}
 
 local s_configuration = false
 
-local function locatePkg(pkg)
+local function l_locatePkg(pkg)
    local result = nil
    for path in package.path:split(";") do
       local s = path:gsub("?",pkg)
@@ -76,13 +76,13 @@ local function locatePkg(pkg)
 end
 
 
-local function new(self)
+local function l_new(self)
    local o = {}
    setmetatable(o,self)
    self.__index = self
 
    local HashSum    = cosmic:value("LMOD_HASHSUM_PATH")
-   local locSitePkg = locatePkg("SitePackage") or "unknown"
+   local locSitePkg = l_locatePkg("SitePackage") or "unknown"
 
    if (locSitePkg ~= "unknown") then
       local std_sha1 = "1fa3d8f24793042217b8474904136fdde72d42dd"
@@ -131,6 +131,8 @@ local function new(self)
    local uname             = capture("uname -a")
    local adminFn, readable = findAdminFn()
    local activeTerm        = haveTermSupport() and "true" or colorize("red","false")
+   local avail_style       = cosmic:value("LMOD_AVAIL_STYLE")
+   local lmod_configDir    = cosmic:value("LMOD_CONFIG_DIR")
    local ksh_support       = cosmic:value("LMOD_KSH_SUPPORT")
    local extended_default  = cosmic:value("LMOD_EXTENDED_DEFAULT")
    local avail_extensions  = cosmic:value("LMOD_AVAIL_EXTENSIONS")
@@ -175,6 +177,11 @@ local function new(self)
    local tracing           = cosmic:value("LMOD_TRACING")
    local fast_tcl_interp   = cosmic:value("LMOD_FAST_TCL_INTERP")
    local allow_root_use    = cosmic:value("LMOD_ALLOW_ROOT_USE")
+   local lmodrc            = cosmic:value("LMOD_RC")
+
+   if (lmodrc == "") then
+      lmodrc = "<empty>"
+   end
 
    if (not rc:find(":") and not isFile(rc)) then
       rc = rc .. " -> <empty>"
@@ -194,9 +201,11 @@ local function new(self)
    local tbl = {}
    tbl.allowRoot    = { k = "Allow root to use Lmod"            , v = allow_root_use,   }
    tbl.allowTCL     = { k = "Allow TCL modulefiles"             , v = allow_tcl_mfiles, }
+   tbl.avail_style  = { k = "Avail Style"                       , v = avail_style,      }
    tbl.autoSwap     = { k = "Auto swapping"                     , v = auto_swap,        }
    tbl.case         = { k = "Case Independent Sorting"          , v = case_ind_sorting, }
    tbl.colorize     = { k = "Colorize Lmod"                     , v = lmod_colorize,    }
+   tbl.configDir    = { k = "Configuration dir"                 , v = lmod_configDir,   }
    tbl.disable1N    = { k = "Disable Same Name AutoSwap"        , v = disable1N,        }
    tbl.disp_av_ext  = { k = "Display Extension w/ avail"        , v = avail_extensions, }
    tbl.dot_files    = { k = "Using dotfiles"                    , v = using_dotfiles,   }
@@ -233,6 +242,7 @@ local function new(self)
    tbl.prefix       = { k = "Lmod prefix"                       , v = "@PREFIX@",       }
    tbl.prefix_site  = { k = "Site controlled prefix"            , v = site_prefix,      }
    tbl.prpnd_blk    = { k = "Prepend order"                     , v = prepend_block,    }
+   tbl.rc           = { k = "LMOD_RC"                           , v = lmodrc,           }
    tbl.settarg      = { k = "Supporting Full Settarg Use"       , v = settarg_support,  }
    tbl.shell        = { k = "User shell"                        , v = myShellName(),    }
    tbl.sitePkg      = { k = "Site Pkg location"                 , v = locSitePkg,       }
@@ -262,7 +272,7 @@ end
 -- @return A Configuration Singleton.
 function M.singleton(self)
    if (not s_configuration) then
-      s_configuration = new(self)
+      s_configuration = l_new(self)
    end
    return s_configuration
 end
@@ -329,7 +339,7 @@ function M.report(self)
    b[#b+1]  = str
    b[#b+1]  = border
    b[#b+1]  = "\n"
-   b[#b+1]  = serializeTbl{ indent = true, name="propT", value = readLmodRC:propT() }
+   b[#b+1]  = serializeTbl{indent = true, name="propT", value = readLmodRC:propT() }
    b[#b+1]  = "\n"
 
    return concatTbl(b,"\n")

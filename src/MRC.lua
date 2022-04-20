@@ -64,11 +64,11 @@ local load      = (_VERSION == "Lua 5.1") and loadstring or load
 local s_MRC     = false
 local hook      = require("Hook")
 
-local function argsPack(...)
+local function l_argsPack(...)
    local argA = { n = select("#", ...), ...}
    return argA
 end
-local pack      = (_VERSION == "Lua 5.1") and argsPack or table.pack  -- luacheck: compat
+local pack      = (_VERSION == "Lua 5.1") and l_argsPack or table.pack  -- luacheck: compat
 
 ------------------------------------------------------------------------
 -- Local functions
@@ -78,7 +78,8 @@ local l_buildMod2VersionT
 -- a private ctor that is used to construct a singleton.
 -- @param self A MRC object.
 
-local function new(self, fnA)
+local function l_new(self, fnA)
+   --dbg.start{"MRC l_new(fnA)"}
    local o              = {}
    o.__mpathT           = {}  -- mpath dependent values for alias2modT, version2modT
                               -- and hiddenT.
@@ -94,6 +95,7 @@ local function new(self, fnA)
    self.__index = self
 
    l_build(o, fnA or getModuleRCT())
+   --dbg.fini("MRC l_new")
    return o
 end
 
@@ -106,7 +108,7 @@ end
 function M.singleton(self, fnA)
    dbg.start{"MRC:singleton()"}
    if (not s_MRC) then
-      s_MRC = new(self, fnA)
+      s_MRC = l_new(self, fnA)
    end
    dbg.fini("MRC:singleton")
    return s_MRC
@@ -453,6 +455,7 @@ end
 -- modT is a table with: sn, fullName and fn
 function M.isVisible(self, modT)
    local frameStk  = require("FrameStk"):singleton()
+   local mname     = frameStk:mname()
    local mt        = frameStk:mt()
    local mpathA    = mt:modulePathA()
    local name      = modT.fullName
@@ -468,7 +471,9 @@ function M.isVisible(self, modT)
       isVisible = idx == nil
    end
 
-   modT['isVisible'] = isVisible
+   modT.isVisible = isVisible
+   modT.mname     = mname
+   modT.mt        = mt
    hook.apply("isVisibleHook", modT)
 
    return modT.isVisible

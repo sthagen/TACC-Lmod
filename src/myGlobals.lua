@@ -148,6 +148,14 @@ cosmic:init{name = "LMOD_REDIRECT",
             yn   = "no"}
 
 ------------------------------------------------------------------------
+-- LMOD_RC:  Lmod RC list of colon separated files 
+------------------------------------------------------------------------
+local rcfiles = getenv("LMOD_RC")
+cosmic:init{name    = "LMOD_RC",
+            default = "",
+            assignV = rcfiles}
+
+------------------------------------------------------------------------
 -- LMOD_FAST_TCL_INTERP:  Send messages to stdout instead of stderr
 ------------------------------------------------------------------------
 cosmic:init{name = "LMOD_FAST_TCL_INTERP",
@@ -163,12 +171,27 @@ cosmic:init{name    = "LMOD_SITE_NAME",
             default = false}
 
 ------------------------------------------------------------------------
+-- LMOD_CONFIG_DIR: The location of the Lmod config dir
+------------------------------------------------------------------------
+cosmic:init{name    = "LMOD_CONFIG_DIR",
+            sedV    = "@lmod_config_dir@",
+            default = "/etc/lmod"}
+
+------------------------------------------------------------------------
+-- LMOD_PACKAGE_PATH: Colon separated list of directories to search for
+--                    SitePackage.lua
+------------------------------------------------------------------------
+cosmic:assign("LMOD_PACKAGE_PATH",getenv("LMOD_PACKAGE_PATH") or "")
+
+------------------------------------------------------------------------
 -- LMOD_SYSHOST: The cluster name: (e.g. stampede)
 ------------------------------------------------------------------------
 
 cosmic:init{name    = "LMOD_SYSHOST",
             sedV    = "@syshost@",
             default = false}
+
+
 
 ------------------------------------------------------------------------
 -- LMOD_SYSTEM_NAME:  When on a shared file system, use this to
@@ -332,6 +355,15 @@ cosmic:init{name    = "LMOD_EXTENDED_DEFAULT",
             yn      = "yes"}
 
 ------------------------------------------------------------------------
+-- LMOD_QUARANTINE_VARS: A colon separated list of variable
+--                       that Lmod will not change.  Note
+--                       path like variables are excluded.
+------------------------------------------------------------------------
+
+
+LMOD_QUARANTINE_VARS = getenv("LMOD_QUARANTINE_VARS")
+
+------------------------------------------------------------------------
 -- LMOD_RTM_TESTING: If set then the author is testing Lmod
 ------------------------------------------------------------------------
 LMOD_RTM_TESTING = getenv("LMOD_RTM_TESTING")
@@ -355,10 +387,13 @@ cosmic:init{name    = "LMOD_ADMIN_FILE",
 --                   entry is the default (i.e. A:B:C => A is default).
 ------------------------------------------------------------------------
 
-LMOD_AVAIL_STYLE = getenv("LMOD_AVAIL_STYLE") or "<system>"
-if (LMOD_AVAIL_STYLE == "") then
-   LMOD_AVAIL_STYLE = "<system>"
+local style = getenv("LMOD_AVAIL_STYLE") or "<system>"
+if (style == "") then
+   style = "<system>"
 end
+cosmic:init{name    = "LMOD_AVAIL_STYLE",
+            default = "<system>",
+            assignV = style}
 
 ------------------------------------------------------------------------
 -- LFS_VERSION: The version of luafilesystem being used
