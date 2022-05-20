@@ -146,6 +146,7 @@ Lmod does not support modulefiles that start with two or more underscores
      e_Illegal_option      = [==[Option: "%{v}" is unknown.
   Try module --help for usage.
 ]==],
+     e_Inf_Loop            = "Infinite Load Loop detected for module: \"%{fullName}\" file: \"%{file}\"",
      e_LocationT_Srch      = "Error in LocationT:search().",
      e_Missing_Value       = "%{func}(\"%{name}\") is not valid; a value is required.",
      e_MT_corrupt          = [==[The module table stored in the environment is corrupt.
@@ -312,6 +313,9 @@ The system default contains no modules
   $  module --force save %{name}
 ]==], --
      w_System_Reserved     = "The named collection 'system' is reserved. Please choose another name.\n",
+     w_Too_Many_RegularFn  = [==[
+MODULEPATH directory: "%{mpath}" has too many non-modulefiles (%{regularFn}). Please make sure that modulefiles are in their own directory and not mixed in with non-modulefiles (e.g. source code)
+]==],
      w_Undef_MPATH         = "MODULEPATH is undefined.\n",
      w_Unknown_Hook        = "Unknown hook: %{name}\n",
 

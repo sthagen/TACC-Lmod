@@ -396,7 +396,6 @@ function M.prepend(self, value, nodups, priority)
    end
 
    local imin = min(self.imin, 0)
-   local name = self.name
    for i = is, ie, iskip do
       local path = pathA[i]
       imin       = imin - 1
@@ -454,6 +453,7 @@ function M.append(self, value, nodups, priority)
 
    local tbl  = self.tbl
    local imax = self.imax
+
    for i = 1, #pathA do
       local path = pathA[i]
       if (name == "MODULEPATH") then
