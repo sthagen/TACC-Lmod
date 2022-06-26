@@ -36,11 +36,15 @@
 
 global g_loadT g_varsT g_fullName g_usrName g_shellName g_mode g_shellType g_outputA, g_fast
 global g_moduleT g_setup_moduleT g_lua_cmd env g_my_cmd
+global g_envT g_envClrT
 
 set g_setup_moduleT 0
 set g_lua_cmd       "@path_to_lua@"
 set g_lmod_cmd      "@path_to_lmod@"
 set g_my_cmd        $argv0
+set g_envT          [dict create]
+set g_envClrT       [dict create]
+
 namespace eval ::cmdline {
     namespace export getArgv0 getopt getKnownOpt getfiles getoptions \
 	    getKnownOptions usage
@@ -461,7 +465,7 @@ proc setenv { var val args } {
     if {$mode == "load"} {
 	# set env vars in the current environment during load only
 	# Don't unset then during remove mode.
-	set env($var)     $val
+	set-env $var $val
 	set g_varsT($var) $val
     }
     cmdargs "setenv" $var $val
@@ -478,7 +482,7 @@ proc unsetenv { var {val {}}} {
     }\
     elseif {$mode == "remove"} {
 	if {$val != ""} {
-	    set env($var) $val
+	    set-env $var $val
 	}
     }
     cmdargs "unsetenv" $var $val
@@ -511,7 +515,7 @@ proc versioncmp {str1 str2} {
 
 proc pushenv { var val } {
     global env  g_varsT
-    set env($var) $val
+    set-env $var $val
     set g_varsT($var) $val
     cmdargs "pushenv" $var $val
 }
@@ -1074,6 +1078,26 @@ proc unset-env {var} {
 	unset env($var)
     }
 }
+proc set-env {var value} {
+    global g_envT g_envClrT env
+    if { ! [info exists env($var)] && ! [info exists g_envT($var)] } {
+	dict set g_envClrT $var 1
+    } else {
+	dict set g_envT $var $env($var)
+    }
+    set env($var) $value
+}
+
+proc reset-env {} {
+    global env g_envT g_envClrT
+    dict for {key value} $g_envT {
+	set env($key) $value
+    }
+    dict for {key value} $g_envClrT {
+	unset env($key)
+    }
+}
+
 
 proc main { modfile } {
     global g_mode
@@ -1081,6 +1105,7 @@ proc main { modfile } {
     pushMode           $g_mode
     execute-modulefile $modfile
     popMode
+    reset-env
 }
 
 global g_loadT g_help 
