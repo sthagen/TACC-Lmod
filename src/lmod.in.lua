@@ -418,7 +418,17 @@ function main()
       local configuration = require("Configuration"):singleton()
       local a = {}
       a[1] = version()
-      a[2] = configuration:report()
+      a[2] = configuration:report{mini=false}
+      pcall(pager,io.stderr,concatTbl(a,""))
+      os.exit(0)
+   end
+
+   -- print mini configuration and quit.
+   if (masterTbl.miniConfig) then
+      local configuration = require("Configuration"):singleton()
+      local a = {}
+      a[1] = version()
+      a[2] = configuration:report{mini=true}
       pcall(pager,io.stderr,concatTbl(a,""))
       os.exit(0)
    end
@@ -549,6 +559,7 @@ function main()
    -- Output all newly created path and variables.
    Shell:expand(varT)
 
+   -- Expand any execute\{\} cmds
    if (Shell:real_shell())then
       Exec:exec():expand()
    end
