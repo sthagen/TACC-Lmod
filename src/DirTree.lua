@@ -138,26 +138,26 @@ end
 -- This routine is given the absolute path to all possible default
 -- files. 
 -- @param defaultA - An array entries that contain: { fullName=, fn=, mpath=, luaExt=, barefn=}
-
--- return all possible absolute paths to the default file.
+-- return the first defaultA.  All other ones are ignored.
 local function l_versionFile(mrc, mpath, defaultA)
-   for i = 1,#defaultA do
-      repeat 
-         local defaultT = defaultA[i]
-         local path     = defaultT.fn
-
-         if (defaultT.barefn == "default") then
-            defaultT.value = barefilename(l_walk_link(defaultT.fn)):gsub("%.lua$","")
-            break
-         end
-         
-         local modA = mrc_load(path)
-         local _, _, name = defaultT.fullName:find("(.*)/.*")
-         
-         defaultT.value = mrc:parseModA_for_moduleA(name, mpath, modA)
-      until true
-   end
-
+   dbg.start{"DirTree:l_versionFile(mrc, mpath, defaultA)"}
+   sort(defaultA, function(x,y)
+                    return x.defaultIdx < y.defaultIdx
+                  end)
+   repeat 
+      local defaultT = defaultA[1]
+      local path     = defaultT.fn
+      if (defaultT.barefn == "default") then
+         defaultT.value = barefilename(l_walk_link(defaultT.fn)):gsub("%.lua$","")
+         break
+      end
+      
+      local modA = mrc_load(path)
+      local _, _, name = defaultT.fullName:find("(.*)/.*")
+      
+      defaultT.value = mrc:parseModA_for_moduleA(name, mpath, modA)
+   until true
+   dbg.fini("DirTree:l_versionFile")
    return defaultA
 end
 
@@ -199,7 +199,7 @@ local function l_walk(mrc, mpath, path, dirA, fileT, regularFn)
                local sizeFn = lfs.attributes(file,"size")
                if (f ~= "default" and not luaExt and sizeFn > 0 and (not l_checkValidModulefile(file))) then break end
                defaultA[#defaultA+1] = { fullName = fullName, fn = file, mpath = mpath, luaExt = luaExt,
-                                         barefn = f, defaultIdx = dfltIdx }
+                                         barefn = f, defaultIdx = dfltIdx, value = false}
                if (f == "default" and kind == "file") then
                   fileT[fullName] = {fn = file, canonical = f, mpath = mpath}
                end
@@ -220,9 +220,6 @@ local function l_walk(mrc, mpath, path, dirA, fileT, regularFn)
    end
    if (next(defaultA) ~= nil) then
       defaultA = l_versionFile(mrc, mpath, defaultA)
-      sort(defaultA, function(x,y)
-                     return x.defaultIdx < y.defaultIdx
-                     end)
    end
 
    dbg.fini("l_walk")
