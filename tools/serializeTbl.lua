@@ -123,7 +123,8 @@ end
 
 --------------------------------------------------------------------------
 -- This is the work-horse for this collections.  It is recursively for
--- sub-tables.  It also ignores keys that start with "__".
+-- sub-tables.  It also ignores keys that start with "__" unless
+-- keepDUnderScore is true.
 
 local function outputTblHelper(indentIdx, name, T, keepDUnderScore, a, level)
 
@@ -250,7 +251,7 @@ function serializeTbl(options)
    else
       a[#a+1] = wrap_name("",n)
       a[#a+1] = " = "
-      a[#a+1] = nsformat(value)
+      a[#a+1] = l_nsformat(value)
       a[#a+1] = "\n"
    end
 

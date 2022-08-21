@@ -267,8 +267,9 @@ local function l_new(self)
    tbl.tmod_rule    = { k = "Tmod prepend PATH Rule"            , v = tmod_rule,        }
    tbl.tracing      = { k = "Tracing"                           , v = tracing,          }
    tbl.uname        = { k = "uname -a"                          , v = uname,            }
-   tbl.z01_admin    = { k = "Admin file"                        , v = adminFn,          }
+   tbl.usrCacheDir  = { k = "User Cache Directory"              , v = usrCacheDir,      }
    tbl.redirect     = { k = "Redirect to stdout"                , v = redirect,         }
+   tbl.z01_admin    = { k = "Admin file"                        , v = adminFn,          }
 
    o.tbl = tbl
    return o
@@ -283,17 +284,6 @@ function M.singleton(self)
       s_configuration = l_new(self)
    end
    return s_configuration
-end
-
-function l_miniReport(self,b)
-   local aa = cosmic:reportChangesFromDefault()
-   b[#b+1] = "Changes from Default Configuration"
-   b[#b+1] = "----------------------------------\n"
-   if (next(aa) ~= nil) then
-      bt      = BeautifulTbl:new{tbl=aa}
-      b[#b+1] = bt:build_tbl()
-      b[#b+1] = "\n"
-   end
 end
 
 
@@ -330,10 +320,13 @@ function M.report(self, t)
    if (next(aa) ~= nil) then
       bt      = BeautifulTbl:new{tbl=aa}
       b[#b+1] = bt:build_tbl()
+      b[#b+1] = "\n"
+      b[#b+1] = "Where Set -> D: default, E: environment, C: configuration"
+      b[#b+1] = "             lmod_cfg: lmod_config.lua SitePkg: SitePackage StdPkg: StandardPackage"
+      b[#b+1] = "             Other: Set somewhere outside of normal locations\n"
    else
       b[#b+1] = "--- None ---"
    end
-   b[#b+1] = "\n"
 
 
    if (not mini) then

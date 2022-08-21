@@ -94,6 +94,10 @@ cleanUp ()
        -e "s|.*_AST_FEATURES.*||"                         \
        -e "/^Changes from Default Configuration.*/d"      \
        -e "/^Name * Default *Value.*/d"                   \
+       -e "/^Name * Where Set *Default *Value.*/d"        \
+       -e "/^Where Set.*/d"                               \
+       -e "/^ *lmod_cfg: l.*/d"                           \
+       -e "/^ *Other: Set.*/d"                            \
        -e "/^LFS_VERSION.*/d"                             \
        -e "/^Active lua-term.*/d"                         \
        -e "/Rebuilding cache.*done/d"                     \
@@ -265,6 +269,7 @@ initStdEnvVars()
   unset _LMFILES_
   unset LMOD_SET_NOGLOB
   unset LMOD_SYSTEM_DEFAULT_MODULES
+  export LMOD_FAST_TCL_INTERP=no
 
   PATH_to_LUA=`findcmd --pathOnly lua`
   PATH_to_TM=`findcmd --pathOnly tm`
@@ -292,6 +297,15 @@ initStdEnvVars()
     pathmunge $i 
   done
 }
+
+userCacheDir ()
+{
+  name='User Cache Directory *'
+  dir=$($LUA_EXEC $projectDir/src/lmod.in.lua bash --config 2>&1 | grep "$name")
+  dir=$(echo $dir | sed -e "s/$name//")
+  echo $dir
+}
+  
 
 clearTARG()
 {
