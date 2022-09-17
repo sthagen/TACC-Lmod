@@ -21,12 +21,13 @@ testdescript = {
      initStdEnvVars
      export MODULEPATH=$(testDir)/mf
 
-     rm -fr _stderr.* _stdout.* err.* out.* .lmod.d
+     rm -fr _stderr.* _stdout.* err.* out.* .lmod.d .cache .config
 
      runLmod --version                         # 1
      runLmod whatis a                          # 2
      runLmod load   earlyLateOutput            # 3
      runLmod list                              # 4
+     runLmod show showMe                       # 5
 
 
      HOME=$ORIG_HOME
