@@ -96,6 +96,8 @@ function M.new(self, sType, name, action, is, ie)
    o.__version    = false
    o.__fn         = false
    o.__versionStr = false
+   o.__dependsOn  = false
+   o.__ref_count  = nil
    o.__sType      = sType
    o.__wV         = false
    o.__waterMark  = "MName"
@@ -157,22 +159,23 @@ function M.buildA(self,sType, ...)
 end
 
 local function l_lazyEval(self)
-   dbg.start{"l_lazyEval(",self.__userName,")"}
+   --dbg.start{"l_lazyEval(",self.__userName,")"}
 
    local sType   = self.__sType
    if (sType == "mt") then
       local frameStk = FrameStk:singleton()
       local mt       = frameStk:mt()
       local sn       = mt:lookup_w_userName(self.__userName)
-      dbg.print{"sn: ",sn,"\n"}
+      --dbg.print{"sn: ",sn,"\n"}
       if (sn) then
          self.__sn         = sn
          self.__fn         = mt:fn(sn)
          self.__version    = mt:version(sn)
          self.__stackDepth = mt:stackDepth(sn)
          self.__wV         = mt:wV(sn)
+         self.__ref_count  = mt:get_ref_count(sn)
       end
-      dbg.fini("l_lazyEval via mt")
+      --dbg.fini("l_lazyEval via mt")
       return
    end
 
@@ -189,7 +192,7 @@ local function l_lazyEval(self)
          self.__wV       = t.wV
       end
 
-      dbg.fini("l_lazyEval via inherit")
+      --dbg.fini("l_lazyEval via inherit")
       return
    end
 
@@ -199,7 +202,7 @@ local function l_lazyEval(self)
    local mt                    = frameStk:mt()
    local userName              = mrc:resolve(mt:modulePathA(), self:userName())
    local sn, versionStr, fileA = moduleA:search(userName)
-   dbg.print{"l_lazyEval: userName: ",userName, ", sn: ",sn,", versionStr: ",versionStr,"\n"}
+   --dbg.print{"l_lazyEval: userName: ",userName, ", sn: ",sn,", versionStr: ",versionStr,"\n"}
 
    self.__userName   = userName
    self.__sn         = sn
@@ -207,7 +210,7 @@ local function l_lazyEval(self)
    self.__stackDepth = self.__stackDepth or frameStk:stackDepth()
 
    if (not sn) then
-      dbg.fini("l_lazyEval via no sn")
+      --dbg.fini("l_lazyEval via no sn")
       return
    end
 
@@ -216,8 +219,11 @@ local function l_lazyEval(self)
    local fn
    local wV
    local found
-   dbg.printT("fileA",fileA)
+   --dbg.printT("fileA",fileA)
    --dbg.print{"#stepA: ",#stepA,"\n"}
+   --dbg.print{"userName: ",self.__userName,"\n"}
+   --dbg.print{"sn: ",self.__sn,"\n"}
+
 
    for i = 1, #stepA do
       local func = stepA[i]
@@ -226,15 +232,15 @@ local function l_lazyEval(self)
          self.__fn      = fn
          self.__version = version
          self.__wV      = wV
-         if (self.__actionNm == "latest") then
+         if (self.__actionNm == "latest" or self.__sn ~= self.__userName) then
             self.__userName = build_fullName(self.__sn, version)
          end
          break
       end
    end
-   dbg.print{"l_lazyEval: sn: ",self.__sn, ", version: ",self.__version, ", fn: ",self.__fn,", wV: ",self.__wV,"\n"}
-   dbg.print{"fn: ",self.__fn,"\n"}
-   dbg.fini("l_lazyEval")
+   --dbg.print{"l_lazyEval: sn: ",self.__sn, ", version: ",self.__version, ", fn: ",self.__fn,", wV: ",self.__wV,", userName: ",self.__userName,"\n"}
+   --dbg.print{"fn: ",self.__fn,"\n"}
+   --dbg.fini("l_lazyEval")
 end
 
 
@@ -252,18 +258,18 @@ end
 
 function M.sn(self)
    if (not self.__sn) then
-      dbg.start{"Mname:sn()"}
+      --dbg.start{"Mname:sn()"}
       l_lazyEval(self)
-      dbg.fini("Mname:sn")
+      --dbg.fini("Mname:sn")
    end
    return self.__sn
 end
 
 function M.fn(self)
    if (not self.__fn) then
-      dbg.start{"Mname:fn()"}
+      --dbg.start{"Mname:fn()"}
       l_lazyEval(self)
-      dbg.fini("Mname:fn")
+      --dbg.fini("Mname:fn")
    end
    return self.__fn
 end
@@ -294,7 +300,7 @@ function M.setStackDepth(self, depth)
    self.__stackDepth = depth
 end
 
-function M.setRefCount(self, count)
+function M.set_ref_count(self, count)
    self.__ref_count = count
 end
 
@@ -307,9 +313,9 @@ end
 
 function M.fullName(self)
    if (not self.__sn) then
-      dbg.start{"Mname:fullName()"}
+      --dbg.start{"Mname:fullName()"}
       l_lazyEval(self)
-      dbg.fini("Mname:fullName")
+      --dbg.fini("Mname:fullName")
       if (not self.__fn) then
          return nil
       end
@@ -375,7 +381,7 @@ end
 
 
 function M.find_exact_match(self, fileA)
-   dbg.start{"MName:find_exact_match(fileA)"}
+   --dbg.start{"MName:find_exact_match(fileA)"}
    local versionStr = self.__versionStr
    local fn         = false
    local version    = false
@@ -383,8 +389,8 @@ function M.find_exact_match(self, fileA)
    local wV         = false
    local found      = false
    if (not versionStr) then
-      dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
-      dbg.fini("MName:find_exact_match")
+      --dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
+      --dbg.fini("MName:find_exact_match")
       return found, fn, version
    end
       
@@ -404,13 +410,13 @@ function M.find_exact_match(self, fileA)
       end
    end
 
-   dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
-   dbg.fini("MName:find_exact_match")
+   ---dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
+   --dbg.fini("MName:find_exact_match")
    return found, fn, version, wV
 end
 
 function M.find_exact_match_meta_module(self, fileA)
-   dbg.start{"MName:find_exact_match_meta_module(fileA)"}
+   --dbg.start{"MName:find_exact_match_meta_module(fileA)"}
    local versionStr = self.__versionStr
    local fn         = false
    local version    = false
@@ -433,14 +439,14 @@ function M.find_exact_match_meta_module(self, fileA)
       end
    end
 
-   dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
-   dbg.fini("MName:find_exact_match_meta_module")
+   --dbg.print{"found: ",found,", fn: ",fn,", version: ", version,"\n"}
+   --dbg.fini("MName:find_exact_match_meta_module")
    return found, fn, version, wV
 end
 
 
 local function l_find_highest_by_key(self, key, fileA)
-   dbg.start{"MName:find_by_key(key:\"",key,"\",fileA)"}
+   --dbg.start{"MName:find_by_key(key:\"",key,"\",fileA)"}
    local mrc     = MRC:singleton()
    local a       = fileA[1] or {}
    local weight  = " "  -- this is less than the lower possible weight.
@@ -469,8 +475,8 @@ local function l_find_highest_by_key(self, key, fileA)
       found        = true
       self.__range = { pV, pV }
    end
-   dbg.print{"found: ",found,", fn: ",fn,", version: ", version,", wV: ",wV,"\n"}
-   dbg.fini("MName:find_by_key")
+   --dbg.print{"found: ",found,", fn: ",fn,", version: ", version,", wV: ",wV,"\n"}
+   --dbg.fini("MName:find_by_key")
    return found, fn, version, wV
 end
 
@@ -538,7 +544,7 @@ function M.find_inherit_match(self,fileA)
 end
 
 function M.isloaded(self)
-   dbg.start{"MName:isloaded()"}
+   --dbg.start{"MName:isloaded()"}
    local frameStk  = FrameStk:singleton()
    local mt        = frameStk:mt()
    local sn        = self:sn()
@@ -555,11 +561,13 @@ function M.isloaded(self)
    if (userName == sn              or
        userName == mt:userName(sn) or
        userName == mt:fullName(sn)) then
-      dbg.fini("MName:isloaded")
+      --dbg.print{"fullName: ",mt:fullName(sn),", status: ",sn_status,"\n"}
+      --dbg.fini("MName:isloaded")
       return sn_status
    end
 
-   dbg.fini("MName:isloaded")
+   --dbg.print{"fullName: ",mt:fullName(sn),", status: false\n"}
+   --dbg.fini("MName:isloaded")
    return false
 end
 
@@ -625,6 +633,21 @@ function M.prereq(self)
 
    -- userName did not match.
    return userName
+end
+
+function M.set_depends_on_flag(self, value)
+   if (type(value) == "number") then
+      self.__dependsOn = value > 0
+   elseif (type(value) == "boolean") then
+      self.__dependsOn = value
+   else
+      self.__dependsOn = false
+   end
+   return self
+end
+
+function M.get_depends_on_flag(self)
+   return self.__dependsOn
 end
 
 -- reset the private variable to force a new l_lazyEval.

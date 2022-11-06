@@ -188,6 +188,7 @@ function M.singleton(self, t)
    if (not s_mt) then
       dbg.start{"MT:singleton()"}
       s_mt        = l_new(self, getMT())
+      dbg.printT("s_mt",s_mt)
       dbg.fini("MT:singleton")
    end
    return s_mt
@@ -239,21 +240,36 @@ end
 -- Return the original MT from bottom of stack.
 
 function M.add(self, mname, status, loadOrder)
-   local mT    = self.mT
-   local sn    = mname:sn()
-   loadOrder   = loadOrder  == nil and -1 or loadOrder
+   local mT         = self.mT
+   local sn         = mname:sn()
    assert(sn)
+   local entry      = mT[sn] or {}
+   local old_status = entry.status
+   loadOrder        = loadOrder  == nil and -1 or loadOrder
+
+   -- Issue #604: If old_status is "inactive" then ref_count must be nil.
+   --             The ref_count will be bumped back up by the loading of
+   --             modules that depend on the dependent modules.
+
+   local ref_count = mname:ref_count()
+   if (old_status == "inactive" and status ~= "inactive" and mname:get_depends_on_flag()) then
+      ref_count = 0
+   end
    mT[sn] = {
       fullName   = mname:fullName(),
       fn         = mname:fn(),
       userName   = mname:userName(),
       stackDepth = mname:stackDepth(),
-      ref_count  = mname:ref_count(),
+      ref_count  = ref_count,
       status     = status,
       loadOrder  = loadOrder,
       propT      = {},
       wV         = mname:wV() or false,
    }
+   if (status ~= "inactive" and old_status ~= "inactive") then
+      self:safely_incr_ref_count(mname)
+   end
+   --dbg.print{"MT:add: sn: ", sn, ", status: ",status,", old_status: ",old_status,", ref_count: ",mT[sn].ref_count,"\n"}
 end
 
 --------------------------------------------------------------------------
@@ -742,36 +758,42 @@ function M.stackDepth(self,sn)
    return entry.stackDepth or 0
 end
 
-function M.incr_ref_count(self,sn)
-   dbg.start{"MT:incr_ref_count(",sn,")"}
+function M.safely_incr_ref_count(self,mname)
+   local sn    = mname:sn()
+   assert(sn)
    local entry = self.mT[sn]
    if (entry == nil) then
-      dbg.fini("MT:incr_ref_count")
+      dbg.print{"MT:safely_incr_ref_count(): Did not find: ",sn,"\n"}
+      return
+   end
+   local depends_on_flag = mname:get_depends_on_flag()
+   if (not depends_on_flag and not entry.ref_count) then
+      dbg.print{"MT:safely_incr_ref_count(): depends_on_flag not set ",sn,"\n"}
       return
    end
    entry.ref_count = (entry.ref_count or 0) + 1
-   dbg.fini("MT:incr_ref_count")
+   dbg.print{"MT:safely_incr_ref_count(): stackDepth > 0, sn: ",sn,", new ref_count: ",entry.ref_count,"\n"}
    return
 end
 
 function M.decr_ref_count(self,sn)
-   dbg.start{"MT:decr_ref_count(",sn,")"}
    local entry = self.mT[sn]
-   if (entry == nil or entry.ref_count == nil) then
-      dbg.fini("MT:decr_ref_count")
-      return 0
+   if (entry == nil or not entry.ref_count) then
+      dbg.print{"MT:decr_ref_count(): sn: ",sn, ", ref_count: nil\n"}
+      return nil
    end
    local ref_count = entry.ref_count - 1
    entry.ref_count = ref_count
-   dbg.fini("MT:decr_ref_count")
+   dbg.print{"MT:decr_ref_count(): sn: ",sn, ", ref_count: ",ref_count,"\n"}
    return ref_count
 end
 
 function M.get_ref_count(self,sn)
    local entry = self.mT[sn]
-   if (entry == nil or entry.ref_count == nil) then
-      return 0
+   if (entry == nil or not entry.ref_count) then
+      return nil
    end
+   dbg.print{"MT:get_ref_count(): sn: ",sn, ", ref_count: ",entry.ref_count,"\n"}
    return entry.ref_count
 end
 
@@ -1246,9 +1268,18 @@ function M.getMTfromFile(self,tt)
    local mA           = {}
 
    -- remember to transfer the old stackDepth to the new mname object.
+   -- If a dependent module is loaded, it gets a one less reference count
+   -- (and not zero).  The reason is that collections are loaded by a MgrLoad
+   -- Therefore a dependent module load is only seen once.  In a "Mgrload"
+   -- depends_on() function is a fake load.
    for i = 1, #activeA do
       local mname = MName:new("load",activeA[i][knd])
-      mname:setRefCount(activeA[i].ref_count)
+      local ref_count = activeA[i].ref_count 
+      if (ref_count) then
+         ref_count = ref_count - 1
+      end
+      mname:set_depends_on_flag(activeA[i].ref_count)
+      mname:set_ref_count(ref_count)
       mname:setStackDepth(activeA[i].stackDepth)
       mA[#mA+1]   = mname
    end
@@ -1257,7 +1288,7 @@ function M.getMTfromFile(self,tt)
    dbg.print{"Setting mcp to ", mcp:name(),"\n"}
    mt         = frameStk:mt()
    local varT = frameStk:varT()
-   varT[ModulePath]:setRefCount(l_mt.mpathRefCountT or {})
+   varT[ModulePath]:set_ref_countT(l_mt.mpathRefCountT or {})
 
    -----------------------------------------------------------------------
    -- Now check to see that all requested modules got loaded.

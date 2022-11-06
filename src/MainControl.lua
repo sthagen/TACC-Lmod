@@ -932,29 +932,22 @@ function M.depends_on(self, mA)
       dbg.start{"MainControl:depends_on(mA={"..s.."})"}
    end
 
-   local mB = {}
+
+   local mB         = {}
+   local mt         = FrameStk:singleton():mt()
 
    for i = 1,#mA do
       local mname = mA[i]
       if (not mname:isloaded()) then
+         mname:set_depends_on_flag(true)
          mB[#mB + 1] = mname
+      else
+         mt:safely_incr_ref_count(mname)
       end
    end
 
    l_registerUserLoads(mB)
    local a = self:load(mB)
-
-   --------------------------------------------
-   -- Bump ref count on ALL dependent modules
-
-   local mt = FrameStk:singleton():mt()
-   for i = 1,#mA do
-      local mname      = mA[i]
-      local sn         = mname:sn()
-      if (sn and mt:stackDepth(sn) > 0) then
-         mt:incr_ref_count(sn)
-      end
-   end
 
    self:registerDependencyCk()
 
@@ -967,8 +960,7 @@ end
 --
 --   if (not isloaded("name")) then load("name") end
 --
--- On unload forgo() unloads iff stackDepth is non-zero and the ref count
--- is zero.
+-- On unload forgo() unloads the ref count is zero.
 
 
 function M.forgo(self,mA)
@@ -986,8 +978,7 @@ function M.forgo(self,mA)
          local sn         = mname:sn()
          if (not sn) then break end
          local ref_count  = mt:decr_ref_count(sn)
-         local stackDepth = mt:stackDepth(sn)
-         if (stackDepth > 0 and ref_count < 1) then
+         if (ref_count and ref_count < 1) then
             mB[#mB+1] = mname
          end
       until true

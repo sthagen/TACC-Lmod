@@ -264,12 +264,17 @@ local s_stk = {}
 function M.mgrload(self, active)
    dbg.start{"Hub:mgrload(",active.userName,")"}
 
-   local mcp_old = mcp
-   mcp           = MainControl.build("mgrload","load")
+   local mcp_old   = mcp
+   mcp             = MainControl.build("mgrload","load")
    dbg.print{"Setting mcp to ", mcp:name(),"\n"}
-   local mname   = MName:new("load", active.userName)
-   mname:setRefCount(active.ref_count)
+   local mname     = MName:new("load", active.userName)
+   local ref_count = active.ref_count
+   if (ref_count) then
+      ref_count = ref_count - 1
+   end
+   mname:set_ref_count(ref_count)
    mname:setStackDepth(active.stackDepth)
+   mname:set_depends_on_flag(ref_count)
    local a       = MCP.load(mcp,{mname})
    mcp           = mcp_old
    dbg.print{"Setting mcp to ", mcp:name(),"\n"}
@@ -575,24 +580,25 @@ function M.reloadAll(self, force_update)
          mt               = frameStk:mt()
          local v          = a[i]
          local sn         = v.sn
-         local mname_old  = MName:new("mt",v.userName)
+         dbg.print{"v.userName: ",v.userName,", v.ref_count: ",v.ref_count,"\n"}
+         local mname_old  = MName:new("mt",v.userName):set_depends_on_flag(v.ref_count)
          if (not mname_old:sn()) then break end
-         dbg.print{"a[i].userName(1): ",v.userName,"\n"}
+         dbg.print{"a[i].userName(1): ",v.userName,", ref_count: ",mname_old:ref_count(),"\n"}
          mA[#mA+1]       = mname_old
          dbg.print{"adding sn: ",sn," to mA\n"}
 
          if (mt:have(sn, "active")) then
             dbg.print{"module sn: ",sn," is active\n"}
-            dbg.print{"userName(2):  ",v.name,"\n"}
-            local mname    = MName:new("load", mt:userName(sn))
-            local fn_new   = mname:fn()
-            local fn_old   = mt:fn(sn)
-            local fullName = mname:fullName()
-            local userName = v.name
-            local mt_uName = mt:userName(sn)
+            dbg.print{"userName(2):  ",v.name,", ref_count: ",v.ref_count,"\n"}
+            local mname     = MName:new("load", mt:userName(sn)):set_depends_on_flag(v.ref_count)
+            local fn_new    = mname:fn()
+            local fn_old    = mt:fn(sn)
+            local fullName  = mname:fullName()
+            local userName  = v.name
+            local mt_uName  = mt:userName(sn)
             dbg.print{"fn_new: ",fn_new,"\n"}
             dbg.print{"fn_old: ",fn_old,"\n"}
-            -- This is #issue 394 fix: only reload when the userName has remained the same.
+            -- This is Issue #394 fix: only reload when the userName has remained the same.
             if (fn_new ~= fn_old or force_update) then
                dbg.print{"Hub:reloadAll fn_new: \"",fn_new,"\"",
                          " mt:fileName(sn): \"",fn_old,"\"",
@@ -603,7 +609,7 @@ function M.reloadAll(self, force_update)
                unload_internal{mname_old}
                mt_uName = mt:userName(sn)
                dbg.print{"Hub:reloadAll(",ReloadAllCntr,"): mt:userName(sn): \"",mt_uName,"\"\n"}
-               mname    = MName:new("load", mt:userName(sn))
+               mname    = MName:new("load", mt:userName(sn)):set_depends_on_flag(v.ref_count)
                if (mname:valid()) then
                   dbg.print{"Hub:reloadAll(",ReloadAllCntr,"): Loading module: \"",userName,"\"\n"}
                   local status = mcp:load({mname})
@@ -620,8 +626,9 @@ function M.reloadAll(self, force_update)
             local fn_old = mt:fn(sn)
             local name   = v.name          -- This name is short for default and
                                            -- Full for specific version.
-            dbg.print{"Hub:reloadAll(",ReloadAllCntr,"): Loading non-active module: \"", name, "\"\n"}
-            local status = mcp:load({MName:new("load",name)})
+            dbg.print{"Hub:reloadAll(",ReloadAllCntr,"): Loading non-active module: \"", name, "\", ref_count: ", v.ref_count,"\n"}
+
+            local status = mcp:load({MName:new("load",name):set_depends_on_flag(v.ref_count)})
             mt           = frameStk:mt()
             dbg.print{"status: ",status,", fn_old: ",fn_old,", fn: ",mt:fn(sn),"\n"}
             if (status and fn_old ~= mt:fn(sn)) then
