@@ -6,6 +6,9 @@
 --
 -- @classmod MC_Spider
 
+_G._DEBUG             = false               -- Required by the new lua posix
+local posix           = require("posix")
+
 require("strict")
 
 --------------------------------------------------------------------------
@@ -74,7 +77,6 @@ M.msg_raw              = MainControl.quiet
 M.mgrload              = MainControl.quiet
 M.prereq               = MainControl.quiet
 M.prereq_any           = MainControl.quiet
-M.pushenv              = MainControl.quiet
 M.remove_path          = MainControl.quiet
 M.report               = MainControl.warning
 M.set_alias            = MainControl.quiet
@@ -218,6 +220,8 @@ s_patDir = false
 function M.setenv(self, name, value)
    dbg.start{"MC_Spider:setenv(name, value)"}
 
+   save_set_env(name, value)
+
    if (not s_patLib) then
       local a  = {}
       a[#a+1]  = "^"
@@ -244,9 +248,21 @@ function M.setenv(self, name, value)
    if (name:find(s_patDir)) then
       processDIR(value)
    end
-   dbg.fini()
+   dbg.fini("MC_Spider:setenv")
    return true
 end
+
+------------------------------------------------------------
+-- Having pushenv just set the value in the environment works
+-- as long as no site mixes pushenv and popenv in the same
+-- modulefile.  Fix this when the time comes.
+
+function M.pushenv(self, name, value)
+   dbg.start{"MC_Spider:pushenv(name, value)"}
+   save_set_env(name, value)
+   dbg.fini()
+   return true
+end   
 
 --------------------------------------------------------------------------
 -- Pass-thru to Spider_append_path().

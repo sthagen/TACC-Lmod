@@ -63,7 +63,8 @@ local readlink     = posix.readlink
 local setenv_posix = posix.setenv
 local stat         = posix.stat
 local strfmt       = string.format
-
+local s_envT       = {}
+local s_clrEnvT    = {}
 --------------------------------------------------------------------------
 -- This is 5.1 Lua function to cover the table.pack function
 -- that is in Lua 5.2 and later.
@@ -1001,6 +1002,30 @@ local function l_build_quarantineT()
    end
 end
 
+------------------------------------------------------------
+-- Save changes to env when processing spider cache
+function save_set_env(name, value)
+   local oldV = getenv(name)
+   if (not  oldV and not s_envT[name]) then
+      s_clrEnvT[name] = true
+   else
+      s_envT[name] = oldV
+   end
+   posix.setenv(name, value, true)
+end
+
+function reset_env()
+   local setenv_posix = posix.setenv
+   for k, v in pairs(s_envT) do
+      setenv_posix(k, v, true)
+   end
+   for k in pairs(s_clrEnvT) do
+      setenv_posix(k, nil, true)
+   end
+   s_clrEnvT = {}
+   s_envT    = {}
+end
+      
 ------------------------------------------------------------
 -- Initialize Lmod 
 
