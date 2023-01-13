@@ -830,6 +830,7 @@ end
 --------------------------------------------------------------------------
 -- Set warning flags to true.
 function setWarningFlag()
+   dbg.print{"setting warning flag\n"}
    s_warning = true
 end
 
@@ -1091,4 +1092,46 @@ function tracing_msg(msgA)
    shell:echo(concatTbl(b,""))
 end
 
+function dynamic_shell(shellNm)
+   local BaseShell = require("BaseShell") 
+   local success   = false
    
+   if (shellNm ~= "shell") then
+      if (BaseShell.isValid(shellNm)) then
+         -- Trust a valid shell and report the shell name is valid and return
+         success = true
+         return shellNm, success
+      end
+   else
+      -- If here then the name of the shell is "shell" and it is "valid"
+      success = true
+   end
+
+   ------------------------------------------------------------
+   -- Dynamically find the shell from the parent process
+   local ppid  = posix.getpid("ppid")
+   local n     = shellNm
+   local fn    = "/proc/"..ppid.."/exe"
+   local found = false
+   if (isFile(fn)) then
+      n = posix.readlink(fn)
+      n = barefilename(n)
+      if (BaseShell.isValid(n)) then
+         shellNm = n
+         return shellNm, success
+      end
+   end
+   
+   local ps_cmd = "@ps@"
+   if ( ps_cmd:sub(1,1) == "@" ) then
+      ps_cmd = "ps"
+   end
+   local cmd = ps_cmd.." -p "..ppid.." -ocomm="
+   n         = capture(cmd):gsub("^%-",""):gsub("%s+$","")
+   if (BaseShell.isValid(n)) then
+      shellNm = n
+   else
+      shellNm = "bash"  -- If "n" is not a valid shell assume bash.
+   end
+   return shellNm, success
+end

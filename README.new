@@ -59,3 +59,10 @@ Lmod 8.7+
 	    * PR #600: merging in 600_category to support "module category"
             * Issue #604: Fixed bug where ref_count was not passed to swapped modules.
    (8.7.15) * Issue #613: setenv and pushenv change local environment when runniing spider (and avail)
+   (8.7.16) * Issue #619: Do not source lmod_bash_aliases when $POSIXLY_CORRECT is set (by bash --posix)
+            * Issue #620: Dynamically set shell name inside Lmod instead of init/bash.in
+	    * Added debugging stmts to track down issue when adding loop in MODULEPATH when doing a spider.
+            * Zsh now gets /path/to/ksh_scripts if KSH_SUPPORT is yes.	    
+   (8.7.17) * Issue #620: Honor shell name on command line.  Use "shell" when Lmod gets to decide.
+            * Fix bug in keyword terse output: Add newline on final entry (Created in Lmod 8.4.18)
+            * Allow ksh93, mksh and pdksh report shellname (myShellName()) as ksh.
