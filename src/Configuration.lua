@@ -61,20 +61,6 @@ local M            = {}
 
 local s_configuration = false
 
-local function l_locatePkg(pkg)
-   local result = nil
-   for path in package.path:split(";") do
-      local s = path:gsub("?",pkg)
-      local f = io.open(s,"r")
-      if (f) then
-         f:close()
-         result = s
-         break;
-      end
-   end
-   return result
-end
-
 
 local function l_new(self)
    local o = {}
@@ -82,7 +68,7 @@ local function l_new(self)
    self.__index = self
 
    local HashSum    = cosmic:value("LMOD_HASHSUM_PATH")
-   local locSitePkg = l_locatePkg("SitePackage") or "unknown"
+   local locSitePkg = locatePkg("SitePackage") or "unknown"
 
    if (locSitePkg ~= "unknown") then
       local std_sha1 = "1fa3d8f24793042217b8474904136fdde72d42dd"
@@ -108,6 +94,9 @@ local function l_new(self)
       result       = result:gsub("^.*= *",""):gsub(" .*","")
       if (result == std_hashsum) then
          locSitePkg = "standard"
+         cosmic:assign("LMOD_SITEPACKAGE_LOCATION", "<srctree>")
+      else
+         cosmic:assign("LMOD_SITEPACKAGE_LOCATION", locSitePkg)
       end
    end
 
@@ -180,6 +169,9 @@ local function l_new(self)
    local tmod_rule         = cosmic:value("LMOD_TMOD_PATH_RULE")
    local tracing           = cosmic:value("LMOD_TRACING")
    local useDotConfigOnly  = cosmic:value("LMOD_USE_DOT_CONFIG_ONLY")
+   local lmod_cfg_path     = cosmic:value("LMOD_CONFIG_LOCATION")
+   local using_fast_tcl    = usingFastTCLInterp()
+   cosmic:assign("LMOD_USING_FAST_TCL_INTERP",using_fast_tcl)
 
    if (dfltModules == "") then
       dfltModules = "<empty>"
@@ -221,6 +213,7 @@ local function l_new(self)
    tbl.exactMatch   = { k = "Require Exact Match/no defaults"   , v = exactMatch,       n = "LMOD_EXACT_MATCH"                }
    tbl.expMCmd      = { k = "Export the module command"         , v = export_module,    n = "LMOD_EXPORT_MODULE"              }
    tbl.fastTCL      = { k = "Use attached TCL over system call" , v = fast_tcl_interp,  n = "LMOD_FAST_TCL_INTERP"            }
+   tbl.fastTCLUsing = { k = "Is fast TCL interp available"      , v = using_fast_tcl,   n = "LMOD_USING_FAST_TCL_INTERP"      }
    tbl.hiddenItalic = { k = "Use italic instead of dim"         , v = hiddenItalic,     n = "LMOD_HIDDEN_ITALIC"              }
    tbl.ksh_support  = { k = "KSH Support"                       , v = ksh_support,      n = "LMOD_KSH_SUPPORT"                }
    tbl.lang         = { k = "Language used for err/msg/warn"    , v = lmod_lang,        n = "LMOD_LANG"                       }
@@ -230,6 +223,7 @@ local function l_new(self)
    tbl.ld_preload   = { k = "LD_PRELOAD at config time"         , v = ld_preload,       n = "LMOD_LD_PRELOAD"                 }
    tbl.ld_lib_path  = { k = "LD_LIBRARY_PATH at config time"    , v = ld_lib_path,      n = "LMOD_LD_LIBRARY_PATH"            }
    tbl.lfsV         = { k = "LuaFileSystem version"             , v = lfsV,             n = false                             }
+   tbl.lmod_cfg     = { k = "lmod_config.lua location"          , v = lmod_cfg_path,    n = "LMOD_CONFIG_LOCATION"            }
    tbl.lmodV        = { k = "Lmod version"                      , v = lmod_version,     n = false                             }
    tbl.luaV         = { k = "Lua Version"                       , v = _VERSION,         n = false                             }
    tbl.lua_term     = { k = "System lua-term"                   , v = have_term,        n = "LMOD_HAVE_LUA_TERM"              }

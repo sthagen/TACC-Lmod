@@ -573,10 +573,12 @@ function path2pathA(path, delim, clearDoubleSlash)
       return {}
    end
    if (path == '') then
-      return { ' ' }
+      return { '' }
    end
+   local delimPatt = delim .. "+";
 
-   local is, ie
+
+   path = path:gsub(delimPatt,delim)
 
    local pathA = {}
    for v  in path:split(delim) do
@@ -912,6 +914,10 @@ local function l_build_runTCLprog()
    end
 end
 
+function usingFastTCLInterp()
+   return (_G.runTCLprog ~= l_runTCLprog) and "yes" or "no"
+end
+
 --------------------------------------------------------------------------
 -- Create the accept functions to allow or ignore TCL modulefiles.
 local function l_build_accept_function()
@@ -1060,13 +1066,14 @@ function initialize_lmod()
    -- Load a SitePackage Module.
    ------------------------------------------------------------------------
 
-   cosmic:set_key("lmod_cfg")
    local configDir = cosmic:value("LMOD_CONFIG_DIR")
    local fn        = pathJoin(configDir,"lmod_config.lua")
    if (isFile(fn)) then
       assert(loadfile(fn))()
+      cosmic:assign("LMOD_CONFIG_LOCATION",fn)
    end
 
+   cosmic:set_key("lmod_cfg")
    build_i18n_messages()
    l_build_runTCLprog()
    l_build_accept_function()   
@@ -1088,6 +1095,8 @@ function initialize_lmod()
                       package.cpath
    end
 
+   local locSitePkg = locatePkg("SitePackage")
+   cosmic:assign("LMOD_SITEPACKAGE_LOCATION",locSitePkg)
    cosmic:set_key("SitePkg")
    require("SitePackage")
    cosmic:set_key("Other")
@@ -1155,3 +1164,16 @@ function dynamic_shell(shellNm)
    end
    return shellNm, success
 end
+
+function locatePkg(pkg)
+   local result = nil
+   for path in package.path:split(";") do
+      local s = path:gsub("?",pkg)
+      if (isFile(s)) then
+         result = abspath(s)
+         break
+      end
+   end
+   return result
+end
+
