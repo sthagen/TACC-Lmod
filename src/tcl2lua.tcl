@@ -745,6 +745,10 @@ proc unuse { args } {
     }
 }
 
+proc purge {} {
+    eval cmdargs "purge"
+}
+
 proc setPutMode { value } {
     global putMode
     set putMode $value
@@ -938,6 +942,9 @@ proc module { command args } {
         add {
             eval loadcmd $args
         }
+        purge {
+            eval purge $args
+        }
         try-add {
             eval tryloadcmd $args
         }
@@ -959,7 +966,9 @@ proc module { command args } {
         unuse {
             eval unuse $args
         }
-
+        default {
+            reportError "Unknown module command: $command -> exitting"
+        }
     }
 }
 
