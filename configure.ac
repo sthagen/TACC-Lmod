@@ -1050,8 +1050,18 @@ EOF
    rm conftest.zsh
 fi
 
-AC_SUBST(ZSH_FPATH)
+AC_SUBST(MY_ZSH_VERSION)
+if test -n "$PATH_TO_ZSH" ; then
+   cat > conftest.zsh << 'EOF'
+echo $ZSH_VERSION
+EOF
+   chmod +x conftest.zsh
+   MY_ZSH_VERSION=`$PATH_TO_ZSH -f ./conftest.zsh 2> /dev/null`
+   rm conftest.zsh
+fi
 
+
+AC_SUBST(ZSH_FPATH)
 if test -n "$PATH_TO_ZSH" ; then
   cat > conftest.zsh << 'EOF'
 echo $FPATH

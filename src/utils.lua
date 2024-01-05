@@ -1204,10 +1204,17 @@ function locatePkg(pkg)
    for path in package.path:split(";") do
       local s = path:gsub("?",pkg)
       if (isFile(s)) then
-         result = abspath(s)
+         result = realpath(s)
          break
       end
    end
    return result
 end
 
+function wrap_complete(name)
+   return "complete<" .. name .. ">"
+end
+function unwrap_complete(name)
+   local i,j,n = name:find("complete<([^<]*)>")
+   return n
+end

@@ -333,7 +333,7 @@ function M.report(self, t)
          b[#b+1] = "Active RC file(s):"
          b[#b+1] = "------------------"
          for i = 1, #rcFileA do
-            b[#b+1] = rcFileA[i]
+            b[#b+1] = realpath(rcFileA[i])
          end
          b[#b+1]  = "\n"
       end
@@ -375,6 +375,11 @@ end
 -- @param self A Configuration object
 -- @return the configuration report in json as a single string.
 function M.report_json(self)
+   if (_VERSION ~= "Lua 5.1") then
+      require("declare")
+      declare("loadstring")
+      loadstring = load
+   end
    local json    = require("json")
    local tbl     = self.tbl
    local configT = {}
