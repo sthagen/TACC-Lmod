@@ -12,10 +12,11 @@ parallel_make_install()
   fi
 
   if [ "$BUILD_TYPE" != "EXPERIMENTAL" ]; then
-    echo "$SUDO $MAKE GIT_VERSION=$GIT_VERSION -j install     $MAKE_EXTRA"
-          $SUDO $MAKE GIT_VERSION=$GIT_VERSION -j install     $MAKE_EXTRA
+    echo "$SUDO $MAKE -j GIT_VERSION=$GIT_VERSION install     $MAKE_EXTRA"
+          $SUDO $MAKE -j GIT_VERSION=$GIT_VERSION install     $MAKE_EXTRA
   else
     echo "$SUDO $MAKE pre-install $MAKE_EXTRA"
+    #$SUDO $MAKE GIT_VERSION=$GIT_VERSION -j pre-install $MAKE_EXTRA
     $SUDO $MAKE GIT_VERSION=$GIT_VERSION -j pre-install $MAKE_EXTRA
     $SUDO rm -f $BASE_DIR/lmod/EXPERIMENTAL
     $SUDO ln -s $PKG_VERSION $BASE_DIR/lmod/EXPERIMENTAL
@@ -138,7 +139,7 @@ case $SYSHOST in
     EXTRA="--with-spiderCacheDir=$CACHEDIRS  --with-updateSystemFn=$UPDATE_FN     --with-useDotConfigDirOnly=yes"
     ;;
 
-  ls6 | stampede2 | stampede3 | frontera )
+  ls6 | stampede3 )
     base="$HOME/l/pkg"
     PKG=$base/lmod/$PKG_VERSION
     UPDATE_FN=/tmp/losf_last_update
@@ -149,6 +150,20 @@ case $SYSHOST in
     fi
     EXTRA="--with-spiderCacheDir=$CACHEDIRS  --with-updateSystemFn=$UPDATE_FN"
     SITE_PKG="contrib/TACC/*.lua"
+    ;;
+
+  frontera )
+    base="$HOME/l/pkg"
+    if [ -x $HOME/.up/bin/arch.py ]; then
+    	   base="$base/$($HOME/.up/bin/arch.py)"
+    else
+    	   base="$base/$(uname -m)"
+    fi
+    UPDATE_FN=/tmp/losf_last_update
+    CACHEDIRS=/tmp/moduleData/cacheDir
+    EXTRA="--with-spiderCacheDir=$CACHEDIRS  --with-updateSystemFn=$UPDATE_FN"
+    SITE_PKG="contrib/TACC/*.lua"
+    PKG=$base/lmod/$PKG_VERSION
     ;;
 
   *)
@@ -179,6 +194,7 @@ fi
 
 cmdA=("-$MAKE distclean"
       "./configure --prefix=$BASE_DIR --with-settarg=yes $COMMON_OPTIONS $EXTRA"
+      "echo BASE_DIR: $BASE_DIR"
       "save_old_version"
       "$MAKE echo"
       "parallel_make_install"

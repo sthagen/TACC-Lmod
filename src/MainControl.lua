@@ -804,6 +804,7 @@ end
 -- Print msgs to stderr.
 -- @param self A MainControl object.
 function M.message(self, ...)
+   build_i18n_messages()
    if (quiet()) then
       return
    end
@@ -826,6 +827,7 @@ end
 -- Print msgs, traceback then set warning flag.
 -- @param self A MainControl object.
 function M.warning(self, ...)
+   build_i18n_messages()
    if (not quiet() and  haveWarnings()) then
       local label = colorize("red", i18n("warnTitle",{}))
       local sA    = l_generateMsg("lmodwarning", label, ...)
@@ -833,7 +835,6 @@ function M.warning(self, ...)
       sA[#sA+1]   = moduleStackTraceBack()
       sA[#sA+1]   = "\n"
       io.stderr:write(concatTbl(sA,""),"\n")
-      setWarningFlag()
    end
 end
 
@@ -841,6 +842,7 @@ end
 -- Print msgs, traceback then exit.
 -- @param self A MainControl object.
 function M.error(self, ...)
+   build_i18n_messages()
    -- Check for user loads that failed.
    if (next(s_missingModuleT) ~= nil) then
       local aa = {}
@@ -1127,7 +1129,6 @@ end
 -- @param mA A array of MName objects.
 function M.try_load(self, mA)
    dbg.start{"MainControl:try_load(mA)"}
-   --deactivateWarning()
    self:load(mA)
    dbg.fini("MainControl:try_load")
 end
@@ -1439,7 +1440,7 @@ function M.reportAdminMsgs()
             io.stderr:write(bt:build_tbl(), "\n")
          end
       end
-      io.stderr:write(border,"\n\n")
+      io.stderr:write(i18n("m_Module_Msgs_close",{border=border}))
    end
    dbg.fini("MainControl:reportAdminMsgs")
 end
@@ -1511,9 +1512,6 @@ function M.purge(self,t)
    unload_usr_internal(mA, force)
    s_purgeFlg = false
 
-   -- A purge should not set the warning flag.
-   clearWarningFlag()
-   dbg.print{"warningFlag: ", getWarningFlag(),"\n"}
    dbg.fini("MainControl:Purge")
 end
    

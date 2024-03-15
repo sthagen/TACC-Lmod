@@ -345,11 +345,8 @@ end
 --------------------------------------------------------------------------
 -- Find the admin file (or nag message file).
 function findAdminFn()
-   local readable    = "no"
-   local adminFn     = cosmic:value("LMOD_ADMIN_FILE")
-   if (posix.access(adminFn, 'r')) then
-      readable = "yes"
-   end
+   local adminFn  = cosmic:value("LMOD_ADMIN_FILE")
+   local readable = posix.access(adminFn, 'r') and "yes" or "no"
    return adminFn, readable
 end
 
@@ -466,15 +463,19 @@ end
 function getModuleRCT(remove_MRC_home)
    --dbg.start{"getModuleRCT(remove_MRC_home)"}
    local A            = {}
-   local MRC_system   = cosmic:value("LMOD_MODULERCFILE")
+   local MRC_system   = cosmic:value("LMOD_MODULERC")
    local MRC_home     = pathJoin(getenv("HOME"), ".modulerc")
    local MRC_home_lua = pathJoin(getenv("HOME"), ".modulerc.lua")
 
    if (MRC_system) then
       local a = {}
-      for file in MRC_system:split(":") do
-         if (isFile(file) and access(file,"r")) then
-            a[#a+1] = file
+      for n in MRC_system:split(":") do
+         if (isDir(n) and access(n,"rx")) then
+            for f in lfs.dir(n) do
+               a[#a+1] = pathJoin(n, f)
+            end
+         elseif (isFile(n) and access(n,"r")) then
+            a[#a+1] = n
          end
       end
       for i = #a, 1, -1 do
@@ -868,22 +869,16 @@ function haveWarnings()
 end
 
 --------------------------------------------------------------------------
--- Reset warning flag to false.
-function clearWarningFlag()
-   s_warning = false
-end
-
---------------------------------------------------------------------------
 -- Set warning flags to true.
-function setWarningFlag()
-   dbg.print{"setting warning flag\n"}
-   s_warning = true
+function setStatusFlag()
+   dbg.print{"setting status flag\n"}
+   s_status = true
 end
 
 --------------------------------------------------------------------------
 -- Get warning flag value.
-function getWarningFlag()
-   return s_warning
+function getStatusFlag()
+   return s_status
 end
 
 local function l_restoreEnv(oldEnvT, newEnvT)

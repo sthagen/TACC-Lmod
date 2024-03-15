@@ -65,6 +65,8 @@ cleanUp ()
        -e "s|^LMOD_LD_PRELOAD.*||g"                       \
        -e "s|^LuaFileSystem version.*||g"                 \
        -e "s|^Lua Version.*||g"                           \
+       -e "s|^Lmod branch.*||g"                           \
+       -e "s|^LMOD_BRANCH.*||g"                           \
        -e "s|^\(uname -a\).*|\1|g"                        \
        -e "s|^\(TARG_HOST=\).*|\1'some_host';|g"          \
        -e "s|^\(TARG_OS_FAMILY=\).*|\1'some_os_family';|g"\
@@ -84,7 +86,7 @@ cleanUp ()
        -e "s|(file \"ProjectDIR/rt/end2end.*)||g"         \
        -e "s|(file \"OutputDIR/lmod/lmod/.*)||g"          \
        -e "s|^Admin file.*||g"                            \
-       -e "s|^MODULERCFILE.*||g"                          \
+       -e "s|^MODULERC.*||g"                              \
        -e "s|$HOME|~|g"                                   \
        -e "s|\-%%\-.*||g"                                 \
        -e "s| *----* *||g"                                \
@@ -283,6 +285,9 @@ initStdEnvVars()
   unset LMOD_DISPLAY_SN_COLOR
   unset LMOD_DISPLAY_META_COLOR
   unset LMOD_SYSTEM_DEFAULT_MODULES
+  unset LMOD_MODULERC
+  unset LMOD_MODULERCFILE
+  unset MODULERCFILE
   unset __LMOD_Priority_PATH
   export LMOD_NEWLINE="
 "

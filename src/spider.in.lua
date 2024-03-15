@@ -111,6 +111,7 @@ BaseShell           = require("BaseShell")
 Shell               = false
 local Optiks        = require("Optiks")
 local Spider        = require("Spider")
+local Version       = require("Version")
 local concatTbl     = table.concat
 local cosmic        = require("Cosmic"):singleton()
 local dbg           = require("Dbg"):dbg()
@@ -221,6 +222,14 @@ local function l_add2map(entry, tbl, dirA, moduleFn, kind, rmapT)
    dbg.fini("l_add2map")
 end
 
+--------------------------------------------------------------------------
+-- Build the version string.
+function l_version()
+   local v = {}
+   v[#v + 1] = "\nModules based on Lua: Version " .. Version.name().."\n"
+   v[#v + 1] = "    by Robert McLay mclay@tacc.utexas.edu\n\n"
+   return concatTbl(v,"")
+end
 --------------------------------------------------------------------------
 --
 -- @param moduleDirA
@@ -437,6 +446,11 @@ function main()
 
    local hub        = Hub:singleton(false)
 
+   if (optionTbl.version) then
+      io.stderr:write(l_version())
+      os.exit(0)
+   end
+
    for _, v in ipairs(pargs) do
       for path in v:split(":") do
          local my_path     = path_regularize(path)
@@ -472,7 +486,7 @@ function main()
    initialize_lmod()
 
 
-   -- Make sure that MRC uses $MODULERCFILE and ignores ~/.modulerc when building the cache
+   -- Make sure that MRC uses $LMOD_MODULERC and ignores ~/.modulerc when building the cache
    local remove_MRC_home         = true
    local mrc                     = MRC:singleton(getModuleRCT(remove_MRC_home))
    local cache                   = Cache:singleton{dontWrite = true, quiet = true, buildCache = true,
@@ -630,6 +644,13 @@ function options()
                                     version = "1.0",
                                     error   = l_Error,
                                     prt     = l_prt,
+   }
+
+   cmdlineParser:add_option{
+      name   = {'-v','--version'},
+      dest   = 'version',
+      action = 'store_true',
+      help   = "Version info",
    }
 
    cmdlineParser:add_option{

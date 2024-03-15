@@ -1,11 +1,13 @@
 srcdir                    := @srcdir@
 prefix                    := @prefix@
+SYS_LUA_PATH              := @SYS_LUA_PATH@
+SYS_LUA_CPATH             := @SYS_LUA_CPATH@
 package                   := lmod
 ifeq ($(PATH_TO_SRC),@$(path_to_src)@)
   PATH_TO_SRC             := .
 endif
 PATH_TO_LUA               := @PATH_TO_LUA@
-version                   := $(shell LUA_PATH="$(srcdir)/src/?.lua;" $(PATH_TO_LUA) -e "V=require('Version'); print(V.tag())")
+version                   := $(shell LUA_PATH="$(srcdir)/src/?.lua;$(SYS_LUA_PATH)" $(PATH_TO_LUA) -e "V=require('Version'); print(V.tag())")
 SITE_CONTROLLED_PREFIX    := @SITE_CONTROLLED_PREFIX@
 LMOD_ROOT                 := $(prefix)/$(package)
 MY_PACKAGE                := $(prefix)/$(package)/$(version)
@@ -49,8 +51,6 @@ DYNAMIC_SPIDER_CACHE      := @DYNAMIC_SPIDER_CACHE@
 SILENCE_SHELL_DEBUGGING   := @SILENCE_SHELL_DEBUGGING@
 SYS_LD_LIB_PATH           := @SYS_LD_LIB_PATH@
 SYS_LD_PRELOAD            := @SYS_LD_PRELOAD@
-SYS_LUA_PATH              := @SYS_LUA_PATH@
-SYS_LUA_CPATH             := @SYS_LUA_CPATH@
 CASE_INDEPENDENT_SORTING  := @CASE_INDEPENDENT_SORTING@
 ORIG_ZSH_VERSION          := @ORIG_ZSH_VERSION@
 ZSH_SITE_FUNCTIONS_DIRS   := @ZSH_SITE_FUNCTIONS_DIRS@
@@ -73,7 +73,8 @@ SPIDER_CACHE_DIRS         := @SPIDER_CACHE_DIRS@
 LEGACY_ORDERING           := @LEGACY_ORDERING@
 EXPORT_MODULE             := @EXPORT_MODULE@
 BASENAME                  := @BASENAME@
-UPDATE_VERSION            := LUA_PATH="$(srcdir)/tools/?.lua;$$LUA_PATH;;" $(srcdir)/proj_mgmt/updateVersion
+UPDATE_VERSION            := LUA_PATH="$(srcdir)/tools/?.lua;$(SYS_LUA_PATH)" $(PATH_TO_LUA) $(srcdir)/proj_mgmt/updateVersion
+BUILD_V_src               := LUA_PATH="$(srcdir)/tools/?.lua;$(SYS_LUA_PATH)" LUA_CPATH="$(SYS_LUA_CPATH)" $(PATH_TO_LUA) $(srcdir)/proj_mgmt/buildVersion_src
 PS                        := @PS@
 READLINK                  := @READLINK@
 EXPR                      := @EXPR@
@@ -125,6 +126,10 @@ else
 endif
 ifeq ($(GIT_VERSION),)
   GIT_VERSION             := $(shell if [ -n "$(GIT_PROG)" -a -e $(srcdir)/.git ]; then lmodV=`git describe --always;`; echo "$$lmodV"; else echo "$(version)"; fi)
+endif
+
+ifeq ($(GIT_BRANCH),)
+  GIT_BRANCH              := $(shell if [ -n "$(GIT_PROG)" -a -e $(srcdir)/.git ]; then lmodBR=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/';`; echo "$$lmodBR"; else echo "main"; fi)
 endif
 
 
@@ -180,8 +185,8 @@ CONTRIB_DIRS              :=  \
                               tricky_modulefiles
 
 CONTRIB                   := $(patsubst %, $(srcdir)/contrib/%, $(CONTRIB_DIRS))
-lua_code                  := $(filter-out %.in.lua, $(wildcard $(srcdir)/src/*.lua))   \
-                             $(wildcard $(srcdir)/src/*.tcl)
+lua_code                  := $(filter-out %.in.lua, $(wildcard $(srcdir)/src/*.lua))
+lua_code                  := $(filter-out $(srcdir)/src/Version.lua, $(lua_code)) $(wildcard $(srcdir)/src/*.tcl)
 VDATE                     := $(shell $(DATE_cmd) +'%F %H:%M %:z')
 
 ComputeHashSum            := $(srcdir)/src/computeHashSum.in.lua
@@ -217,9 +222,10 @@ uninstall:
 
 pre-install: $(DIRLIST) lmod_install_targets
 
-lmod_install_targets: $(PKGS) lmodrc_init shell_init startup libexec               \
+lmod_install_targets: $(PKGS) lmodrc_init shell_init startup libexec VersionSrc    \
                       Inst_Tools Inst_Shells Inst_Settarg Inst_Lmod_MF other_tools \
-                      man_pages messageFns i18n spiderCacheSupport ksh_funcs
+                      man_pages messageFns i18n spiderCacheSupport ksh_funcs       \
+                      STVersionSrc
 
 install: pre-install  zsh_tab_funcs fish_tab_funcs 
 	$(MAKE) PKGV=$(PKG) shell_init startup
@@ -239,6 +245,8 @@ install: pre-install  zsh_tab_funcs fish_tab_funcs
 echo:
 	@echo Version: $(version)
 	@echo GIT_VERSION: $(GIT_VERSION)
+	@echo GIT_BRANCH:  $(GIT_BRANCH)
+
 man_pages: $(DESTDIR)$(MAN_PAGES)
 	LUA_CPATH='$(MY_PACKAGE)/lib/?.so;$(SYS_LUA_CPATH);;'                     \
            LUA_PATH='$(MY_PACKAGE)/libexec/?.lua;$(SYS_LUA_PATH);;'               \
@@ -254,84 +262,84 @@ __installMe:
 	   fn=$${bareN%%.in*};                                                    \
 	   ext=$${bareN#*.};                                                      \
 	   : echo "DIRLOC/fn: $(DIRLOC)/$$fn";                                    \
-	   sed  -e 's|@PREFIX@|$(prefix)|g'                                       \
-	        -e 's|@LMOD_TOP_DIR@|$(MY_PACKAGE)|g'                             \
-	        -e 's|@path_to_lua@|$(PATH_TO_LUA)|g'                             \
-	        -e 's|@hashsum@|$(PATH_TO_HASHSUM)|g'                             \
-	        -e 's|@pager@|$(PATH_TO_PAGER)|g'                                 \
-	        -e 's|@case_independent_sorting@|$(CASE_INDEPENDENT_SORTING)|g'   \
-	        -e 's|@lmod_settarg_full_support@|$(LMOD_SETTARG_FULL_SUPPORT)|g' \
-	        -e 's|@use_dot_files@|$(USE_DOT_FILES)|g'                         \
-	        -e 's|@lang@|$(LMOD_OVERRIDE_LANG)|g'                             \
-	        -e 's|@site_msg_file@|$(SITE_MSG_FILE)|g'                         \
-	        -e 's|@git@|$(GIT_VERSION)|g'                                     \
-	        -e 's|--@ignore_dirs@--|$(IGNORE_DIRS)|g'                         \
-	        -e 's|@sys_lua_path@|$(SYS_LUA_PATH)|g'                           \
-	        -e 's|@hidden_italic@|$(LMOD_HIDDEN_ITALIC)|g'                    \
-	        -e 's|@modulepath_init@|$(MODULEPATH_INIT)|g'                     \
-	        -e 's|@sys_lua_cpath@|$(SYS_LUA_CPATH)|g'                         \
-	        -e 's|@path_to_luac@|$(PATH_TO_LUAC)|g'                           \
-	        -e 's|@path_to_lmod@|$(LIBEXEC)/lmod|g'                           \
-	        -e 's|@have_lua_term@|$(HAVE_LUA_TERM)|g'                         \
-	        -e 's|@silence_shell_debugging@|$(SILENCE_SHELL_DEBUGGING)|g'     \
-	        -e 's|@dynamic_spider_cache@|$(DYNAMIC_SPIDER_CACHE)|g'           \
-	        -e 's|@fast_tcl_interp@|$(FAST_TCL_INTERP)|g'                     \
-	        -e 's|@settarg_cmd@|$(SETTARG_CMD)|g'                             \
-	        -e 's|@lmod_config_dir@|$(LMOD_CONFIG_DIR)|g'                     \
-	        -e "s|@my_shell@|$$fn|g"                                          \
-	        -e 's|@tclsh@|$(PATH_TO_TCLSH)|g'                                 \
-	        -e 's|@ls@|$(PATH_TO_LS)|g'                                       \
-	        -e 's|@disable_name_autoswap@|$(DISABLE_NAME_AUTOSWAP)|g'         \
-	        -e 's|@tmod_path_rule@|$(TMOD_PATH_RULE)|g'                       \
-	        -e 's|@tmod_find_first@|$(TMOD_FIND_FIRST)|g'                     \
-	        -e 's|@redirect@|$(REDIRECT)|g'                                   \
-	        -e 's|@basename@|$(BASENAME)|g'                                   \
-	        -e 's|@support_ksh@|$(SUPPORT_KSH)|g'                             \
-	        -e 's|@zsh_fpath@|$(ZSH_FPATH)|g'                                 \
-	        -e 's|@orig_zsh_version@|$(ORIG_ZSH_VERSION)|g'                   \
-	        -e 's|@cached_loads@|$(CACHED_LOADS)|g'                           \
-	        -e 's|@avail_extensions@|$(LMOD_AVAIL_EXTENSIONS)|g'              \
-	        -e 's|@ps@|$(PS)|g'                                               \
-	        -e 's|@readlink@|$(READLINK)|g'                                   \
-	        -e 's|@site_name@|$(SITE_NAME)|g'                                 \
-	        -e 's|@site_controlled_prefix@|$(SITE_CONTROLLED_PREFIX)|g'       \
-	        -e 's|@syshost@|$(SYSHOST)|g'                                     \
-	        -e 's|@expr@|$(EXPR)|g'                                           \
-	        -e 's|@extended_default@|$(EXTENDED_DEFAULT)|g'                   \
-	        -e 's|@libexec@|$(LIBEXEC)|g'                                     \
-	        -e 's|@legacy_ordering@|$(LEGACY_ORDERING)|g'                     \
-	        -e 's|@pin_versions@|$(PIN_VERSIONS)|g'                           \
-	        -e 's|@auto_swap@|$(AUTO_SWAP)|g'                                 \
-	        -e 's|@sys_ld_lib_path@|$(SYS_LD_LIB_PATH)|g'                     \
-	        -e 's|@sys_ld_preload@|$(SYS_LD_PRELOAD)|g'                       \
-	        -e 's|@export_module@|$(EXPORT_MODULE)|g'                         \
-	        -e 's|@lmod_version@|$(version)|g'                                \
-	        -e 's|@exact_match@|$(EXACT_MATCH)|g'                             \
-	        -e 's|@ancient@|$(ANCIENT)|g'                                     \
-	        -e 's|@prepend_block@|$(PREPEND_BLOCK)|g'                         \
-	        -e 's|@colorize@|$(COLORIZE)|g'                                   \
-	        -e 's|@duplicate_paths@|$(DUPLICATE_PATHS)|g'                     \
-	        -e 's|@allow_tcl_mfiles@|$(ALLOW_TCL_MFILES)|g'                   \
-	        -e 's|@mpath_avail@|$(MPATH_AVAIL)|g'                             \
-	        -e 's|@short_time@|$(SHORT_TIME)|g'                               \
-	        -e 's|@cacheDirs@|$(SPIDER_CACHE_DIRS)|g'                         \
-	        -e 's|@updateSystemFn@|$(UPDATE_SYSTEM_FN)|g'                     \
-	        -e 's|@modulepath_root@|$(MODULEPATH_ROOT)|g'                     \
-	        -e 's|@lmod_root@|$(LMOD_ROOT)|g'                                 \
-	        -e 's|@lmod_allow_root_use@|$(LMOD_ALLOW_ROOT_USE)|g'             \
-	        -e 's|@lmod_use_dot_config_only@|$(LMOD_USE_DOT_CONFIG_ONLY)|g'   \
-	        -e 's|@PKGV@|$(PKGV)|g'                                           \
-	        -e 's|@PKG@|$(PKG)|g'         < $$i > $(DIRLOC)/$$fn;             \
-	        chmod $(MODE_R)                       $(DIRLOC)/$$fn;             \
-	    [ "$$ext" = "in.lua" -o "$$ext" = "tcl" -o "$$ext" = "in"             \
-	       -o "$$ext" = "sh.in" ] &&                                          \
-	       chmod $(MODE_X) $(DIRLOC)/$$fn;                                    \
-	    if [ "$$ext" = "version.lua" ]; then                                  \
-	       mname=$${bareN%%.*};                                               \
-	       : echo "DIRLOC: $(DIRLOC)/$$mname";                                \
-	       mv $(DIRLOC)/$$fn $(DIRLOC)/$$mname.lua;                           \
-              chmod $(MODE_R)    $(DIRLOC)/$$mname.lua;                           \
-	    fi;                                                                   \
+	   $(SED) -e 's|@PREFIX@|$(prefix)|g'                                       \
+	          -e 's|@LMOD_TOP_DIR@|$(MY_PACKAGE)|g'                             \
+	          -e 's|@path_to_lua@|$(PATH_TO_LUA)|g'                             \
+	          -e 's|@hashsum@|$(PATH_TO_HASHSUM)|g'                             \
+	          -e 's|@pager@|$(PATH_TO_PAGER)|g'                                 \
+	          -e 's|@case_independent_sorting@|$(CASE_INDEPENDENT_SORTING)|g'   \
+	          -e 's|@lmod_settarg_full_support@|$(LMOD_SETTARG_FULL_SUPPORT)|g' \
+	          -e 's|@use_dot_files@|$(USE_DOT_FILES)|g'                         \
+	          -e 's|@lang@|$(LMOD_OVERRIDE_LANG)|g'                             \
+	          -e 's|@site_msg_file@|$(SITE_MSG_FILE)|g'                         \
+	          -e 's|@git@|$(GIT_VERSION)|g'                                     \
+	          -e 's|--@ignore_dirs@--|$(IGNORE_DIRS)|g'                         \
+	          -e 's|@sys_lua_path@|$(SYS_LUA_PATH)|g'                           \
+	          -e 's|@hidden_italic@|$(LMOD_HIDDEN_ITALIC)|g'                    \
+	          -e 's|@modulepath_init@|$(MODULEPATH_INIT)|g'                     \
+	          -e 's|@sys_lua_cpath@|$(SYS_LUA_CPATH)|g'                         \
+	          -e 's|@path_to_luac@|$(PATH_TO_LUAC)|g'                           \
+	          -e 's|@path_to_lmod@|$(LIBEXEC)/lmod|g'                           \
+	          -e 's|@have_lua_term@|$(HAVE_LUA_TERM)|g'                         \
+	          -e 's|@silence_shell_debugging@|$(SILENCE_SHELL_DEBUGGING)|g'     \
+	          -e 's|@dynamic_spider_cache@|$(DYNAMIC_SPIDER_CACHE)|g'           \
+	          -e 's|@fast_tcl_interp@|$(FAST_TCL_INTERP)|g'                     \
+	          -e 's|@settarg_cmd@|$(SETTARG_CMD)|g'                             \
+	          -e 's|@lmod_config_dir@|$(LMOD_CONFIG_DIR)|g'                     \
+	          -e "s|@my_shell@|$$fn|g"                                          \
+	          -e 's|@tclsh@|$(PATH_TO_TCLSH)|g'                                 \
+	          -e 's|@ls@|$(PATH_TO_LS)|g'                                       \
+	          -e 's|@disable_name_autoswap@|$(DISABLE_NAME_AUTOSWAP)|g'         \
+	          -e 's|@tmod_path_rule@|$(TMOD_PATH_RULE)|g'                       \
+	          -e 's|@tmod_find_first@|$(TMOD_FIND_FIRST)|g'                     \
+	          -e 's|@redirect@|$(REDIRECT)|g'                                   \
+	          -e 's|@basename@|$(BASENAME)|g'                                   \
+	          -e 's|@support_ksh@|$(SUPPORT_KSH)|g'                             \
+	          -e 's|@zsh_fpath@|$(ZSH_FPATH)|g'                                 \
+	          -e 's|@orig_zsh_version@|$(ORIG_ZSH_VERSION)|g'                   \
+	          -e 's|@cached_loads@|$(CACHED_LOADS)|g'                           \
+	          -e 's|@avail_extensions@|$(LMOD_AVAIL_EXTENSIONS)|g'              \
+	          -e 's|@ps@|$(PS)|g'                                               \
+	          -e 's|@readlink@|$(READLINK)|g'                                   \
+	          -e 's|@site_name@|$(SITE_NAME)|g'                                 \
+	          -e 's|@site_controlled_prefix@|$(SITE_CONTROLLED_PREFIX)|g'       \
+	          -e 's|@syshost@|$(SYSHOST)|g'                                     \
+	          -e 's|@expr@|$(EXPR)|g'                                           \
+	          -e 's|@extended_default@|$(EXTENDED_DEFAULT)|g'                   \
+	          -e 's|@libexec@|$(LIBEXEC)|g'                                     \
+	          -e 's|@legacy_ordering@|$(LEGACY_ORDERING)|g'                     \
+	          -e 's|@pin_versions@|$(PIN_VERSIONS)|g'                           \
+	          -e 's|@auto_swap@|$(AUTO_SWAP)|g'                                 \
+	          -e 's|@sys_ld_lib_path@|$(SYS_LD_LIB_PATH)|g'                     \
+	          -e 's|@sys_ld_preload@|$(SYS_LD_PRELOAD)|g'                       \
+	          -e 's|@export_module@|$(EXPORT_MODULE)|g'                         \
+	          -e 's|@lmod_version@|$(version)|g'                                \
+	          -e 's|@exact_match@|$(EXACT_MATCH)|g'                             \
+	          -e 's|@ancient@|$(ANCIENT)|g'                                     \
+	          -e 's|@prepend_block@|$(PREPEND_BLOCK)|g'                         \
+	          -e 's|@colorize@|$(COLORIZE)|g'                                   \
+	          -e 's|@duplicate_paths@|$(DUPLICATE_PATHS)|g'                     \
+	          -e 's|@allow_tcl_mfiles@|$(ALLOW_TCL_MFILES)|g'                   \
+	          -e 's|@mpath_avail@|$(MPATH_AVAIL)|g'                             \
+	          -e 's|@short_time@|$(SHORT_TIME)|g'                               \
+	          -e 's|@cacheDirs@|$(SPIDER_CACHE_DIRS)|g'                         \
+	          -e 's|@updateSystemFn@|$(UPDATE_SYSTEM_FN)|g'                     \
+	          -e 's|@modulepath_root@|$(MODULEPATH_ROOT)|g'                     \
+	          -e 's|@lmod_root@|$(LMOD_ROOT)|g'                                 \
+	          -e 's|@lmod_allow_root_use@|$(LMOD_ALLOW_ROOT_USE)|g'             \
+	          -e 's|@lmod_use_dot_config_only@|$(LMOD_USE_DOT_CONFIG_ONLY)|g'   \
+	          -e 's|@PKGV@|$(PKGV)|g'                                           \
+	          -e 's|@PKG@|$(PKG)|g'         < $$i > $(DIRLOC)/$$fn;             \
+            chmod $(MODE_R)                       $(DIRLOC)/$$fn;                   \
+	    [ "$$ext" = "in.lua" -o "$$ext" = "tcl" -o "$$ext" = "in"               \
+	       -o "$$ext" = "sh.in" ] &&                                            \
+	       chmod $(MODE_X) $(DIRLOC)/$$fn;                                      \
+	    if [ "$$ext" = "version.lua" ]; then                                    \
+	       mname=$${bareN%%.*};                                                 \
+	       : echo "DIRLOC: $(DIRLOC)/$$mname";                                  \
+	       mv $(DIRLOC)/$$fn $(DIRLOC)/$$mname.lua;                             \
+              chmod $(MODE_R)    $(DIRLOC)/$$mname.lua;                             \
+	    fi;                                                                     \
 	done
 
 generate_doc:
@@ -536,6 +544,12 @@ luachk:
 libexec:  $(lua_code)
 	$(MAKE) FILELIST="$^" DIRLOC=$(DESTDIR)$(LIBEXEC) GIT_VERSION=$(GIT_VERSION) __installMe
 
+VersionSrc:
+	$(BUILD_V_src) $(GIT_BRANCH) $(version) $(GIT_VERSION) "$(VDATE)" >  $(DESTDIR)$(LIBEXEC)/Version.lua 
+
+STVersionSrc: Inst_Settarg
+	$(BUILD_V_src) $(GIT_BRANCH) $(version) $(GIT_VERSION) "$(VDATE)" >  $(DESTDIR)$(SETTARG)/Version.lua
+
 Inst_Tools: $(TOOL_SRC)
 	$(MAKE) FILELIST="$^" DIRLOC=$(DESTDIR)$(TOOLS) GIT_VERSION=$(GIT_VERSION) __installMe
 
@@ -596,23 +610,7 @@ gittag:
 	  else                                                                              \
 	    $(RM)                                                           $(VERSION_SRC); \
 	    $(RM)                                                          $(SETTARG_VSRC); \
-	    echo 'local M={}'                                            >  $(VERSION_SRC); \
-	    echo 'function M.tag()  return "$(TAG)"   end'               >> $(VERSION_SRC); \
-	    echo 'function M.git()'                                      >> $(VERSION_SRC); \
-	    echo '   local s = "@git@"'                                  >> $(VERSION_SRC); \
-	    echo '   if (s == "@" .. "git@") then s = "" end'            >> $(VERSION_SRC); \
-	    echo '   if (s == M.tag()      ) then s = "" end'            >> $(VERSION_SRC); \
-	    echo '   return s == "" and s or "("..s..")"'                >> $(VERSION_SRC); \
-	    echo 'end'                                                   >> $(VERSION_SRC); \
-	    echo 'function M.date() return "$(VDATE)" end'               >> $(VERSION_SRC); \
-	    echo 'function M.name()'                                     >> $(VERSION_SRC); \
-	    echo '  local a = {}'                                        >> $(VERSION_SRC); \
-	    echo '  a[#a+1] = M.tag()'                                   >> $(VERSION_SRC); \
-	    echo '  a[#a+1] = M.git()'                                   >> $(VERSION_SRC); \
-	    echo '  a[#a+1] = M.date()'                                  >> $(VERSION_SRC); \
-	    echo '  return table.concat(a," ")'                          >> $(VERSION_SRC); \
-	    echo 'end'                                                   >> $(VERSION_SRC); \
-	    echo 'return M'                                              >> $(VERSION_SRC); \
+	    $(BUILD_V_src) $(GIT_BRANCH) $(TAG) $(TAG) $(VDATE)          >  $(VERSION_SRC); \
 	    cp                                          $(VERSION_SRC)     $(SETTARG_VSRC); \
 	    $(UPDATE_VERSION) -p $(CONF_PY_PATTERN)          --version $(TAG)   $(CONF_PY); \
 	    git commit -m "moving to TAG_VERSION $(TAG)"                   $(SETTARG_VSRC)  \

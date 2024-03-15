@@ -43,6 +43,7 @@ require("strict")
 require("declare")
 require("fileOps")
 
+local Version      = require("Version")
 local cosmic       = require("Cosmic"):singleton()
 local lfs          = require("lfs")
 local getenv       = os.getenv
@@ -58,6 +59,14 @@ end
 ------------------------------------------------------------------------
 
 LuaV = (_VERSION:gsub("Lua ",""))
+
+------------------------------------------------------------------------
+-- Lmod branch
+------------------------------------------------------------------------
+cosmic:init{name    = "LMOD_BRANCH",
+            default = "main",
+            assignV = Version.branch()}
+            
 
 ------------------------------------------------------------------------
 -- Lmod ExitHookArray Object:
@@ -206,7 +215,7 @@ cosmic:init{name    = "LMOD_SITEPACKAGE_LOCATION",
 
 
 ------------------------------------------------------------------------
--- LMOD_CFG:  lmod_config.lua locatoin
+-- LMOD_CFG:  lmod_config.lua location
 ------------------------------------------------------------------------
 cosmic:init{name    = "LMOD_CONFIG_LOCATION",
             default = "no"}
@@ -398,8 +407,10 @@ local rc_dflt    = pathJoin(etcDir,"rc.lua")
 if (not isFile(rc_dflt)) then
    rc_dflt   = pathJoin(etcDir,"rc")
 end
-local rc        = getenv("LMOD_MODULERCFILE") or getenv("MODULERCFILE")
-cosmic:init{name    = "LMOD_MODULERCFILE",
+local rc        = getenv("LMOD_MODULERC") or 
+                  getenv("LMOD_MODULERCFILE") or
+                  getenv("MODULERCFILE")
+cosmic:init{name    = "LMOD_MODULERC",
             default = rc_dflt,
             envV    = rc,
             assignV = rc,
@@ -570,6 +581,11 @@ parseVersion  = false
 s_warning     = false
 
 ------------------------------------------------------------------------
+-- s_status:   When set return a non-zero status
+------------------------------------------------------------------------
+s_status      = false
+
+------------------------------------------------------------------------
 -- s_haveWarnings:  if warning are allowed (or ignored).  For example
 --                  a try-load command turns off warnings.
 ------------------------------------------------------------------------
@@ -674,6 +690,8 @@ cosmic:init{name = "LMOD_ALLOW_ROOT_USE",
 cosmic:init{name = "LMOD_HAVE_LUA_TERM",
             sedV = "@have_lua_term@",
             yn   = "no"}
+
+
 
 ------------------------------------------------------------------------
 -- MODULEPATH_ROOT
