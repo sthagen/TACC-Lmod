@@ -50,8 +50,6 @@ local dbg         = require("Dbg"):dbg()
 local getenv      = os.getenv
 local s_moduleA   = false
 local sort        = table.sort
-local exact_match = cosmic:value("LMOD_EXACT_MATCH")
-local find_first  = cosmic:value("LMOD_TMOD_FIND_FIRST")
 
 -- print(__FILE__() .. ':' .. __LINE__())
 ----------------------------------------------------------------------
@@ -256,12 +254,17 @@ local function l_search(name, moduleA)
 end
 
 function M.applyWeights(self,fullNameDfltT)
-   --dbg.start{"ModuleA:applyWeights(fullNameDfltT)"}
+   dbg.start{"ModuleA:applyWeights(fullNameDfltT)"}
+   dbg.printT("fullNameDfltT",fullNameDfltT)
    for fullName, weight in pairs(fullNameDfltT) do
       repeat
          local sn, versionStr, vA = l_find_vA(fullName, self.__moduleA)
          if (sn == nil) then break end
          local fullStr, vB        = l_find_vB(sn,  versionStr, vA)
+         dbg.print{"sn: ",sn,", versionStr: ",versionStr,", fullStr: ",fullStr,"\n"}
+         dbg.printT("vA",vA)
+         dbg.printT("vB",vB)
+
 
          for i = 1, #vB do
             local v = vB[i]
@@ -282,7 +285,7 @@ function M.applyWeights(self,fullNameDfltT)
          end
       until true
    end
-   --dbg.fini("ModuleA:applyWeights")
+   dbg.fini("ModuleA:applyWeights")
 end
 
 
@@ -316,12 +319,13 @@ function M.__find_all_defaults(self)
             defaultT[sn] = {weight = "999999999.*zfinal", fullName = sn, fn = v.file, count = 1}
          elseif (next(v.fileT) ~= nil) then
             for fullName, vv in pairs(v.fileT) do
-               local vis = mrc:isVisible{fullName=fullName, sn=sn, fn=vv.fn} or isMarked(vv.wV)
+               local wV  = mrc:find_wght_for_fullName(fullName, vv.wV)
+               local vis = mrc:isVisible{fullName=fullName, sn=sn, fn=vv.fn} or isMarked(wV)
                if (show_hidden or vis) then
                   count = count + 1
-                  if (vis and (vv.wV > weight)) then
+                  if (vis and (wV > weight)) then
                      found      = true
-                     weight     = vv.wV
+                     weight     = wV
                      ext        = vv.luaExt and ".lua" or ""
                      fn         = pathJoin(mpath, fullName .. ext)
                      myfullName = fullName
@@ -483,14 +487,19 @@ function M.inherited_search(self, search_fullName, orig_fn)
 end
 
 function M.search(self, name)
+   dbg.start{"ModuleA:search(name: ",name,")"}
    if (self.__isNVV) then
+      dbg.fini("ModuleA:search via NVV search")
       return l_search(name, self.__moduleA)
    end
 
    if (not self.__locationT) then
+      dbg.print{"build new self.__locationT\n"}
       self.__locationT = LocationT:new(self.__moduleA)
+      dbg.printT("self.__locationT",self.__locationT)
    end
 
+   dbg.fini("ModuleA:search via NV search self.__locationT")
    return self.__locationT:search(name)
 end
 
@@ -505,11 +514,12 @@ end
 
 local function l_build_from_spiderT(spiderT)
    --dbg.start{"ModuleA l_build_from_spiderT(spiderT)"}
-   local frameStk = FrameStk:singleton()
-   local mt       = frameStk:mt()
-   local mpathA   = mt:modulePathA()
-   local moduleA  = {}
-   local isNV     = find_first == "no"
+   local find_first = cosmic:value("LMOD_TMOD_FIND_FIRST")
+   local frameStk   = FrameStk:singleton()
+   local mt         = frameStk:mt()
+   local mpathA     = mt:modulePathA()
+   local moduleA    = {}
+   local isNV       = find_first == "no"
    for i = 1, #mpathA do
       local mpath = mpathA[i]
       if (isDir(mpath)) then
@@ -534,7 +544,7 @@ end
 
 function M.update(self, t)
    t                   = t or {}
-   --dbg.start{"ModuleA:update(spider_cache = ",t.spider_cache,")"}
+   dbg.start{"ModuleA:update(spider_cache = ",t.spider_cache,")"}
    local frameStk      = FrameStk:singleton()
    local mt            = frameStk:mt()
    local varT          = frameStk:varT()
@@ -589,16 +599,18 @@ function M.update(self, t)
       until true
    end
    self.__defaultT  = {}
+   dbg.print{"Setting self.__locationT to false\n"}
    self.__locationT = false
    self.__moduleA   = moduleA
    mt:updateMPathA(mpathA)
-   --dbg.fini("ModuleA:update")
+   dbg.fini("ModuleA:update")
 end
 
 
 function M.__new(self, mpathA, maxdepthT, moduleRCT, spiderT)
    --dbg.start{"ModuleA:__new()"}
-   local o = {}
+   local o          = {}
+   local find_first = cosmic:value("LMOD_TMOD_FIND_FIRST")
    setmetatable(o,self)
 
    local dirTree   = false
@@ -617,15 +629,10 @@ function M.__new(self, mpathA, maxdepthT, moduleRCT, spiderT)
       o.__moduleA     = l_build(o, maxdepthT, dirTree:dirA())
    end
 
-   --dbg.printT("moduleA:",o.__moduleA)
-   --dbg.print{"isNVV: ",o.__isNVV,"\n"}
-   if (moduleRCT and next(moduleRCT) ~= nil) then
-      --dbg.print{"apply weights\n"}
-      local mrc       = MRC:singleton(moduleRCT)
-      o:applyWeights(mrc:fullNameDfltT())
-   end
-   local mrc       = MRC:singleton()
-   --dbg.printT("mrcMpathT",mrc:mrcMpathT())
+   --if (moduleRCT and next(moduleRCT) ~= nil) then
+   --   local mrc       = MRC:singleton(moduleRCT)
+   --   o:applyWeights(mrc:fullNameDfltT())
+   --end
    o.__locationT   = false
    o.__defaultT    = {}
    
@@ -647,16 +654,21 @@ function M.spiderBuilt(self)
 end
 
 function M.locationT(self)
+   dbg.start{"ModuleA:locationT()"}
    if (self.__isNVV) then
+      dbg.fini("ModuleA:locationT")
       return {}
    end
    if (not self.__locationT) then
+      dbg.print{"ModuleA:locationT: Build self.__locationT\n"}
       self.__locationT = LocationT:new(self.__moduleA)
    end
+   dbg.fini("ModuleA:locationT")
    return self.__locationT:locationT()
 end
 
 function M.defaultT(self)
+   local exact_match = cosmic:value("LMOD_EXACT_MATCH")
    if (exact_match == "yes") then
       return self.__defaultT
    end
@@ -668,7 +680,7 @@ function M.defaultT(self)
 end
 
 function M.singleton(self, t)
-   --dbg.start{"ModuleA:singleton(t)"}
+   dbg.start{"ModuleA:singleton(t)"}
    t = t or {}
    if (t.reset or (s_moduleA and s_moduleA:spiderBuilt())) then
       --dbg.print{"Wiping out old value of s_moduleA\n"}
@@ -686,8 +698,16 @@ function M.singleton(self, t)
       end
       s_moduleA = self:__new(mt:modulePathA(), mt:maxDepthT(), getModuleRCT(), spiderT)
    end
+   --elseif (t.applyWeights) then
+   --   dbg.print{"applying Weights\n"}
+   --   local mrc        = MRC:singleton(getModuleRCT())
+   --   dbg.printT("mrc:fullNameDfltT(): ",mrc:fullNameDfltT())
+   --   s_moduleA:applyWeights(mrc:fullNameDfltT())
+   --   dbg.print{"Setting self.__locationT to false\n"}
+   --   s_moduleA.__locationT = false
+   --end
 
-   --dbg.fini("ModuleA:singleton")
+   dbg.fini("ModuleA:singleton")
    return s_moduleA
 end
 

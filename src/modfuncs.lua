@@ -215,6 +215,8 @@ function load_any(...)
    return b
 end   
 
+local s_cleanupDirT = { PATH = true, LD_LIBRARY_PATH = true, LIBRARY_PATH = true, MODULEPATH = true }
+
 --- PATH functions ---
 --------------------------------------------------------------------------
 -- convert arguments into a table if necessary.
@@ -224,15 +226,29 @@ local function l_convert2table(...)
 
    if (argA.n == 1 and type(argA[1]) == "table" ) then
       t = argA[1]
-      t[1] = t[1]:trim()
+      t[1] = t[1]
    else
-      t[1]    = argA[1]:trim()
+      t[1]    = argA[1]
       t[2]    = argA[2]
       t.delim = argA[3]
    end
+   
    t.priority = tonumber(t.priority or "0")
    return t
 end
+
+local function l_cleanupPathArgs(t)
+   local name = t[1]:trim()
+   local path = t[2]:trim()
+   
+   if (s_cleanupDirT[name]) then
+      path = path:gsub(":+$",""):gsub("^:+","")
+      t[2] = path
+   end
+
+   return t
+end
+
 
 --------------------------------------------------------------------------
 -- Prepend a value to a path like variable.
@@ -240,6 +256,9 @@ function prepend_path(...)
    local t = l_convert2table(...)
    dbg.start{"prepend_path(",l_concatTbl(t,", "),")"}
    if (not l_validateStringTable(2, "prepend_path",t)) then return end
+   l_cleanupPathArgs(t)
+
+   
 
    mcp:prepend_path(t)
    dbg.fini("prepend_path")
@@ -251,7 +270,7 @@ function append_path(...)
    local t = l_convert2table(...)
    dbg.start{"append_path(",l_concatTbl(t,", "),")"}
    if (not l_validateStringTable(2, "append_path",t)) then return end
-
+   l_cleanupPathArgs(t)
    mcp:append_path(t)
    dbg.fini("append_path")
 end
@@ -262,7 +281,7 @@ function remove_path(...)
    local t = l_convert2table(...)
    dbg.start{"remove_path(",l_concatTbl(t,", "),")"}
    if (not l_validateStringTable(2, "remove_path",t)) then return end
-
+   l_cleanupPathArgs(t)
    mcp:remove_path(t)
    dbg.fini("remove_path")
 end
@@ -534,21 +553,21 @@ function prereq_any(...)
    if (not l_validateModules("prereq_any",...)) then return end
 
    mcp:prereq_any(MName:buildA("mt",...))
-   dbg.fini("conflict")
+   dbg.fini("prereq_any")
 end
 
 --------------------------------------------------------------------------
 -- Test to see if a conflict module is loaded.  Fail if it is loaded.
 function conflict(...)
    dbg.start{"conflict(",l_concatTbl({...},", "),")"}
-   if (not l_validateStringArgs("conflict",...)) then return end
+   if (not l_validateModules("conflict",...)) then return end
 
    mcp:conflict(MName:buildA("mt",...))
-   dbg.fini()
+   dbg.fini("conflict")
 end
 
 --------------------------------------------------------------------------
--- A load and prereq modifier.  It is used like this:
+-- A load, prereq and conflict modifier.  It is used like this:
 -- load(atleast("gcc","4.8"))
 -- @param m module name
 -- @param is the starting version
@@ -556,6 +575,20 @@ function atleast(m, is)
    dbg.start{"atleast(",m,", ",is,")"}
 
    local mname = MName:new("load", m, "atleast", is)
+
+   dbg.fini("atleast")
+   return mname
+end
+
+--------------------------------------------------------------------------
+-- A load, prereq and conflict modifier.  It is used like this:
+-- load(atleast("gcc","4.8"))
+-- @param m module name
+-- @param is the starting version
+function atmost(m, ie)
+   dbg.start{"atmost(",m,", ",ie,")"}
+
+   local mname = MName:new("load", m, "atmost", false, ie)
 
    dbg.fini("atleast")
    return mname
@@ -830,6 +863,14 @@ function depends_on(...)
 
    local b = mcp:depends_on(MName:buildA(mcp:MNameType(),...))
    dbg.fini("depends_on")
+end
+
+function depends_on_any(...)
+   dbg.start{"depends_on_any(",l_concatTbl({...},", "),")"}
+   if (not l_validateModules("depends_on_any",...)) then return {} end
+
+   local b = mcp:depends_on_any(MName:buildA(mcp:MNameType(),...))
+   dbg.fini("depends_on_any")
 end
 
 function extensions(...)

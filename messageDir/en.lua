@@ -110,6 +110,7 @@ return {
      e_BrokenCacheFn       = "Spider cache fn: \"%{fn}\" appears broken",
      e_BrokenQ             = "Internal error: broken module Q\n",
      e_Conflict            = "Cannot load module \"%{name}\" because these module(s) are loaded:\n   %{module_list}\n",
+     e_Conflict_Downstream = "Cannot load module \"%{userName}\" because this module set a conflict: \"%{fullNameUpstream}\"\n",
      e_Execute_Msg         = [==[Syntax error in file: %{fn}
 with command: "execute".
 The syntax is:
@@ -183,6 +184,7 @@ See https://lmod.readthedocs.io/en/latest/260_sh_to_modulefile.html for details.
 ]==],
      e_Sh_convertSh2MF     = "convertSh2MF script failed to produce 7 blocks\n",
      e_Spdr_Timeout        = "Spider search timed out.\n",
+     e_SU_defaults         = "Internal error in setting SU defaults\n",
      e_Swap_Failed         = "Swap failed: \"%{name}\" is not loaded.\n",
      e_Unable_2_Load       = "Unable to load module because of error when evaluating modulefile: %{name}\n     %{fn}: %{message}\n     Please check the modulefile and especially if there is a line number specified in the above message",
      e_Unable_2_Load_short = "%{message}",
@@ -306,11 +308,12 @@ to see if the module(s) are available across all compilers and MPI implementatio
 %{border}
 The following dependent module(s) are not currently loaded: %{missing}
 %{border}
-]==],
+]==], 
      w_MPATH_Coll          = "The system MODULEPATH has changed: please rebuild your saved collection.\n",
      w_Mods_Not_Loaded     = "The following modules were not loaded: %{module_list}\n\n",
      w_No_Coll             = "No collection named \"%{collection}\" found.",
      w_No_dot_Coll         = "It is illegal to have a `.' in a collection name.  Please choose another name for: \"%{name}\".",
+     w_Possible_Bad_Dir    = "Adding \"%{dir}\" to $MODULEPATH. Did you mean: \"module %{dir} use\"?",
      w_SYS_DFLT_EMPTY      = [==[
 The system default contains no modules
   (env var: LMOD_SYSTEM_DEFAULT_MODULES is empty)

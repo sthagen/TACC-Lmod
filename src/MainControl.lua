@@ -104,10 +104,17 @@ local function l_compareRequestedLoadsWithActual()
    dbg.start{"l_compareRequestedLoadsWithActual()"}
    local mt = FrameStk:singleton():mt()
 
+   dbg.printT("s_loadT",s_loadT)
+   if (dbg.active()) then
+      local s = mt:serializeTbl("pretty")
+      dbg.print{s,"\n"}
+   end
+
    local aa = {}
    local bb = {}
    for userName, mname in pairs(s_loadT) do
       local sn = mname:sn()
+      dbg.print{"sn: ",sn,", userName: ",userName,"\n"}
       if (not mt:have(sn, "active")) then
          aa[#aa+1] = mname:show()
          bb[#bb+1] = userName
@@ -952,7 +959,6 @@ function M.depends_on(self, mA)
       dbg.start{"MainControl:depends_on(mA={"..s.."})"}
    end
 
-
    local mB         = {}
    local mt         = FrameStk:singleton():mt()
 
@@ -972,6 +978,52 @@ function M.depends_on(self, mA)
    self:registerDependencyCk()
 
    dbg.fini("MainControl:depends_on")
+   return a
+end
+
+-------------------------------------------------------------------
+-- depends_on_any() a list of modules.  This is short hand for:
+--
+--   if (isloaded(any("mod1, mod2, modN"))) then done end
+--   if no module loadable error.
+--
+
+function M.depends_on_any(self, mA) 
+   if (dbg.active()) then
+      local s = mAList(mA)
+      dbg.start{"MainControl:depends_on_any(mA={"..s.."})"}
+   end
+
+   local mt         = FrameStk:singleton():mt()
+   local mB = {}
+
+   for i = 1,#mA do
+      local mname = mA[i]
+      if (mname:isloaded()) then
+         mt:safely_incr_ref_count(mname)
+         dbg.fini("MainControl:depends_on_any")
+         return {}
+      elseif (mname:sn()) then
+         mB[#mB + 1] = mname
+      end
+   end 
+
+   if (next(mB) == nil) then 
+      local s = mAList(mA)
+      LmodError{msg="e_Failed_depends_any", module_list=s}
+   end
+
+ 
+   local mC = {mB[1]}
+   local mname = mC[1]
+   mname:set_depends_on_flag(true)
+
+   l_registerUserLoads(mC)
+   local a = self:load(mC)
+
+   self:registerDependencyCk()
+
+   dbg.fini("MainControl:depends_on_any")
    return a
 end
 
@@ -1204,26 +1256,48 @@ end
 function M.conflict(self, mA)
    dbg.start{"MainControl:conflict(mA)"}
 
-
-   local frameStk  = FrameStk:singleton()
-   local mt        = frameStk:mt()
-   local fullName  = frameStk:fullName()
-   local optionTbl = optionTbl()
-   local a         = {}
+   local frameStk    = FrameStk:singleton()
+   local mt          = frameStk:mt()
+   local fullName    = frameStk:fullName()
+   local optionTbl   = optionTbl()
+   local a           = {}
+   local dsConflicts = cosmic:value("LMOD_DOWNSTREAM_CONFLICTS")
 
    for i = 1, #mA do
       local mname    = mA[i]
-      local sn       = mname:sn()  -- this will return false if there is no module loaded.
-      local userName = mname:userName()
-      if (sn and mt:have(sn,"active") and (userName == sn or extractVersion(userName, sn) == mt:version(sn))) then
+      local userName = mname:conflictCk(mt)
+      if ( userName ) then
          a[#a+1]  = userName
       end
    end
 
+   ------------------------------------------------------------------------
+   -- check for current conflicits
+
    if (#a > 0) then
       LmodError{msg="e_Conflict", name = fullName, module_list = concatTbl(a," ")}
    end
+
+   ------------------------------------------------------------------------
+   -- register downstream conflicts
+   if (dsConflicts == "yes") then
+      mt:registerConflicts(frameStk:mname(), mA)
+   end
+
    dbg.fini("MainControl:conflict")
+end
+
+function M.removeConflict(self, mA)
+   dbg.start{"MainControl:removeConflict(mA)"}
+   local frameStk    = FrameStk:singleton()
+   local mt          = frameStk:mt()
+   local dsConflicts = cosmic:value("LMOD_DOWNSTREAM_CONFLICTS")
+
+   if (dsConflicts == "yes" ) then
+      mt:removeConflicts(frameStk:mname())
+   end
+   
+   dbg.fini("MainControl:removeConflict")
 end
 
 --------------------------------------------------------------------------

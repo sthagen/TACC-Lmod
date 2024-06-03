@@ -39,30 +39,29 @@ require("TermWidth")
 require("string_utils")
 require("loadModuleFile")
 
-local Banner       = require("Banner")
-local BeautifulTbl = require("BeautifulTbl")
-local Cache        = require("Cache")
-local ColumnTable  = require("ColumnTable")
-local FrameStk     = require("FrameStk")
-local M            = {}
-local MRC          = require("MRC")
-local MName        = require("MName")
-local MT           = require("MT")
-local ModuleA      = require("ModuleA")
-local Spider       = require("Spider")
-local Var          = require("Var")
-local concatTbl    = table.concat
-local cosmic       = require("Cosmic"):singleton()
-local dbg          = require("Dbg"):dbg()
-local hook         = require("Hook")
-local i18n         = require("i18n")
-local remove       = table.remove
-local sort         = table.sort
-local q_load       = 0
-local s_same       = true
+local Banner        = require("Banner")
+local BeautifulTbl  = require("BeautifulTbl")
+local Cache         = require("Cache")
+local ColumnTable   = require("ColumnTable")
+local FrameStk      = require("FrameStk")
+local M             = {}
+local MRC           = require("MRC")
+local MName         = require("MName")
+local MT            = require("MT")
+local ModuleA       = require("ModuleA")
+local Spider        = require("Spider")
+local Var           = require("Var")
+local concatTbl     = table.concat
+local cosmic        = require("Cosmic"):singleton()
+local dbg           = require("Dbg"):dbg()
+local hook          = require("Hook")
+local i18n          = require("i18n")
+local remove        = table.remove
+local sort          = table.sort
+local q_load        = 0
+local s_same        = true
 
 local A             = ShowResultsA
-local mpath_avail  = cosmic:value("LMOD_MPATH_AVAIL")
 
 ------------------------------------------------------------------------
 -- a private ctor that is used to construct a singleton.
@@ -87,7 +86,6 @@ function M.singleton(self, safe)
    if (not s_hub) then
       s_hub = l_new(self, safe)
    end
-   dbg.print{"s_hub: ",tostring(s_hub), ", safe: ",s_hub.__safe,"\n"}
    dbg.fini("Hub:singleton")
    return s_hub
 end
@@ -116,7 +114,7 @@ function M.access(self, ...)
    local result, t
 
    local argA = pack(...)
-   if (optionTbl.location) then
+   if (optionTbl.location or optionTbl.terse) then
       local userName = argA[1]
       local mname    = mt:have(userName,"any") and MName:new("mt",userName)
                                                or  MName:new("load",userName)
@@ -302,12 +300,13 @@ function M.load(self, mA)
 
    local disable_same_name_autoswap = cosmic:value("LMOD_DISABLE_SAME_NAME_AUTOSWAP")
 
-   local optionTbl = optionTbl()
-   local tracing   = cosmic:value("LMOD_TRACING")
-   local frameStk  = FrameStk:singleton()
-   local shell     = _G.Shell
-   local shellNm   = shell and shell:name() or "bash"
-   local a         = true
+   local dsConflicts = cosmic:value("LMOD_DOWNSTREAM_CONFLICTS")
+   local optionTbl   = optionTbl()
+   local tracing     = cosmic:value("LMOD_TRACING")
+   local frameStk    = FrameStk:singleton()
+   local shell       = _G.Shell
+   local shellNm     = shell and shell:name() or "bash"
+   local a           = true
    local mt
 
 
@@ -315,11 +314,11 @@ function M.load(self, mA)
       repeat
          local mname      = mA[i]
          local userName   = mname:userName()
-
-         dbg.print{"Hub:load i: ",i,", userName: ",userName,"\n",}
-
          mt               = frameStk:mt()
+
          local sn         = mname:sn()
+         dbg.print{"Hub:load i: ",i,", userName: ",userName,", sn: ",sn,"\n",}
+
          if ((sn == nil) and ((i > 1) or (frameStk:stackDepth() > 0))) then
             dbg.print{"Pushing ",mname:userName()," on moduleQ\n"}
             dbg.print{"i: ",i,", stackDepth: ", frameStk:stackDepth(),"\n"}
@@ -346,7 +345,7 @@ function M.load(self, mA)
                         ")" }
          end
 
-         dbg.print{"Hub:load i: ",i," sn: ",sn," fn: ",fn,"\n"}
+         dbg.print{"Hub:load i: ",i,", sn: ",sn,", fullName: ",fullName,", fn: ",fn,"\n"}
 
          if (mt:have(sn,"active")) then
             local version    = mname:version()
@@ -384,6 +383,17 @@ function M.load(self, mA)
             frameStk:push(mname)
             mt = frameStk:mt()
             mt:add(mname,"pending")
+            dbg.print{"dsConflicts: ",dsConflicts,"\n"}
+            if (dsConflicts == "yes") then
+               local snUpstream = mt:haveDSConflict(mname)
+               if (snUpstream) then
+                  local fullNameUpstream = mt:fullName(snUpstream)
+                  LmodError{msg="e_Conflict_Downstream", fullNameUpstream = fullNameUpstream,
+                            userName=userName}
+               end
+            end
+
+
             local status = loadModuleFile{file = fn, shell = shellNm, mList = mList, reportErr = true}
             mt = frameStk:mt()
 
@@ -811,6 +821,7 @@ function M.safeToUpdate()
 end
 
 local function l_availEntry(defaultOnly, label, searchA, defaultT, entry)
+   local mpath_avail = cosmic:value("LMOD_MPATH_AVAIL")
    if (defaultOnly) then
       local fn    = entry.fn
       if (not defaultT[fn]) then

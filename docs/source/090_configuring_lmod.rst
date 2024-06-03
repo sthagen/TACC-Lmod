@@ -25,7 +25,7 @@ any cache files and walks MODULEPATH instead.
 
 The following settings are considered "no".  Note that the string value
 is lowercased first, so NO, No, and nO are the same as no. ALL OTHER
-VALUES are treated as "yes".
+VALUES are treated as "yes" such as "1", or "on".
 
 #. export LMOD_IGNORE_CACHE=""
 #. export LMOD_IGNORE_CACHE=0
@@ -244,6 +244,14 @@ the configuration option which will set the action.
   ~/.config/lmod but will check both directories when reading picking
   the most recent one.
 
+Configuration or cosmic:assign() at startup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**LMOD_DOWNSTREAM_CONFLICTS**:
+  [yes/no, default: no, --with-downstreamConflicts] If yes then
+  the conflict() function are also remembered to block future module
+  loads. 
+
 
 Configuration only settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,6 +269,7 @@ Configuration only settings
   non-executable files.
   
 .. _lmod_config-label:
+
 
 Configuring Lmod with **/etc/lmod/lmod_config.lua**:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

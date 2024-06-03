@@ -179,6 +179,17 @@ cosmic:init{name = "LMOD_REDIRECT",
             yn   = "no"}
 
 ------------------------------------------------------------------------
+-- LMOD_DOWNSTREAM_CONFLICTS:  Module confiicts are remember for later
+--                            module loads
+--                            Note: this variable can only be set
+--                            at config time or via cosmic:assign() at
+--                            startup
+------------------------------------------------------------------------
+cosmic:init{name    = "LMOD_DOWNSTREAM_CONFLICTS",
+            sedV    = "@lmod_downstream_conflicts@",
+            default = "no",
+            assignV = "no"}
+------------------------------------------------------------------------
 -- LMOD_RC:  Lmod RC list of colon separated files 
 ------------------------------------------------------------------------
 local rcfiles = getenv("LMOD_RC")
@@ -351,16 +362,11 @@ cosmic:init{name = "LMOD_DUPLICATE_PATHS",
             yn   = "no"}
 
 
-if (cosmic:value("LMOD_TMOD_PATH_RULE") == "yes") then
-   cosmic:assign("LMOD_DUPLICATE_PATHS", "no")
-end
-
 ------------------------------------------------------------------------
 -- LMOD_IGNORE_CACHE:  Ignore user and system caches and rebuild if needed
 ------------------------------------------------------------------------
-cosmic:init{name    = "LMOD_IGNORE_CACHE",
-            lower   = true,
-            default = false}
+cosmic:init{name = "LMOD_IGNORE_CACHE",
+            yn   = "no"}
 
 ------------------------------------------------------------------------
 -- LMOD_CACHED_LOADS: Use spider cache on loads
@@ -368,11 +374,6 @@ cosmic:init{name    = "LMOD_IGNORE_CACHE",
 cosmic:init{name = "LMOD_CACHED_LOADS",
             sedV = "@cached_loads@",
             yn   = "no"}
-
-local ignore_cache = cosmic:value("LMOD_IGNORE_CACHE")
-local cached_loads = cosmic:value("LMOD_CACHED_LOADS")
-
-cosmic:assign("LMOD_CACHED_LOADS",ignore_cache and "no" or cached_loads)
 
 ------------------------------------------------------------------------
 -- LMOD_PAGER: Lmod will use this value of pager if set.
@@ -641,7 +642,12 @@ cosmic:init{name    = "LMOD_ANCIENT_TIME",
             envV    = ancientEnv,
             sedV    = ancientSedV,
             assignV = ancient}
-ancient             = cosmic:value("LMOD_ANCIENT_TIME")
+ancient = cosmic:value("LMOD_ANCIENT_TIME")
+------------------------------------------------------------------------
+-- shortLifeCache: If building the cache file is fast then shorten the
+--                 ancient to this time.
+------------------------------------------------------------------------
+shortLifeCache = ancient/12
 
 ------------------------------------------------------------------------
 -- LMOD_SHORT_TIME: the time in seconds when building the cache file is quick
@@ -658,6 +664,8 @@ cosmic:init{name     = "LMOD_SHORT_TIME",
             sedV     = shortTimeSedV,
             assignV  = shortTime}
 
+
+
 ------------------------------------------------------------------------
 -- Threshold:  The amount of time to wait before printing the cache
 --             rebuild message.  (It has to be 1 second or greater).
@@ -670,12 +678,6 @@ cosmic:init{name     = "LMOD_THRESHOLD",
             envV     = thresholdEnv,
             assignV  = threshold}
 
-
-------------------------------------------------------------------------
--- shortLifeCache: If building the cache file is fast then shorten the
---                 ancient to this time.
-------------------------------------------------------------------------
-shortLifeCache = ancient/12
 
 ------------------------------------------------------------------------
 -- LMOD_ALLOW_ROOT_USE
@@ -719,6 +721,15 @@ end
 cosmic:init{name    = "LMOD_HASHSUM_PATH",
             sedV    = "@hashsum@",
             default = HashSum}
+
+------------------------------------------------------------------------
+-- MODULES_AUTO_HANDLING: If true the make prereq -> depends_on
+--                        prereq_any -> depends_on_any
+------------------------------------------------------------------------
+
+cosmic:init{name    = "MODULES_AUTO_HANDLING",
+            sedV    = "@modules_auto_handling@",
+            default = "no"}
 
 ------------------------------------------------------------------------
 -- PATH_TO_LUA

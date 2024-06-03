@@ -64,11 +64,7 @@ local load      = (_VERSION == "Lua 5.1") and loadstring or load
 local s_MRC     = false
 local hook      = require("Hook")
 
-local function l_argsPack(...)
-   local argA = { n = select("#", ...), ...}
-   return argA
-end
-local pack      = (_VERSION == "Lua 5.1") and l_argsPack or table.pack  -- luacheck: compat
+local pack      = (_VERSION == "Lua 5.1") and argsPack or table.pack  -- luacheck: compat
 
 ------------------------------------------------------------------------
 -- Local functions
@@ -79,13 +75,19 @@ local l_buildMod2VersionT
 -- @param self A MRC object.
 
 local function l_new(self, fnA)
-   --dbg.start{"MRC l_new(fnA)"}
+   if (dbg.active()) then
+      local strFnA = "nil"
+      if (fnA and next(fnA) ~= nil) then
+         strFnA = concatTbl(fnA,", ")
+      end
+      dbg.start{"MRC l_new(fnA: ",strFnA,")"}
+   end
    local o              = {}
    o.__mpathT           = {}  -- mpath dependent values for alias2modT, version2modT
                               -- and hiddenT.
    o.__version2modT     = {}  -- Map a sn/version string to a module fullname
    o.__alias2modT       = {}  -- Map an alias string to a module name or alias
-   o.__fullNameDfltT    = {}
+   o.__fullNameDfltT    = {}  -- Map for fullName (in pieces) to weights
    o.__defaultT         = {}  -- Map module sn to fullname that is the default.
    o.__hiddenT          = {}  -- Table of hidden module names and modulefiles.
    o.__mod2versionT     = {}  -- Map from full module name to versions.
@@ -95,7 +97,7 @@ local function l_new(self, fnA)
    self.__index = self
 
    l_build(o, fnA or getModuleRCT())
-   --dbg.fini("MRC l_new")
+   dbg.fini("MRC l_new")
    return o
 end
 
@@ -106,24 +108,23 @@ end
 
 
 function M.singleton(self, fnA)
-   --dbg.start{"MRC:singleton()"}
+   dbg.start{"MRC:singleton()"}
    if (not s_MRC) then
       s_MRC = l_new(self, fnA)
    end
-   --dbg.fini("MRC:singleton")
+   dbg.fini("MRC:singleton")
    return s_MRC
 end
 
 
 function M.__clear(self)
-   --dbg.start{"MRC:__clear()"}
+   dbg.start{"MRC:__clear()"}
    s_MRC = nil
-   --dbg.fini("MRC:__clear")
+   dbg.fini("MRC:__clear")
 end
 
 function l_build(self, fnA)
-   --dbg.start{"MRC l_build(self,fnA)"}
-   --dbg.printT("fnA",fnA)
+   dbg.start{"MRC l_build(self,fnA)"}
    for i = 1, #fnA do
       local fn     = fnA[i][1]
       if (isFile(fn)) then
@@ -132,11 +133,35 @@ function l_build(self, fnA)
          self:parseModA(modA, weight)
       end
    end
-   --dbg.fini("MRC l_build")
+   dbg.fini("MRC l_build")
 end
 
+local function l_save_su_weights(self, fullName, weight)
+   local a = {}
+   local n = 0
+   for s in fullName:split("/") do
+      n    = n + 1
+      a[n] = s
+   end
+
+   local function l_su_weight_helper(i,n,a,t,weight)
+      local s = a[i]
+      t[s] = t[s] or {}
+      if (i == n) then
+         t[s].weight = weight
+         return
+      else
+         t[s].tree   = t[s].tree or {}
+         l_su_weight_helper(i+1,n,a,t[s].tree, weight)
+      end
+   end
+
+   l_su_weight_helper(1,n,a,self.__fullNameDfltT,weight)
+end
+
+
 function M.parseModA(self, modA, weight)
-   --dbg.start{"MRC:parseModA(modA, weight: \"",weight,"\")"}
+   dbg.start{"MRC:parseModA(modA, weight: \"",weight,"\")"}
 
    for i = 1,#modA do
       repeat
@@ -161,7 +186,7 @@ function M.parseModA(self, modA, weight)
                --dbg.print{"j: ",j, ", version: ",version, "\n"}
                if (version == "default") then
                   --dbg.print{"Setting default: ",fullName, "\n"}
-                  self.__fullNameDfltT[fullName] = weight
+                  l_save_su_weights(self, fullName, weight)
                else
                   local key = shorter .. '/' .. version
                   self.__version2modT[key] = fullName
@@ -180,7 +205,7 @@ function M.parseModA(self, modA, weight)
          end
       until true
    end
-   --dbg.fini("MRC:parseModA")
+   dbg.fini("MRC:parseModA")
 end
 
 function l_buildMod2VersionT(self, mpathA)
@@ -223,7 +248,7 @@ function l_buildMod2VersionT(self, mpathA)
    for k, v in pairs(t) do
       mA2T[k] = v
    end
-      
+
    --dbg.printT("v2mT",v2mT)
 
    for k, v in pairs(v2mT) do
@@ -271,7 +296,7 @@ end
 
 function M.resolve(self, mpathA, name)
    local value = l_find_alias_value("alias2modT", self.__alias2modT, self.__mpathT, mpathA, name)
-   dbg.print{"MRC:resolve: 1) name: ",name,", value: ",value,"\n"}
+   dbg.print{"MRC:resolve: (1) name: ",name,", value: ",value,"\n"}
    if (value ~= nil) then
       name  = value
       value = self:resolve(mpathA, value)
@@ -281,9 +306,9 @@ function M.resolve(self, mpathA, name)
       dbg.printT("version2modT",self.__version2modT)
       dbg.printT("mpathT",self.__mpathT)
    end
-   
+
    value = l_find_alias_value("version2modT", self.__version2modT, self.__mpathT, mpathA, name)
-   dbg.print{"MRC:resolve: 2) name: ",name,", value: ",value,"\n"}
+   dbg.print{"MRC:resolve: (2) name: ",name,", value: ",value,"\n"}
    if (value == nil) then
       value = name
    else
@@ -493,6 +518,150 @@ function M.update(self, fnA)
    --dbg.fini("MRC:update")
 end
 
+function l_find_all_su_defaults(k, t, b, resultA)
+   b[#b+1] = k
+   if (t.tree) then
+      t = t.tree
+      for kk, v in pairs(t) do
+         l_find_all_su_defaults(kk,v,deepcopy(b), resultA)
+      end
+   elseif (t.weight) then
+      resultA[#resultA+1] = { version = concatTbl(b,"/"), weight = t.weight}
+   else
+      LmodError{msg="e_SU_defaults"}
+   end
+end
 
+function M.find_wght_for_fullName(self, fullName, wV)
+   dbg.start{"MRC:find_wght_for_fullName(fullName: \"",fullName,")"}
+   local t = self.__fullNameDfltT
+   if (not fullName) then
+      dbg.fini("MRC:find_wght_for_fullName: no fullName")
+      return wV
+   end
+   
+
+   -- split fullName into an array on '/' --> fnA
+   local fnA = {}
+   local n   = 0
+   for s in fullName:split("/") do
+      n      = n + 1
+      fnA[n] = s
+   end
+
+   -- if fnA  has no parts then quit.
+   if (n < 1) then
+      dbg.fini("MRC:find_wght_for_fullName: fnA has no parts")
+      return wV
+   end
+
+   -- Search thru t to see if fullName is marked with (su) defaults
+   local found = false
+   for i = 1, n do
+      local s = fnA[i]
+      if (t[s]) then
+         t = t[s].tree or t[s]
+         found = (i == n)
+      end
+   end
+
+   if (not found) then
+      dbg.fini("MRC:find_wght_for_fullName: not found")
+      return wV
+   end
+
+   local weight = t.weight 
+   local idx    = wV:match("^.*()/")
+   if (weight) then
+      if (idx) then
+         wV = wV:sub(1,idx) .. weight .. wV:sub(idx+2,-1)
+      else
+         wV = weight .. wV:sub(2,-1)
+      end
+   end
+   
+   dbg.print{"found weight: ",weight,", wV: ",wV,"\n"}
+   dbg.fini("MRC:find_wght_for_fullName")
+   return wV
+end
+
+
+function M.applyWeights(self, sn, fileA)
+   dbg.start{"MRC:applyWeights(sn: \"",sn,"\", fileA)"}
+   local t = self.__fullNameDfltT
+
+   if (not (sn and fileA and next(fileA) ~= nil)) then
+      dbg.fini("MRC:applyWeights via no sn or fileA")
+      return
+   end
+
+   dbg.printT("fullNameDfltT: ", t)
+
+
+   -- split sn into an array on '/' --> snA
+   local snA = {}
+   local n = 0
+   for s in sn:split("/") do
+      n      = n + 1
+      snA[n] = s
+   end
+
+   -- if snA  has no parts then quit.
+   if (n < 1) then
+      return
+   end
+
+
+   -- Search thru t to see if sn is a marked (su) defaults
+   local found = false
+   for i = 1, n do
+      local s = snA[i]
+      if (t[s]) then
+         t = t[s].tree or t[s]
+         found = (i == n)
+      end
+   end
+
+   -- If not found then there are no marked (su) defaults.
+   if (not found) then
+      dbg.fini("MRC:applyWeights sn not found")
+      return
+   end
+
+
+   -- search thru self.__fullNameDfltT that has our sn for marked su defaults
+   -- resultA looks like:
+   -- resultA = { {version = "14.1", weight = "u"}, { version = "12.1", weight = "s"}, }
+
+   local resultA = {}
+   for k, v in pairs(t) do
+      l_find_all_su_defaults(k,v,{},resultA)
+   end
+
+   dbg.printT("resultA",resultA)
+   -- Now use resultA to mark su defaults in fileA
+
+   for k = 1,#fileA do
+      local blockA = fileA[k]
+      for j = 1,#blockA do
+         local entry   = blockA[j]
+         local version = entry.version
+         for i = 1, #resultA do
+            local suEntry = resultA[i]
+            if (version == suEntry.version) then
+               local weight = suEntry.weight
+               local idx    = entry.wV:match("^.*()/")
+               if (idx) then
+                  entry.wV = entry.wV:sub(1,idx) .. weight .. entry.wV:sub(idx+2,-1)
+               else
+                  entry.wV = weight .. entry.wV:sub(2,-1)
+               end
+            end
+         end
+      end
+   end
+   dbg.printT("fileA: ", fileA)
+   dbg.fini("MRC:applyWeights")
+end
 
 return M

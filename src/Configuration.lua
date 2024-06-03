@@ -142,7 +142,7 @@ local function l_new(self)
    local hashsum_path      = cosmic:value("LMOD_HASHSUM_PATH")
    local have_term         = cosmic:value("LMOD_HAVE_LUA_TERM")
    local hiddenItalic      = cosmic:value("LMOD_HIDDEN_ITALIC")
-   local ignore_cache      = cosmic:value("LMOD_IGNORE_CACHE") and "yes" or "no"
+   local ignore_cache      = cosmic:value("LMOD_IGNORE_CACHE")
    local ksh_support       = cosmic:value("LMOD_KSH_SUPPORT")
    local ld_lib_path       = cosmic:value("LMOD_LD_LIBRARY_PATH") or "<empty>"
    local ld_preload        = cosmic:value("LMOD_LD_PRELOAD")      or "<empty>"
@@ -156,10 +156,12 @@ local function l_new(self)
    local mpath_avail       = cosmic:value("LMOD_MPATH_AVAIL")
    local mpath_init        = cosmic:value("LMOD_MODULEPATH_INIT")
    local mpath_root        = cosmic:value("MODULEPATH_ROOT")
+   local mAutoHanding      = cosmic:value("MODULES_AUTO_HANDLING")
    local nag               = cosmic:value("LMOD_ADMIN_FILE")
    local pager             = cosmic:value("LMOD_PAGER")
    local pager_opts        = cosmic:value("LMOD_PAGER_OPTS")
    local pin_versions      = cosmic:value("LMOD_PIN_VERSIONS")
+   local dsConflicts       = cosmic:value("LMOD_DOWNSTREAM_CONFLICTS")
    local prepend_block     = cosmic:value("LMOD_PREPEND_BLOCK")
    local rc                = cosmic:value("LMOD_MODULERC")
    local redirect          = cosmic:value("LMOD_REDIRECT")
@@ -186,10 +188,12 @@ local function l_new(self)
       lmodrc = "<empty>"
    end
 
-   if (not rc:find(":") and not isFile(rc)) then
-      rc = rc .. " -> <empty>"
-   elseif (not access(rc,"r")) then
-      rc = rc .. " -> <unreadable>"
+   if (not rc:find(":")) then
+      if (not exists(rc)) then
+         rc = rc .. " -> <empty>"
+      elseif (not access(rc,"r")) then
+         rc = rc .. " -> <unreadable>"
+      end
    end
    if (not readable) then
       adminFn = adminFn .. " -> <empty>"
@@ -236,6 +240,7 @@ local function l_new(self)
    tbl.luaV         = { k = "Lua Version"                       , v = _VERSION,         n = false                             }
    tbl.lua_term     = { k = "System lua-term"                   , v = have_term,        n = "LMOD_HAVE_LUA_TERM"              }
    tbl.lua_term_A   = { k = "Active lua-term"                   , v = activeTerm,       n = false                             }
+   tbl.mAutoHndl    = { k = "Modules Auto Handling"             , v = mAutoHanding,     n = "MODULES_AUTO_HANDLING"         }
    tbl.mpath_av     = { k = "avail: Include modulepath dir"     , v = mpath_avail,      n = "LMOD_MPATH_AVAIL"                }
    tbl.mpath_init   = { k = "MODULEPATH_INIT"                   , v = mpath_init,       n = "LMOD_MODULEPATH_INIT"            }
    tbl.mpath_root   = { k = "MODULEPATH_ROOT"                   , v = mpath_root,       n = "MODULEPATH_ROOT"                 }
@@ -247,6 +252,7 @@ local function l_new(self)
    tbl.pager_opts   = { k = "Pager Options"                     , v = pager_opts,       n = "LMOD_PAGER_OPTS"                 }
    tbl.path_hash    = { k = "Path to HashSum"                   , v = hashsum_path,     n = "LMOD_HASHSUM_PATH"               }
    tbl.path_lua     = { k = "Path to Lua"                       , v = lua_path,         n = false                             }
+   tbl.dsConflicts  = { k = "Downstream Module Conflicts"       , v = dsConflicts,    n = "LMOD_DOWNSTREAM_CONFLICTS"         }
    tbl.pin_v        = { k = "Pin Versions in restore"           , v = pin_versions,     n = "LMOD_PIN_VERSIONS"               }
    tbl.pkg          = { k = "Pkg Class name"                    , v = pkgName,          n = false                             }
    tbl.prefix       = { k = "Lmod prefix"                       , v = "@PREFIX@",       n = false                             }
@@ -363,7 +369,7 @@ function M.report(self, t)
       
       local banner = Banner:singleton()
       local border = banner:border(2)
-      local str    = " Lmod Property Table:"
+      local str    = " Lmod Property Table (LMOD_RC):"
       b[#b+1]  = border
       b[#b+1]  = str
       b[#b+1]  = border

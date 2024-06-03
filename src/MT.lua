@@ -87,13 +87,14 @@ local function l_new(self, s, restoreFn)
    dbg.start{"MT l_new(s,restoreFn:",restoreFn,")"}
    local o         = {}
 
-   o.c_rebuildTime   = false
-   o.c_shortTime     = false
-   o.mT              = {}
-   o.MTversion       = l_mt_version()
-   o.family          = {}
-   o.mpathA          = {}
-   o.depthT          = {}
+   o.c_rebuildTime = false
+   o.c_shortTime   = false
+   o.mT            = {}
+   o.MTversion     = l_mt_version()
+   o.family        = {}
+   o.mpathA        = {}
+   o.depthT        = {}
+   o.__conflictT   = {}
    o.__stickyA     = {}
    o.__loadT       = {}
    o.__changeMPATH = false
@@ -151,6 +152,25 @@ local function l_new(self, s, restoreFn)
       for k,v in pairs(_ModuleTable_) do
          o[k] = v
       end
+      ------------------------------------------------------------------
+      -- Convert the list of MName constructors in to an array of mnames
+      -- to hold the conflicts.
+      if (o.conflictT and  next(o.conflictT) ~= nil) then
+         local MName = require("MName")
+         local cT = {}
+         local tt = o.conflictT
+
+         for sn, vv in pairs(tt) do
+            local a = {}
+            for i = 1,#vv do
+               local t = tt[sn][i]
+               a[i] = MName:new(t.sType, t.userName, t.action, t.is, t.ie)
+            end
+            cT[sn] = a
+         end
+         o.__conflictT = cT
+      end
+      o.conflictT   = nil
    end
 
    -- remove any mcmdT connected to a mT entry
@@ -188,7 +208,9 @@ function M.singleton(self, t)
    if (not s_mt) then
       dbg.start{"MT:singleton()"}
       s_mt        = l_new(self, getMT())
-      dbg.printT("s_mt",s_mt)
+      if (dbg.active()) then
+         dbg.print{"s_mt: ",s_mt:serializeTbl("pretty") }
+      end
       dbg.fini("MT:singleton")
    end
    return s_mt
@@ -401,6 +423,8 @@ end
 
 function M.serializeTbl(self, state)
    local make_pretty = (state == "pretty")
+
+
    local mt     = deepcopy(self)
    local rTest  = optionTbl().rt
    if (rTest) then
@@ -409,6 +433,21 @@ function M.serializeTbl(self, state)
    end
    l_setLoadOrder(mt)
 
+   if (next(self.__conflictT) ~= nil) then
+      local cT = mt.__conflictT
+      local tt = {}
+
+      for sn,vv in pairs(cT) do
+         local a = {}
+         for i=1,#vv do
+            local mname = vv[i]
+            a[i] = mname:print()
+         end
+         tt[sn] = a
+      end
+      mt.conflictT = tt
+   end
+         
    if (make_pretty)  then
       local mT = mt.mT
       for sn, v in pairs(mT) do
@@ -1444,7 +1483,60 @@ function M.name_w_possible_alias(self, entry, kind)
    return moduleName
 end
 
+------------------------------------------------------------------------
+-- Register Downstream conflicts
+function M.registerConflicts(self, mname, mA)
+   if (dbg.active()) then
+      local s = mAList(mA)
+      dbg.start{"MT:registerConflicts(sn:", mname:sn(),",mA={"..s.."})"}
+   end
+   local sn = mname:sn()
+   local a  = deepcopy(mA)
+   local A  = self.__conflictT[sn] or {}
+   for i = 1,#a do
+      A[#A+1] = a[i]
+   end
+   self.__conflictT[sn] = A
+   dbg.fini("MT:registerConflicts")
+end
+------------------------------------------------------------------------
+-- Unregister Downstream conflicts
+function M.removeConflicts(self, mname)
+   local sn = mname:sn()
+   if (dbg.active()) then
+      dbg.start{"MT:removeConflicts(sn:", sn,")"}
+   end
+   self.__conflictT[sn] = nil
+   dbg.fini("MT:removeConflicts")
+end
 
+function M.haveDSConflict(self, mnameIn)
+   if (dbg.active()) then
+      local snIn   = mnameIn:sn()
+      dbg.start{"MT:haveDSConflict(sn:", snIn,")"}
+   end
+
+   local cT    = self.__conflictT
+   local MName = require("MName")
+   for sn, vv in pairs(cT) do
+      dbg.print{"upstreamSn: ",sn,"\n"}
+      for i = 1,#vv do
+         local conflict_mname = vv[i]
+         dbg.print{"conflict_mname:userName(): ",conflict_mname:userName(),"\n"}
+         local userName_in_MT = self:lookup_w_userName(conflict_mname:userName())
+         dbg.print{"userName_in_MT: ",userName_in_MT,"\n"}
+         if (self:lookup_w_userName(conflict_mname:userName())) then
+            local snUpstream  = conflict_mname:downstreamConflictCk(mnameIn)
+            if (snUpstream) then
+               return sn
+            end
+         end
+      end
+   end
+
+   dbg.fini("MT:haveDSConflict")
+   return false
+end
 
 
 return M

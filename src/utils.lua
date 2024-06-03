@@ -77,7 +77,7 @@ function argsPack(...)
    local argA = { n = select("#", ...), ...}
    return argA
 end
-pack     = (_VERSION == "Lua 5.1") and argsPack or table.pack
+local pack     = (_VERSION == "Lua 5.1") and argsPack or table.pack
 
 function __FILE__()
    return debug.getinfo(2,'S').source
@@ -446,7 +446,6 @@ function getMT()
       local envNm = strfmt(piece,i)
       local v     = getenv(envNm)
       if (v == nil) then break end
-      dbg.print{"getMT: nm:",envNm,", v: ",v,"\n"}
 
       a[#a+1]    = v
    end
@@ -460,15 +459,16 @@ end
 ------------------------------------------------------------
 -- Get the table of modulerc files with proper weights
 
-s_fnIgnorePatternsA = { "^.*~", "^#.*", "^%.#.*", "^%..*%.swp"}
+local s_fnIgnorePatternsA = { "^.*~", "^#.*", "^%.#.*", "^%..*%.swp"}
 
 
 function getModuleRCT(remove_MRC_home)
-   --dbg.start{"getModuleRCT(remove_MRC_home)"}
+   dbg.start{"getModuleRCT(remove_MRC_home: ",remove_MRC_home,")"}
    local A            = {}
    local MRC_system   = cosmic:value("LMOD_MODULERC")
    local MRC_home     = pathJoin(getenv("HOME"), ".modulerc")
    local MRC_home_lua = pathJoin(getenv("HOME"), ".modulerc.lua")
+   dbg.print{"MRC_system: ",MRC_system,"\n"}
 
    if (MRC_system) then
       local a = {}
@@ -484,7 +484,10 @@ function getModuleRCT(remove_MRC_home)
                   end
                end
                if (valid) then
-                  a[#a+1] = pathJoin(n, f)
+                  local fullPath = pathJoin(n, f)
+                  if (isFile(fullPath) and access(fullPath,"r")) then
+                     a[#a+1] = fullPath
+                  end
                end
             end
          elseif (isFile(n) and access(n,"r")) then
@@ -502,8 +505,8 @@ function getModuleRCT(remove_MRC_home)
          A[#A+1] = { MRC_home, "u"}
       end
    end
-   --dbg.printT("fnA",A)
-   --dbg.fini("getModuleRCT")
+   dbg.printT("fnA",A)
+   dbg.fini("getModuleRCT")
    return A
 end
 
@@ -1142,6 +1145,20 @@ function initialize_lmod()
    cosmic:set_key("SitePkg")
    require("SitePackage")
    cosmic:set_key("Other")
+   colorize_init()
+   if (cosmic:value("LMOD_TMOD_PATH_RULE") == "yes") then
+      cosmic:assign("LMOD_DUPLICATE_PATHS", "no")
+   end
+   local ignore_cache = cosmic:value("LMOD_IGNORE_CACHE") == "yes"
+   local cached_loads = cosmic:value("LMOD_CACHED_LOADS")
+   cosmic:assign("LMOD_CACHED_LOADS", ignore_cache and "no" or cached_loads)
+   local ancient = cosmic:value("LMOD_ANCIENT_TIME")
+   ------------------------------------------------------------------------
+   -- shortLifeCache: If building the cache file is fast then shorten the
+   --                 ancient to this time.
+   ------------------------------------------------------------------------
+   shortLifeCache = ancient/12
+
 end
 
 function tracing_msg(msgA)

@@ -49,8 +49,6 @@ local dbg         = require("Dbg"):dbg()
 local sort        = table.sort
 local s_findT     = false
 
-local exact_match = cosmic:value("LMOD_EXACT_MATCH")
-
 function M.className(self)
    return self.my_name
 end
@@ -63,10 +61,15 @@ local function l_lessthan_equal(a,b)
    return a <= b
 end
 
+local s_rangeFuncT = { ["<="] = {func = l_lessthan_equal, name = "<="},
+                       ["<"]  = {func = l_lessthan,       name = "<"},
+                     }
 
 
 function M.new(self, sType, name, action, is, ie)
    --dbg.start{"Mname:new(",sType,")"}
+
+   local exact_match = cosmic:value("LMOD_EXACT_MATCH")
 
    if (not s_findT) then
       local Match   = require("MN_Match")
@@ -79,6 +82,7 @@ function M.new(self, sType, name, action, is, ie)
          latest  = Latest,
          between = Between,
          atleast = Between,
+         atmost  = Between,
       }
    end
 
@@ -92,6 +96,8 @@ function M.new(self, sType, name, action, is, ie)
 
    is             = is or false
    ie             = ie or false
+   o.__isOrig     = is
+   o.__ieOrig     = ie
    o.__sn         = false
    o.__version    = false
    o.__fn         = false
@@ -102,21 +108,23 @@ function M.new(self, sType, name, action, is, ie)
    o.__wV         = false
    o.__waterMark  = "MName"
    o.__action     = action
-   o.__range_fnA  = { l_lessthan_equal, l_lessthan_equal }
+   o.__range_fnA  = { s_rangeFuncT["<="], s_rangeFuncT["<="]}
    o.__show_range = { is, ie}
    if (is and (is:sub(1,1) == "<" or is:sub(-1) == "<")) then
-      o.__range_fnA[1]  = l_lessthan
+      o.__range_fnA[1]  = s_rangeFuncT["<"]
       is = is:gsub("<","")
+   elseif (is and (is:sub(1,1) == ">" or is:sub(-1) == ">")) then
+      o.__range_fnA[1]  = s_rangeFuncT["<"]
+      is = is:gsub(">","")
    end
    if (ie and (ie:sub(1,1) == "<" or ie:sub(-1) == "<")) then
-      o.__range_fnA[2]  = l_lessthan
+      o.__range_fnA[2]  = s_rangeFuncT["<"]
       ie = ie:gsub("<","")
    end
-   o.__is         = is 
-   o.__ie         = ie 
+   o.__is         = is
+   o.__ie         = ie
    o.__have_range = is or ie
    o.__range      = { o.__is and parseVersion(o.__is) or " ", o.__ie and parseVersion(o.__ie) or "~" }
-   o.__actionNm   = action
 
    if (sType == "entryT") then
       local t      = name
@@ -138,6 +146,18 @@ function M.new(self, sType, name, action, is, ie)
 end
 
 
+
+--------------------------------------------------------------------------
+-- This l_overRide_sType() function is here to convert
+--    mcp:conflict(MName:buildA("mt",...))
+--    where the list of userNames might include between("A","1.0","2.0")
+--    Functions like between assume "load".  Where as conflict, prereq etc
+--    need "mt".
+
+local function l_overRide_sType(mname, sTypeIn)
+   mname.__sType = sTypeIn
+end
+
 --------------------------------------------------------------------------
 -- Return an array of MName objects
 -- @param self A MName object
@@ -152,6 +172,7 @@ function M.buildA(self,sType, ...)
       if (type(v) == "string" ) then
          a[#a + 1] = self:new(sType, v:trim())
       elseif (type(v) == "table") then
+         l_overRide_sType(v,sType)
          a[#a + 1] = v
       end
    end
@@ -159,9 +180,10 @@ function M.buildA(self,sType, ...)
 end
 
 local function l_lazyEval(self)
-   --dbg.start{"l_lazyEval(",self.__userName,")"}
+   dbg.start{"l_lazyEval(",self.__userName,")"}
 
    local sType   = self.__sType
+   dbg.print{"sType: ",sType,"\n"}
    if (sType == "mt") then
       local frameStk = FrameStk:singleton()
       local mt       = frameStk:mt()
@@ -175,12 +197,13 @@ local function l_lazyEval(self)
          self.__wV         = mt:wV(sn)
          self.__ref_count  = mt:get_ref_count(sn)
       end
-      --dbg.fini("l_lazyEval via mt")
+      dbg.fini("l_lazyEval via mt")
       return
    end
 
    local cached_loads = cosmic:value("LMOD_CACHED_LOADS")
    local moduleA = ModuleA:singleton{spider_cache = (cached_loads ~= "no")}
+   dbg.printT("(3) moduleA: ",moduleA:moduleA())
    if (sType == "inherit") then
       local t  = self.__t
       local fn = moduleA:inherited_search(self.__fullName, t.fn)
@@ -192,7 +215,7 @@ local function l_lazyEval(self)
          self.__wV       = t.wV
       end
 
-      --dbg.fini("l_lazyEval via inherit")
+      dbg.fini("l_lazyEval via inherit")
       return
    end
 
@@ -204,6 +227,7 @@ local function l_lazyEval(self)
    local userName              = mrc:resolve(mt:modulePathA(), self:userName())
    local sn, versionStr, fileA = moduleA:search(userName)
    dbg.print{"l_lazyEval: orig: ",origUserName,", userName: ",userName, ", sn: ",sn,", versionStr: ",versionStr,"\n"}
+   mrc:applyWeights(sn, fileA)
 
    if (origUserName ~= userName) then
       self.__origUserName = origUserName
@@ -216,7 +240,7 @@ local function l_lazyEval(self)
    self.__stackDepth = self.__stackDepth or frameStk:stackDepth()
 
    if (not sn) then
-      --dbg.fini("l_lazyEval via no sn")
+      dbg.fini("l_lazyEval via no sn")
       return
    end
 
@@ -225,10 +249,10 @@ local function l_lazyEval(self)
    local fn
    local wV
    local found
-   --dbg.printT("fileA",fileA)
+   dbg.printT("fileA",fileA)
    --dbg.print{"#stepA: ",#stepA,"\n"}
-   --dbg.print{"userName: ",self.__userName,"\n"}
-   --dbg.print{"sn: ",self.__sn,"\n"}
+   dbg.print{"userName: ",self.__userName,"\n"}
+   dbg.print{"sn: ",self.__sn,"\n"}
 
 
    for i = 1, #stepA do
@@ -238,7 +262,7 @@ local function l_lazyEval(self)
          self.__fn      = fn
          self.__version = version
          self.__wV      = wV
-         if (self.__actionNm == "latest" or self.__sn ~= self.__userName) then
+         if (self.__action == "latest" or self.__sn ~= self.__userName) then
             self.__userName = build_fullName(self.__sn, version)
          end
          break
@@ -246,7 +270,7 @@ local function l_lazyEval(self)
    end
    --dbg.print{"l_lazyEval: sn: ",self.__sn, ", version: ",self.__version, ", fn: ",self.__fn,", wV: ",self.__wV,", userName: ",self.__userName,"\n"}
    --dbg.print{"fn: ",self.__fn,"\n"}
-   --dbg.fini("l_lazyEval")
+   dbg.fini("l_lazyEval")
 end
 
 
@@ -403,11 +427,11 @@ function M.find_exact_match(self, fileA)
       --dbg.fini("MName:find_exact_match")
       return found, fn, version
    end
-      
-   for i = 1, #fileA do
-      local a = fileA[i]
-      for j = 1, #a do
-         local entry = a[j]
+
+   for j = 1, #fileA do
+      local blockA = fileA[j]
+      for i = 1, #blockA do
+         local entry = blockA[i]
          if (entry.version == versionStr and entry.pV > pV ) then
             pV      = entry.pV
             wV      = entry.wV
@@ -433,10 +457,10 @@ function M.find_exact_match_meta_module(self, fileA)
    local pV         = " "  -- this is less than the lowest possible weight
    local wV         = false
    local found      = false
-   for i = 1, #fileA do
-      local a = fileA[i]
-      for j = 1, #a do
-         local entry = a[j]
+   for j = 1, #fileA do
+      local blockA = fileA[j]
+      for i = 1, #blockA do
+         local entry = blockA[i]
          if (entry.version == versionStr and entry.pV > pV ) then
             pV      = entry.pV
             wV      = entry.wV
@@ -513,8 +537,8 @@ function M.find_between(self, fileA)
    local version    = false
    local lowerBound = self.__range[1]
    local upperBound = self.__range[2]
-   local lowerFn    = self.__range_fnA[1]
-   local upperFn    = self.__range_fnA[2]
+   local lowerFn    = self.__range_fnA[1].func
+   local upperFn    = self.__range_fnA[2].func
 
    local pV         = lowerBound
    local wV         = " "  -- this is less than the lower possible weight.
@@ -553,6 +577,36 @@ function M.find_inherit_match(self,fileA)
    local a = fileA[1] or {}
 end
 
+local function l_rangeCk(self, version, result_if_found, result_if_not_found)
+   dbg.start{"l_rangeCk(self, version: ",version,", result_if_found: ",result_if_found,", result_if_not_found: ",result_if_not_found,")"}
+   local have_range = false
+   local result     = result_if_not_found
+   if (not self.__have_range) then
+      dbg.print{"no range\n"}
+      dbg.fini("l_rangeCk")
+      return have_range, result
+   end
+
+   have_range       = true
+   local lowerBound = self.__range[1]
+   local upperBound = self.__range[2]
+   local lowerFn    = self.__range_fnA[1]
+   local upperFn    = self.__range_fnA[2]
+   local pV         = parseVersion(version)
+   dbg.print{"lowerBound: ",lowerBound,"\n"}
+   dbg.print{"upperBound: ",upperBound,"\n"}
+   dbg.print{"pV:         ",pV,"\n"}
+   dbg.print{"lowerFn: ",lowerFn.name,", lowerFn.func(lowerBound, pV): ",lowerFn.func(lowerBound, pV),"\n"}
+   dbg.print{"upperFn: ",upperFn.name,", upperFn.func(pV, upperBound): ",upperFn.func(pV, upperBound),"\n"}
+
+   if (lowerFn.func(lowerBound, pV) and upperFn.func(pV, upperBound)) then
+      result = result_if_found
+   end
+
+   dbg.fini("l_rangeCk")
+   return have_range, result
+end
+
 function M.isloaded(self)
    --dbg.start{"MName:isloaded()"}
    local frameStk  = FrameStk:singleton()
@@ -560,11 +614,15 @@ function M.isloaded(self)
    local sn        = self:sn()
    local status    = mt:status(sn)
    local sn_status = ((status == "active") or (status == "pending"))
-   if (sn_status and self.__have_range) then
-      local pV = parseVersion(mt:version(sn))
-      if ((self.__range[1] <= pV) and (pV <= self.__range[2])) then
-         return sn_status
-      end
+   if (not sn_status) then
+      --dbg.fini("MName:isloaded")
+      return sn_status
+   end
+
+   local have_range, result = l_rangeCk(self, mt:version(sn), sn_status, false)
+   if (have_range) then
+      --dbg.fini("MName:isloaded")
+      return result
    end
 
    local userName  = self:userName()
@@ -595,7 +653,7 @@ function M.isPending(self)
 end
 
 function M.defaultKind(self)
-   local kindT = { 
+   local kindT = {
       ["^"] = "marked",
       s     = "system",
       u     = "user",
@@ -623,13 +681,11 @@ function M.prereq(self)
       return userName
    end
 
-   if (self.__have_range) then
-      local pV = parseVersion(mt:version(sn))
-      if ((self.__range[1] <= pV) and (pV <= self.__range[2])) then
-         return false
-      end
+   local have_range, result = l_rangeCk(self, mt:version(sn), false, userName)
+   if (have_range) then
+      return result
    end
-      
+
    if (userName == sn or userName == fullName) then
       -- The userName matched the either the sn or fullName
       -- stored in the MT
@@ -643,6 +699,56 @@ function M.prereq(self)
 
    -- userName did not match.
    return userName
+end
+
+function M.conflictCk(self, mt)
+   dbg.start{"MName:conflictCk(mt)"}
+   local userName = false
+   local sn       = self:sn()
+   if (not (sn and mt:have(sn,"active"))) then
+      dbg.print{"1) userName: ",userName,"\n"}
+      dbg.fini("MName:conflictCk")
+      return userName
+   end
+
+   local have_range, result = l_rangeCk(self, mt:version(sn), mt:fullName(sn), false)
+   if (have_range) then
+      dbg.fini("MName:conflictCk")
+      return result
+   end
+
+   local self_userName = self:userName()
+   --dbg.print{"self_userName: ",self_userName,", sn: ",sn,", userName: ",userName,"\n"}
+   if (self_userName == sn or extractVersion(self_userName, sn) == mt:version(sn)) then
+      userName = self_userName
+   end
+   --dbg.print{"3) userName: ",userName,"\n"}
+   dbg.fini("MName:conflictCk")
+   return userName
+end
+
+function M.downstreamConflictCk(self, mnameIn)
+   local snIn = mnameIn:sn()
+   dbg.start{"MName:downstreamConflictCk(snIn:", snIn,")"}
+
+   dbg.print{"self:userName(): ", self:userName(),"\n"}
+
+   local have_range, result = l_rangeCk(self, mnameIn:version(), mnameIn:userName(), false)
+   if (have_range) then
+      dbg.print{"2 result: ",result,"\n"}
+      dbg.fini( "MName:downstreamConflictCk")
+      return result
+   end
+
+   result = false
+   --dbg.print{"self: ",self,"\n"}
+   --dbg.print{"mnameIn: ",mnameIn,"\n"}
+   if (self:userName() == snIn or extractVersion(self:userName(), snIn) == mnameIn:version()) then
+      result = snIn
+   end
+
+   dbg.fini( "MName:downstreamConflictCk")
+   return result
 end
 
 function M.set_depends_on_flag(self, value)
@@ -668,11 +774,28 @@ function M.reset(self)
    self.__stackDepth = nil
 end
 
+function M.actionName(self)
+   return self.__action
+end
+
+
 --------------------------------------------------------------------------
 -- Return the string of the user name of the module.
 -- @param self A MName object
 function M.show(self)
    return '"' .. self:userName() .. '"'
 end
+
+function M.print(self)
+   local t = { sType    = self.__sType,
+               userName = self.__userName,
+               action   = self.__action,
+               is       = self.__isOrig,
+               ie       = self.__ieOrig,
+   }
+   return t
+end
+
+
 
 return M

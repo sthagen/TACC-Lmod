@@ -57,7 +57,6 @@ local min             = math.min
 local max             = math.max
 local huge            = math.huge
 local setenv_posix    = posix.setenv
-local tmod_path_rule  = cosmic:value("LMOD_TMOD_PATH_RULE")
 local ln10_inv        = 1.0/log(10.0)
 --------------------------------------------------------------------------
 -- Rebuild the path-like priority table.  So for a PATH with priorities
@@ -98,30 +97,63 @@ local function l_extract_Lmod_var_table(self, envName)
    return t
 end
 
+
 --------------------------------------------------------------------------
 -- This function is called to let Lmod know that the MODULEPATH
 -- has changed.
 -- @param name The variable name
 -- @param adding True if adding to path.
 -- @param pathEntry The new value.
-local function l_chkMP(name, value, adding)
-   if (name == ModulePath) then
-      dbg.start{"l_chkMP(\"MODULEPATH\", value: ",value,", adding:",adding,")"}
-      local mt = require("FrameStk"):singleton():mt()
-      mt:set_MPATH_change_flag()
-      mt:updateMPathA(value)
+local function l_dynamicMP(name, value, adding)
+   dbg.start{'Var: l_dynamicMP(name: "',name,'", value: ',value,", adding:",adding,")"}
+   local mt = require("FrameStk"):singleton():mt()
+   mt:set_MPATH_change_flag()
+   mt:updateMPathA(value)
 
-      -- Check to see if there are any currently loaded or pending modules 
-      -- before looking to rebuild the caches.
-      if (not mt:empty()) then
-         local cached_loads = cosmic:value("LMOD_CACHED_LOADS")
-         local spider_cache = (cached_loads ~= 'no')
-         local moduleA      = require("ModuleA"):singleton{spider_cache = spider_cache}
-         moduleA:update{spider_cache = spider_cache}
-      end
-      dbg.fini("l_chkMP")
+   -- Check to see if there are any currently loaded or pending modules 
+   -- before looking to rebuild the caches.
+   if (not mt:empty()) then
+      local cached_loads = cosmic:value("LMOD_CACHED_LOADS")
+      local spider_cache = (cached_loads ~= 'no')
+      local moduleA      = require("ModuleA"):singleton{spider_cache = spider_cache}
+      moduleA:update{spider_cache = spider_cache}
    end
+   dbg.fini("Var: l_dynamicMP")
 end
+
+local function l_dynamicMRC(name, value, adding)
+   dbg.start{'Var: l_dynamicMRC(name: "',name,'", value: ',value,", adding:",adding,")"}
+   cosmic:assign("LMOD_MODULERC",value)
+   local MRC = require("MRC")
+   MRC:__clear()
+   if (dbg.active()) then
+      local mrc             = MRC:singleton()
+      local mrcT, mrcMpathT = mrc:extract()
+      dbg.printT("mrcT",          mrcT)
+      dbg.printT("mrcMpathT",     mrcMpathT)
+   end
+   dbg.fini("Var: l_dynamicMRC")
+end
+
+
+local s_dispatchT = {
+   MODULEPATH        = l_dynamicMP,
+   LMOD_MODULERC     = l_dynamicMRC,
+   LMOD_MODULERCFILE = l_dynamicMRC,
+   MODULERCFILE      = l_dynamicMRC,
+}
+
+local function l_processDynamicVars(name, value, adding)
+   --dbg.start{'l_processDynamicVars(name: "',name,'", value: ',value,", adding:",adding,")"}
+   local func = s_dispatchT[name]
+   if (not func) then
+      --dbg.fini("l_processDynamicVars")
+      return
+   end
+   func(name, value,adding)
+   --dbg.fini("l_processDynamicVars")
+end
+
 
 --------------------------------------------------------------------------
 -- The ctor uses this routine to initialize the variable to be
@@ -296,7 +328,7 @@ function M.remove(self, value, where, priority, nodups, force)
    self.value = v
    if (not v) then v = nil end
    setenv_posix(self.name, v, true)
-   l_chkMP(self.name, v, adding)
+   l_processDynamicVars(self.name, v, adding)
 end
 
 --------------------------------------------------------------------------
@@ -310,8 +342,9 @@ end
 -- @param nodups True if no duplications are allowed.
 -- @param priority The priority value.
 local function l_insertFunc(vv, idx, isPrepend, nodups, priority)
-   local num  = vv.num
-   local idxA = vv.idxA
+   local tmod_path_rule = cosmic:value("LMOD_TMOD_PATH_RULE")
+   local num            = vv.num
+   local idxA           = vv.idxA
    if (nodups or abs(priority) > 0) then
       local oldPriority = 0
       if (next(idxA) ~= nil) then
@@ -394,7 +427,7 @@ function M.prepend(self, value, nodups, priority)
    if (not v) then v = nil end
    setenv_posix(self.name, v, true)
 
-   l_chkMP(self.name, v, adding)
+   l_processDynamicVars(self.name, v, adding)
 end
 
 --------------------------------------------------------------------------
@@ -444,7 +477,7 @@ function M.append(self, value, nodups, priority)
    self.value  = value
    if (not value) then value = nil end
    setenv_posix(name, value, true)
-   l_chkMP(name, value, adding)
+   l_processDynamicVars(name, value, adding)
 end
 
 function M.complete(self, args)
@@ -470,7 +503,7 @@ function M.set(self,value)
    if (not value) then value = nil end
    setenv_posix(self.name, value, true)
    local adding = true
-   l_chkMP(self.name, value, adding)
+   l_processDynamicVars(self.name, value, adding)
 end
 
 --------------------------------------------------------------------------
@@ -520,7 +553,7 @@ function M.pop(self)
    if (not v) then v = nil end
    setenv_posix(self.name, v, true)
    local adding = false
-   l_chkMP(self.name, v, adding)
+   l_processDynamicVars(self.name, v, adding)
    dbg.print{"result: ",result,"\n"}
    dbg.fini("Var.pop")
    return result
@@ -588,7 +621,7 @@ function M.unset(self)
    self.type  = 'var'
    setenv_posix(self.name, nil, true)
    local adding = false
-   l_chkMP(self.name, nil, adding)
+   l_processDynamicVars(self.name, nil, adding)
 end
 
 

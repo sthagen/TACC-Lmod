@@ -57,7 +57,7 @@ end
 function M.show(self)
    local a  = {}
    local nm = self:sn() or self:userName()
-   a[#a+1]  = self.__actionNm
+   a[#a+1]  = self:actionName()
    a[#a+1]  = "(\""
    a[#a+1]  = nm .. '"'
    for i = 1, #self.__show_range do
@@ -91,7 +91,7 @@ function M.prereq(self)
    local lowerBound = self.__is and parseVersion(self.__is) or " "
    local upperBound = self.__ie and parseVersion(self.__ie) or "~"
 
-   if (lowerFn(lowerBound, pV) and upperFn(pV, upperBound)) then
+   if (lowerFn.func(lowerBound, pV) and upperFn.func(pV, upperBound)) then
       return false
    end
    return self:show()

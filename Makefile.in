@@ -72,6 +72,7 @@ AUTO_SWAP                 := @AUTO_SWAP@
 SPIDER_CACHE_DIRS         := @SPIDER_CACHE_DIRS@
 LEGACY_ORDERING           := @LEGACY_ORDERING@
 EXPORT_MODULE             := @EXPORT_MODULE@
+LMOD_DOWNSTREAM_CONFLICTS := @LMOD_DOWNSTREAM_CONFLICTS@
 BASENAME                  := @BASENAME@
 UPDATE_VERSION            := LUA_PATH="$(srcdir)/tools/?.lua;$(SYS_LUA_PATH)" $(PATH_TO_LUA) $(srcdir)/proj_mgmt/updateVersion
 BUILD_V_src               := LUA_PATH="$(srcdir)/tools/?.lua;$(SYS_LUA_PATH)" LUA_CPATH="$(SYS_LUA_CPATH)" $(PATH_TO_LUA) $(srcdir)/proj_mgmt/buildVersion_src
@@ -84,6 +85,7 @@ PATH_TO_PAGER             := @PATH_TO_PAGER@
 PATH_TO_TCLSH             := @PATH_TO_TCLSH@
 PATH_TO_LS                := @PATH_TO_LS@
 MODULEPATH_ROOT           := @MODULEPATH_ROOT@
+VDateFn                   := $(srcdir)/.versionDate
 VERSION_SRC               := $(srcdir)/src/Version.lua
 SETTARG_VSRC              := $(srcdir)/settarg/Version.lua
 LUA_INCLUDE               := @LUA_INCLUDE@
@@ -107,6 +109,7 @@ LMOD_MF_SOURCE            := $(patsubst %, $(srcdir)/%, MF/*.version.lua)
 SETTARG_SOURCE            := $(patsubst %, $(srcdir)/%, settarg/*.lua  settarg/targ.in)
 DATE_cmd                  := $(srcdir)/proj_mgmt/DATE_cmd.sh
 UNAME_S                   := $(shell uname -s)
+VersionDate               := $(shell cat $(VDateFn))
 MODE                      := @MODE@
 
 ifeq ($(UNAME_S),Darwin)
@@ -187,7 +190,7 @@ CONTRIB_DIRS              :=  \
 CONTRIB                   := $(patsubst %, $(srcdir)/contrib/%, $(CONTRIB_DIRS))
 lua_code                  := $(filter-out %.in.lua, $(wildcard $(srcdir)/src/*.lua))
 lua_code                  := $(filter-out $(srcdir)/src/Version.lua, $(lua_code)) $(wildcard $(srcdir)/src/*.tcl)
-VDATE                     := $(shell $(DATE_cmd) +'%F %H:%M %:z')
+CurDATE                   := $(shell $(DATE_cmd) +'%F %H:%M %:z')
 
 ComputeHashSum            := $(srcdir)/src/computeHashSum.in.lua
 spiderCacheSupportCMD     := $(PATH_TO_LUA) $(DESTDIR)$(LIBEXEC)/spiderCacheSupport
@@ -286,6 +289,7 @@ __installMe:
 	          -e 's|@fast_tcl_interp@|$(FAST_TCL_INTERP)|g'                     \
 	          -e 's|@settarg_cmd@|$(SETTARG_CMD)|g'                             \
 	          -e 's|@lmod_config_dir@|$(LMOD_CONFIG_DIR)|g'                     \
+	          -e 's|@lmod_downstream_conflicts@|$(LMOD_DOWNSTREAM_CONFLICTS)|g' \
 	          -e "s|@my_shell@|$$fn|g"                                          \
 	          -e 's|@tclsh@|$(PATH_TO_TCLSH)|g'                                 \
 	          -e 's|@ls@|$(PATH_TO_LS)|g'                                       \
@@ -545,10 +549,10 @@ libexec:  $(lua_code)
 	$(MAKE) FILELIST="$^" DIRLOC=$(DESTDIR)$(LIBEXEC) GIT_VERSION=$(GIT_VERSION) __installMe
 
 VersionSrc:
-	$(BUILD_V_src) "$(GIT_BRANCH)" "$(version)" "$(GIT_VERSION)" "$(VDATE)" >  $(DESTDIR)$(LIBEXEC)/Version.lua 
+	$(BUILD_V_src) "$(GIT_BRANCH)" "$(version)" "$(GIT_VERSION)" "$(VersionDate)" "$(CurDATE)" >  $(DESTDIR)$(LIBEXEC)/Version.lua 
 
 STVersionSrc: Inst_Settarg
-	$(BUILD_V_src) "$(GIT_BRANCH)" "$(version)" "$(GIT_VERSION)" "$(VDATE)" >  $(DESTDIR)$(SETTARG)/Version.lua
+	$(BUILD_V_src) "$(GIT_BRANCH)" "$(version)" "$(GIT_VERSION)" "$(VersionDate)" "$(CurDATE)" >  $(DESTDIR)$(SETTARG)/Version.lua
 
 Inst_Tools: $(TOOL_SRC)
 	$(MAKE) FILELIST="$^" DIRLOC=$(DESTDIR)$(TOOLS) GIT_VERSION=$(GIT_VERSION) __installMe
@@ -610,11 +614,14 @@ gittag:
 	  else                                                                              \
 	    $(RM)                                                           $(VERSION_SRC); \
 	    $(RM)                                                          $(SETTARG_VSRC); \
-	    $(BUILD_V_src) "$(GIT_BRANCH)" "$(TAG)" "$(TAG)" "$(VDATE)"  >  $(VERSION_SRC); \
+	    $(BUILD_V_src) "$(GIT_BRANCH)" "$(TAG)"     "$(TAG)"                            \
+                                           "$(CurDATE)" "$(CurDATE)"      > $(VERSION_SRC); \
 	    cp                                          $(VERSION_SRC)     $(SETTARG_VSRC); \
+            echo $(CurDATE)                                               >     $(VDateFn); \
 	    $(UPDATE_VERSION) -p $(CONF_PY_PATTERN)          --version $(TAG)   $(CONF_PY); \
 	    git commit -m "moving to TAG_VERSION $(TAG)"                   $(SETTARG_VSRC)  \
                                                                                 $(CONF_PY)  \
+                                                                                $(VDateFn)  \
                                                                             $(VERSION_SRC); \
 	    git tag -a $(TAG) -m 'Setting TAG_VERSION to $(TAG)'                          ; \
 	    branchName=`git status | head -n 1 | sed 's/^[# ]*On branch //g'`             ; \

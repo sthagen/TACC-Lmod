@@ -24,8 +24,8 @@ testdescript = {
      ORIG_HOME=`(cd $HOME; /bin/pwd)`
      HOME=`/bin/pwd`
      cacheDir=`userCacheDir`
-
-     rm -fr _stderr.* _stdout.* err.* out.* $cacheDir .modulerc cacheDir .cache .config myCacheDir
+ 
+     remove_generated_lmod_files myCacheDir fn spiderT.lua
 
      cp $(testDir)/dot.modulerc .modulerc
 
@@ -54,6 +54,7 @@ testdescript = {
      runLmod --show_hidden avail     #18
      export LMOD_SHORT_TIME=0
      runLmod avail                   #19
+     cp $cacheDir/spiderT.*.lua ~/spiderT.lua
      unset LMOD_SHORT_TIME
      runLmod avail                   #20
      rm -rf $cacheDir
@@ -62,7 +63,7 @@ testdescript = {
 $(outputDir)/cacheDir: $(outputDir)/last_update
 EOF
 
-     lua $(projectDir)/src/spiderCacheSupport.in.lua --descriptFn fn >> .lmodrc.lua
+     lua $(projectDir)/src/spiderCacheSupport.in.lua --descriptFn fn > .lmodrc.lua
      mkdir myCacheDir
      touch last_update
      buildSpiderT $MODULEPATH > myCacheDir/spiderT.lua
@@ -87,16 +88,16 @@ EOF
      runLmod list                                      #30
 
      rm .modulerc
-     export LMOD_MODULERCFILE=$testDir/dot.modulerc
+     export LMOD_MODULERC=$testDir/dot.modulerc
      runLmod avail                                     #31
      runLmod --show_hidden avail                       #32
 
-     export LMOD_MODULERCFILE=$testDir/dot.modulerc.lua
+     export LMOD_MODULERC=$testDir/dot.modulerc.lua
      runLmod avail                                     #33
      runLmod --show_hidden avail                       #34
 
 
-     unset LMOD_MODULERCFILE
+     unset LMOD_MODULERC
      unsetMT
      export MODULEPATH=$(testDir)/mf5
      runLmod avail                                     #35
@@ -125,7 +126,7 @@ EOF
      unsetMT
      export MODULEPATH_ROOT=$(testDir)/mf
      export MODULEPATH=$MODULEPATH_ROOT/Core
-     export LMOD_MODULERCFILE=$(testDir)/loop_modulerc_d.lua
+     export LMOD_MODULERC=$(testDir)/loop_modulerc_d.lua
      runLmod    avail                                  #45
 
      unsetMT
@@ -133,6 +134,22 @@ EOF
      export MODULEPATH=$MODULEPATH_ROOT/Core
      export LMOD_MODULERC=$(testDir)/modulerc.d
      runLmod    avail                                  #46
+
+     runLmod    purge                                  #47
+     unsetMT
+     rm -f .modulerc .modulerc.lua
+     cp $(testDir)/dot.modulerc_defaults.lua .modulerc.lua
+     export LMOD_MODULERC=$(testDir)/MRC/mainRC.lua
+     export MODULEPATH_ROOT=$(testDir)/mfA
+     export MODULEPATH=$MODULEPATH_ROOT/Core
+     runLmod    avail                                  #48
+     runLmod    load newDefaults                       #49
+     runLmod    list                                   #50
+     runLmod    avail                                  #51
+     
+
+
+
 
 
      HOME=$ORIG_HOME
