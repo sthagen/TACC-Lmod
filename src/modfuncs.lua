@@ -163,7 +163,7 @@ end
 -- @param cmdName The command which is getting its arguments validated.
 local function l_validateModules(cmdName, ...)
    local argA = pack(...)
-   dbg.print{"cmd: ",cmdName, " argA.n: ",argA.n,"\n"}
+   --dbg.print{"l_validateModules: cmd: ",cmdName, " argA.n: ",argA.n,"\n"}
    local allGood = true
    local fn      = false
    for i = 1, argA.n do
@@ -255,7 +255,7 @@ end
 -- Prepend a value to a path like variable.
 function prepend_path(...)
    local t = l_convert2table(...)
-   dbg.start{"prepend_path_rtm(",l_concatTbl(t,", "),")"}
+   dbg.start{"prepend_path(",l_concatTbl(t,", "),")"}
    if (not l_validateStringTable(2, "prepend_path",t)) then return end
 
    l_cleanupPathArgs(t)
@@ -540,7 +540,7 @@ function prereq(...)
    dbg.start{"prereq(",l_concatTbl({...},", "),")"}
    if (not l_validateModules("prereq", ...)) then return end
 
-   mcp:prereq(MName:buildA("mt", ...))
+   mcp:prereq(MName:buildA(mcp:MNamePrereqType(), ...))
    dbg.fini("prereq")
 end
 
@@ -551,7 +551,7 @@ function prereq_any(...)
    dbg.start{"prereq_any(",l_concatTbl({...},", "),")"}
    if (not l_validateModules("prereq_any",...)) then return end
 
-   mcp:prereq_any(MName:buildA("mt",...))
+   mcp:prereq_any(MName:buildA(mcp:MNamePrereqType(),...))
    dbg.fini("prereq_any")
 end
 
