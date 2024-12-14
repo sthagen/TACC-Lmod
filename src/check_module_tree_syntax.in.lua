@@ -129,7 +129,6 @@ end
 
 function walk_spiderT(spiderT, mt, mList, errorT)
    dbg.start{"walk_spiderT(spiderT, mList, errorT)"}
-   local show_hidden = optionTbl().show_hidden
    local mrc         = MRC:singleton()
 
    local function l_walk_moduleA_helper(mpath, sn, v)
@@ -140,7 +139,7 @@ function walk_spiderT(spiderT, mt, mList, errorT)
 
       if (next(v.fileT) ~= nil) then
          for fullName, vv in pairs(v.fileT) do
-            local resultT = mrc:isVisible{fullName=fullName,sn=sn,fn=vv.fn, show_hidden = show_hidden}
+            local resultT = mrc:isVisible{fullName=fullName,sn=sn,fn=vv.fn, mpath = vv.mpath}
             if (resultT.isVisible) then
                check_syntax(mpath, mt, mList, sn, vv.fn, fullName, errorT.syntaxA)
             end
@@ -285,6 +284,10 @@ function main()
    ------------------------------------------------------------------
    -- initialize lmod with SitePackage and /etc/lmod/lmod_config.lua
    initialize_lmod()
+
+   local mrc        = MRC:singleton()
+   mrc:set_display_mode("spider")
+
    dbg.set_prefix(colorize("red","Lmod"))
 
    local hub     = Hub:singleton(false)
@@ -313,7 +316,6 @@ function main()
    _G.mcp = MainControl.build("spider")
    _G.MCP = MainControl.build("spider")
    local remove_MRC_home         = getuid() < 501
-   local mrc                     = MRC:singleton()
    local cache                   = Cache:singleton{dontWrite = true, quiet = true, buildCache = true,
                                                    buildFresh = true, noMRC=true}
    local spider                  = Spider:new()
