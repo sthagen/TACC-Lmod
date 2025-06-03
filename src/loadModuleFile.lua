@@ -71,9 +71,6 @@ function loadModuleFile(t)
    local whole
    local userName
 
-   
-
-
    -- If the user is requesting an unload, don't complain if the file
    -- has disappeared.
 
@@ -111,6 +108,7 @@ function loadModuleFile(t)
          f:close()
       end
    else
+      dbg.print{"Reading tcl file\n"}
       userName       = myModuleUsrName()
       local fullName = myModuleFullName()
       -- Build argument list then call tcl2lua translator
@@ -155,12 +153,11 @@ function loadModuleFile(t)
       end
    end
 
-   -- dynamic additions via hook
-   local additional_lines = hook.apply("decorate_module", {path=myFileName(), name=myModuleName(), version=myModuleVersion(), contents=whole}) or {}
-   whole = whole .. "\n" .. concatTbl(additional_lines, "\n")
-
    -- Use the sandbox to evaluate modulefile text.
    if (whole) then
+      -- dynamic additions via hook
+      local additional_lines = hook.apply("decorate_module", {path=myFileName(), name=myModuleName(), version=myModuleVersion(), contents=whole}) or {}
+      whole = whole .. "\n" .. concatTbl(additional_lines, "\n")
       status, msg = sandbox_run(whole)
    else
       status = nil
