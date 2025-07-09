@@ -60,25 +60,26 @@ function Json.initialize(self)
    self.js = js.encode({alias={}, shellFunc={}, env={}, unset={}})
 end
 
-function Json.alias(self, k, v)
+function Json.set_alias(self, k, t)
    local tbl = js.decode(self.js)
-   tbl["alias"][k] = v
+   tbl["alias"][k] = t.vstr
    self.js = js.encode(tbl)
 end
 
-function Json.shellFunc(self, k, v)
+function Json.set_shell_function(self, k, t)
    local tbl = js.decode(self.js)
-   tbl["shellFunc"][k] = v
+   tbl["shellFunc"][k] = t.vstr
    self.js = js.encode(tbl)
 end
 
-function Json.expandVar(self, k, v, vType)
+
+function Json.expandVar(self, k, v)
    local tbl = js.decode(self.js)
    tbl["env"][k] = v
    self.js = js.encode(tbl)
 end
 
-function Json.unset(self, k, vType)
+function Json.unset(self, k)
    local tbl = js.decode(self.js)
    tbl["unset"][#tbl["unset"]+1] = k
    self.js = js.encode(tbl)

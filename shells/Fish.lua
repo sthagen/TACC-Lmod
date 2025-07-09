@@ -54,39 +54,39 @@ Fish.myType     = Fish.my_name
 --               Modify module definition of alias so that there is
 --               one and only one semicolon at the end.
 
-function Fish.alias(self, k, v)
-   if (not v) then
+function Fish.set_alias(self, k, t)
+   local vstr = t.vstr
+   if (not vstr) then
       stdout:write("functions -e ",k,";\n")
       dbg.print{   "functions -e ",k,";\n"}
    else
-      v = v:gsub(";%s*$","")
-      stdout:write("alias ",k,"='",v,"';\n")
-      dbg.print{   "alias ",k,"='",v,"';\n"}
+      vstr = vstr:gsub(";%s*$","")
+      stdout:write("alias ",k,"='",vstr,"';\n")
+      dbg.print{   "alias ",k,"='",vstr,"';\n"}
    end
 end
 
 --------------------------------------------------------------------------
--- Fish:shellFunc(): Either define or undefine a fish shell function.
---                   Modify module definition of function so that there is
---                   one and only one semicolon at the end.
+-- Fish:set_shell_func(): Either define or undefine a fish shell function.
+--                        Modify module definition of function so that there is
+--                        one and only one semicolon at the end.
 
-function Fish.shellFunc(self, k, v)
-   if (not v) then
+function Fish.set_shell_func(self, k, t)
+   local vstr = t.vstr
+   if (not vstr) then
       stdout:write("functions -e ",k,";\n")
       dbg.print{   "functions -e ",k,";\n"}
    else
-      local func = v[1]:gsub(";%s*$","")
+      local func = vstr[1]:gsub(";%s*$","")
       stdout:write("function ",k,"; ",func,"; end;\n")
       dbg.print{   "function ",k,"; ",func,"; end;\n"}
    end
 end
 
-
 --------------------------------------------------------------------------
--- Fish:expandVar(): Define either a global or local variable in bash
---                   syntax
+-- Fish:expandVar(): Define a global variable in Fish syntax
 
-function Fish.expandVar(self, k, v, vType)
+function Fish.expandVar(self, k, v)
    local lineA       = {}
    v                 = tostring(v):multiEscaped()
    if (k == "PATH" or k == "INFOPATH") then
@@ -94,9 +94,7 @@ function Fish.expandVar(self, k, v, vType)
    end
    lineA[#lineA + 1] = "set "
    lineA[#lineA + 1] = "-x "
-   if (vType ~= "local_var") then
-      lineA[#lineA + 1] = "-g "
-   end
+   lineA[#lineA + 1] = "-g "
    lineA[#lineA + 1] = k
    lineA[#lineA + 1] = " "
    lineA[#lineA + 1] = v
