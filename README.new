@@ -248,3 +248,9 @@ Lmod 8.7+
               then pick the first one that is visible.
             * Changed BaseShell:expand() to use self table instead of big if-elseif-else block to 
               expand varT key-value pairs.
+   W.I.P:
+            * Issue #704: Support for nushell command generation added.            
+            * Added conversion from old tm format to new with l_convertOldtm(tm) in src/MRC.lua
+            * Issue #778: Only quit searching when there is no entry in v.dirT (in collectFileA())
+            * PR #784: merged in startup and docs for nushell.
+            
