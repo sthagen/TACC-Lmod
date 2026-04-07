@@ -991,7 +991,7 @@ fi
 IntLuaV=$( $PATH_TO_LUA  -e "_,_,M,m=_VERSION:gsub('Lua%s+',''):find('(%d+)%.(%d)'); print(math.floor(tonumber(M)*1000+tonumber(m)))")
 
 if test $IntLuaV -lt 5001 -o $IntLuaV -gt 5005; then
-  echo "Error: Lmod requires versions 5.1, 5.2, 5.3, 5.4, or 5.5 You have: $LuaV"
+  echo "Error: Lmod requires versions 5.1 to 5.5. You have: $LuaV"
   rm -f makefile
   exit 1
 fi
@@ -1056,7 +1056,7 @@ else
     echo "... no"
   else
     lfsV=`$PATH_TO_LUA $ac_confdir/proj_mgmt/getLFSVersion`
-    if test "$lfsV" -lt 1008000; then
+    if test "$lfsV" -lt 1009000; then
        echo "... Too old, using providing version"
     else
        echo "... yes"    
