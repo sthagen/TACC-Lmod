@@ -94,14 +94,12 @@ jobs:
          set +e
          for failFn in rt/*/t1/*/failed.txt; do
            dir=`dirname failFn`
-           diff -c ${dir}t1/*/_err.left ${dir}/t1/*/_err.right > /dev/null 2>&1
-           if [ $? -ne 0 ]; then
-             echo ">>>> ${dir}/err.txt"
-             diff -c ${dir}t1/*/_err.left ${dir}/t1/*/_err.right || echo
-             echo ">>>> ${dir}/out.txt"
-             diff -c ${dir}/out.txt ${dir}/t1/*/out.txt || echo
-             echo ">>>> ${dir}/t1.txt"
-             cat ${dir}t1/*/t1.log
+           echo ">>>> ${dir}/err.txt"
+           diff -c ${dir}/_err.left ${dir}/_err.right || echo
+           echo ">>>> ${dir}/out.txt"
+           diff -c ${dir}/_out.left ${dir}/_out.right || echo
+           echo ">>>> ${dir}/t1.txt"
+           cat ${dir}/t1.log
            fi
          done
       - name: run busted tests
