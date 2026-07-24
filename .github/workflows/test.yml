@@ -100,7 +100,6 @@ jobs:
            diff -c ${dir}/_out.left ${dir}/_out.right || echo
            echo ">>>> ${dir}/t1.txt"
            cat ${dir}/t1.log
-           fi
          done
       - name: run busted tests
         run: |
