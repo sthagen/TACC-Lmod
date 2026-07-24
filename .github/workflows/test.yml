@@ -87,13 +87,13 @@ jobs:
          echo "$PWD/Hermes/bin" >> $GITHUB_PATH
          cd -
       - name: Run tests
-        run: tm 
+        run: tm -k termWidthFallback
       - name: show output of failed Lmod tests
         if: ${{ failure() }}
         run: |
          set +e
          for failFn in rt/*/t1/*/failed.txt; do
-           dir=`dirname failFn`
+           dir=`dirname $failFn`
            echo ">>>> ${dir}/err.txt"
            diff -c ${dir}/_err.left ${dir}/_err.right || echo
            echo ">>>> ${dir}/out.txt"
