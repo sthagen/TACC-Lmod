@@ -490,7 +490,7 @@ test-pkgs-symlinks:
 	$(MAKE) DESTDIR=/tmp/lmod-pkgs-symlinks-test install
 	@sh $(srcdir)/pkgs/test-lib-symlinks.sh "/tmp/lmod-pkgs-symlinks-test$(LIB)"
 
-tags: build_tags
+etags tags: build_tags
 	$(RM) file_list.*
 
 build_tags:
