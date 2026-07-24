@@ -44,4 +44,8 @@ Lmod 9.2+
    (9.2.9)  * Modifying configure.ac to require posix.unistd as a module
             * Issue #840: new function protected_getenv{} added.
             * Only set psignal if alarm exists.
-
+W.I.P.:
+   (9.2.10) * Protect psignal from being a function and not a table
+            * Add onFailure flag to testFinish
+            * Change .github/*/test.yml to find failed.txt instead of every rt directory
+            

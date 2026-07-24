@@ -90,6 +90,7 @@ local function l_init_envTable(self)
       {"^(uname %-a).*",                      "%1"                 },
       {" *%-%-%-%-* *",                       ""                   },
       {"^ *OutputDIR",                        " OutputDIR"         },
+      { " #%*#%*#.*$",                        ""                   },
       {"^%-%-* *",                            " "                  },             
       {"%-%-%-* *$",                          ""                   },
       {"attempt to call.*WTF.*",              ""                   },

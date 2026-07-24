@@ -85,6 +85,7 @@ FAKE
      elapsedC=$SECONDS
      if [ "$elapsedC" -lt 5 ]; then
         echo "scenario-C wedged-stty completed: yes" > _stdout.997
+        elapsedC="<5  #*#*# elapsedC=$elapsedC"
      else
         echo "scenario-C wedged-stty completed: no" > _stdout.997
      fi
@@ -102,7 +103,7 @@ FAKE
      rm -f results.csv
      wrapperDiff --csv results.csv $(testDir)/out.txt out.txt
      wrapperDiff --csv results.csv $(testDir)/err.txt err.txt
-     testFinish -r $(resultFn) -t $(runtimeFn) results.csv
+     testFinish --onFailure $(outputDir)/failed.txt -r $(resultFn) -t $(runtimeFn) results.csv
    ]],
 
    blessScript = [[
