@@ -727,6 +727,7 @@ COLORIZE
 CASE_INDEPENDENT_SORTING
 LMOD_OVERRIDE_LANG
 SITE_MSG_FILE
+SITEPACKAGE_PREPEND
 LMOD_ALLOW_ROOT_USE
 DUPLICATE_PATHS
 OBJEXT
@@ -780,6 +781,7 @@ ac_user_opts='
 enable_option_checking
 with_duplicatePaths
 with_allowRootUse
+with_sitePackagePrepend
 with_siteMsgFile
 with_lang
 with_caseIndependentSorting
@@ -1456,6 +1458,13 @@ Optional Packages:
                           Allow duplicate directories in path like variables
                           [[no]]
   --with-allowRootUse=ans Allow root to use Lmod [[yes]]
+  --with-sitePackagePrepend
+                          List of paths for Package Manager SitePackages
+    SITEPACKAGE_PREPEND="$withval"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: SITEPACKAGE_PREPEND=$with_sitePackagePrepend" >&5
+printf "%s\n" "SITEPACKAGE_PREPEND=$with_sitePackagePrepend" >&6; }
+    printf "%s\n" "#define SITEPACKAGE_PREPEND \"$with_sitePackagePrepend\"" >>confdefs.h
+
   --with-siteMsgFile=ans  Site Message File [[<empty>]]
   --with-lang=ans         Override $LANG for Lmod errors/messages/warnings
                           [[<empty>]]
@@ -3516,6 +3525,19 @@ else $as_nop
 printf "%s\n" "LMOD_ALLOW_ROOT_USE=$withval" >&6; }
     LMOD_ALLOW_ROOT_USE="$withval"
     printf "%s\n" "#define LMOD_ALLOW_ROOT_USE \"$withval\"" >>confdefs.h
+
+fi
+
+
+
+# Check whether --with-sitePackagePrepend was given.
+if test ${with_sitePackagePrepend+y}
+then :
+  withval=$with_sitePackagePrepend; withval="<empty>"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: SITEPACKAGE_PREPEND=$withval" >&5
+printf "%s\n" "SITEPACKAGE_PREPEND=$withval" >&6; }
+    SITEPACKAGE_PREPEND="$withval"
+    printf "%s\n" "#define SITEPACKAGE_PREPEND \"$withval\"" >>confdefs.h
 
 fi
 
@@ -5765,10 +5787,10 @@ SYS_LUA_CPATH=$(echo $SYS_LUA_CPATH | sed -e 's|^\./?.so;||'   \
                                           -e 's|;\./?.so;|;|'  \
                                           -e 's|;\./?.so$|;|')
 
-printf "checking for lua modules: posix"
+printf "checking for lua modules: posix, posix.unistd"
 
 missingModules=""
-for i in posix; do
+for i in posix posix.unistd; do
   if ! ($PATH_TO_LUA $ac_confdir/proj_mgmt/luaModuleAvailable $i 2> /dev/null) ; then
     missingModules="$missingModules $i"
   fi
@@ -5779,7 +5801,10 @@ if test -n "$missingModules" ; then
   echo ""
   echo "Error: The follow lua module(s) are missing: $missingModules"
   echo ""
-  echo "You can not run Lmod without: $missingModules"
+  case "$missingModules" in
+    *$posix.unistd*) echo "Your luaposix is too old, please use luaposix version 33 or newer" ;;
+    *)               echo "You can not run Lmod without: $missingModules"
+  esac
   rm -f makefile
   exit 1
 else

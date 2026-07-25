@@ -1067,12 +1067,12 @@ function M.unsetenv(self, argT)
    if (varT[name] == nil) then
       varT[name]   = Var:new(name)
    end
-   varT[name]:unset()
+   varT[name]:unset(argT.__cmdName)
 
    -- Unset stack variable if it exists
    local stackName = l_createStackName(name)
    if (varT[stackName]) then
-      varT[name]:unset()
+      varT[name]:unset(argT.__cmdName)
    end
    dbg.fini("MainControl:unsetenv")
 end
@@ -1444,6 +1444,20 @@ function M.myModuleUsrName(self)
 end
 
 --------------------------------------------------------------------------
+-- Return the user name and the true loaded name when a dot-hidden alias
+-- load occurred; otherwise both values are the same.
+-- @param self A MainControl object.
+function M.myModuleUsrAndAliasName(self)
+   local usr = self:myModuleUsrName()
+   local frameStk = FrameStk:singleton()
+   local mname = frameStk:mname()
+   if (mname and mname:dotHiddenAliasLoad()) then
+      return usr, self:myModuleFullName()
+   end
+   return usr, usr
+end
+
+--------------------------------------------------------------------------
 -- Return the name of the modules.  That is the name of the module w/o a
 -- version.
 -- @param self A MainControl object
@@ -1596,8 +1610,7 @@ function M.error(self, ...)
       sA[#sA+1]     = "\n"
    end
 
-   io.stderr:write(concatTbl(sA,""),"\n")
-   LmodErrorExit()
+   LmodErrorExit(concatTbl(sA,""),"\n")
 end
 
 --------------------------------------------------------------------------
