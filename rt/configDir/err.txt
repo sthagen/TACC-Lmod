@@ -2,13 +2,13 @@
 step 1
 lua ProjectDIR/src/lmod.in.lua shell --regression_testing --version
 ===========================
-Modules based on Lua: Version 9.2.6 2026-07-13 17:55 -05:00
+Modules based on Lua: Version 9.2.10 2026-07-24 17:58 -06:00
     https://lmod.readthedocs.io
 ===========================
 step 2
 lua ProjectDIR/src/lmod.in.lua shell --regression_testing --config
 ===========================
-Modules based on Lua: Version 9.2.6 2026-07-13 17:55 -05:00
+Modules based on Lua: Version 9.2.10 2026-07-24 17:58 -06:00
     https://lmod.readthedocs.io
 Description                                                Value
 Allow root to use Lmod (LMOD_ALLOW_ROOT_USE)               yes
@@ -66,7 +66,7 @@ System Name (LMOD_SYSTEM_NAME)                             <empty>
 SYSHOST (cluster name) (LMOD_SYSHOST)                      <empty>
 TCL Version                                                <N/A>
 Terse Decorations (LMOD_TERSE_DECORATIONS)                 yes
-User cache valid time(sec) (LMOD_ANCIENT_TIME)             86400
+User cache valid time(sec) (LMOD_ANCIENT_TIME)             86401
 Write cache after (sec) (LMOD_SHORT_TIME)                  2
 Threshold (sec) (LMOD_THRESHOLD)                           1
 Tmod find first rule (LMOD_TMOD_PATH_RULE)                 no
@@ -75,6 +75,7 @@ Tracing (LMOD_TRACING)                                     no
 uname -a
 User Cache Directory                                       OutputDIR/.cache/lmod
 MODULEPATH:   ProjectDIR/rt/configDir/mf
+LMOD_ANCIENT_TIME            StdPkg     86400        86401
 LMOD_CONFIG_DIR              E          /etc/lmod    ProjectDIR/rt/configDir/lmod_cfg_dir
 LMOD_CONFIG_LOCATION         StdPkg     no           ProjectDIR/rt/configDir/lmod_cfg_dir/lmod_config.lua
 LMOD_PACKAGE_PATH            StdPkg     nil          ProjectDIR/rt/configDir/lmod_cfg_dir
@@ -206,3 +207,16 @@ If there is no newer version, request one at hpc@vub.ac.be.
 While processing the following module(s):
     Module fullname  Module Filename
     w/1.0            ProjectDIR/rt/configDir/mf/w/1.0.lua
+===========================
+step 5
+lua ProjectDIR/src/lmod.in.lua shell --regression_testing avail
+===========================
+ProjectDIR/rt/configDir/mf
+   tryThis/1.0 (L)    w/1.0 (L)
+  Where:
+   L:  Module is loaded
+If the avail list is too long consider trying:
+"module --default avail" or "ml -d av" to just list the default modules.
+"module overview" or "ml ov" to display the number of modules for each name.
+Use "module spider" to find all possible modules and extensions.
+Use "module keyword key1 key2 ..." to search for all possible modules matching any of the "keys".
