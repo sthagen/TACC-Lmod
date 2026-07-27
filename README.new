@@ -49,4 +49,5 @@ Lmod 9.2+
             * Change .github/*/test.yml to find failed.txt instead of every rt directory
 W.I.P.:
    (9.2.11) * Issue #846: Add isNum to cosmic objects like LMOD_ANCIENT_TIME
-   
+            * change failed.txt to test.failed
+            
