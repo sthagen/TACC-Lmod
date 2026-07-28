@@ -47,7 +47,6 @@ Lmod 9.2+
    (9.2.10) * Protect psignal from being a function and not a table
             * Add onFailure flag to testFinish
             * Change .github/*/test.yml to find failed.txt instead of every rt directory
-W.I.P.:
-   (9.2.11) * Issue #846: Add isNum to cosmic objects like LMOD_ANCIENT_TIME
-            * change failed.txt to test.failed
-            
+Lmod 9.3+
+   (9.3)    * Issue #846: Add isNum to cosmic objects like LMOD_ANCIENT_TIME
+            * Change failed.txt to test.failed
