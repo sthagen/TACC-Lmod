@@ -1448,9 +1448,9 @@ end
 -- load occurred; otherwise both values are the same.
 -- @param self A MainControl object.
 function M.myModuleUsrAndAliasName(self)
-   local usr = self:myModuleUsrName()
+   local usr      = self:myModuleUsrName()
    local frameStk = FrameStk:singleton()
-   local mname = frameStk:mname()
+   local mname    = frameStk:mname()
    if (mname and mname:dotHiddenAliasLoad()) then
       return usr, self:myModuleFullName()
    end
