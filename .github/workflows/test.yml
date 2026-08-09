@@ -92,7 +92,7 @@ jobs:
         if: ${{ failure() }}
         run: |
          set +e
-         for failFn in rt/*/t1/*/failed.txt; do
+         for failFn in rt/*/t1/*/test.failed; do
            dir=`dirname $failFn`
            echo ">>>> ${dir}/err.txt"
            diff -c ${dir}/_err.left ${dir}/_err.right || echo
@@ -128,7 +128,7 @@ jobs:
         run: |
          cd /tmp/Lmod_test_suite
          set +e
-         for failFn in rt/*/t1/*/failed.txt; do
+         for failFn in rt/*/t1/*/test.failed; do
            dir=`dirname $failFn`
            echo ">>>> ${dir}/err.txt"
            diff -c ${dir}/_err.left ${dir}/_err.right || echo

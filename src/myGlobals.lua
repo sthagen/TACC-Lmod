@@ -702,6 +702,7 @@ local nFD_SedV = "@nearly_forbidden_days@"
 local nFD      = tonumber(nFD_Env) or tonumber(nFD_SedV)
 
 cosmic:init{name    = "LMOD_NEARLY_FORBIDDEN_DAYS",
+            isNum   = true,
             default = nFD_DFLT,
             envV    = nFD_Env,
             sedV    = nFD_SedV,
@@ -715,6 +716,7 @@ local ancientEnv    = getenv("LMOD_ANCIENT_TIME")
 local ancientSedV   = "@ancient@"
 local ancient       = tonumber(ancientEnv) or tonumber(ancientSedV)
 cosmic:init{name    = "LMOD_ANCIENT_TIME",
+            isNum   = true,
             default = ancient_dflt,
             envV    = ancientEnv,
             sedV    = ancientSedV,
@@ -736,6 +738,7 @@ local shortTimeEnv   = getenv("LMOD_SHORT_TIME")
 local shortTimeSedV  = "@short_time@"
 local shortTime      = tonumber(shortTimeEnv) or tonumber(shortTimeSedV)
 cosmic:init{name     = "LMOD_SHORT_TIME",
+            isNum    = true,
             default  = shortTime_dflt,
             envV     = shortTimeEnv,
             sedV     = shortTimeSedV,
@@ -751,6 +754,7 @@ local threshold_dflt = 1
 local thresholdEnv   = getenv("LMOD_THRESHOLD")
 local threshold      = tonumber(thresholdEnv)
 cosmic:init{name     = "LMOD_THRESHOLD",
+            isNum    = true,
             default  = threshold_dflt,
             envV     = thresholdEnv,
             assignV  = threshold}
@@ -769,8 +773,6 @@ cosmic:init{name = "LMOD_ALLOW_ROOT_USE",
 cosmic:init{name = "LMOD_HAVE_LUA_TERM",
             sedV = "@have_lua_term@",
             yn   = "no"}
-
-
 
 ------------------------------------------------------------------------
 -- MODULEPATH_ROOT
@@ -841,6 +843,7 @@ cosmic:init{name    = "LMOD_PREPEND_BLOCK",
 --                overridden by a .version etc file.
 ------------------------------------------------------------------------
 cosmic:init{name    = "LMOD_MAXDEPTH",
+            isNum = true,
             sedV    = "@maxdepth@",
             default = ""}
 
