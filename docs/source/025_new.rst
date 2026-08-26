@@ -2,7 +2,7 @@ New Features in Lmod
 ====================
 
 **myModuleFullNameAndAlias()**
-  (Lmod X.Y.Z+) Modulefiles can call ``myModuleFullNameAndAlias()`` to obtain
+  (Lmod 9.3.2+) Modulefiles can call ``myModuleFullNameAndAlias()`` to obtain
   the logical full name and the true loaded full name when dot-leading path
   segments are used to hide modules.  See :ref:`dot_hidden_load_alias-label`
   and :ref:`lua_modulefile_functions-label`.  Rationale:
