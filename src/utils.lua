@@ -396,7 +396,8 @@ end
 -- path segment of the true loaded full name.
 function stripHidePrefixFromFullName(fullName)
    local sA = {}
-   for seg in fullName:gmatch("[^/]+") do
+   for mySeg in fullName:gmatch("[^/]+") do
+      local seg = mySeg
       if (seg:sub(1,1) == ".") then
          seg = seg:sub(2)
       end
